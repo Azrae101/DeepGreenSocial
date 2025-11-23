@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green & Social - Aarhus Sustainable Locations</title>
+    <style>
+        /* Global Styles - from home.html */
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-color: #ff9800;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--primary-green);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-login {
+            background-color: transparent;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+
+        .btn-register {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 60px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--primary-green);
+        }
+
+        .section-title h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .section-title p {
+            color: var(--dark-gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Map Section */
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .locations-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .location-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .location-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .location-type {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .type-flea-market {
+            background-color: #e8f5e9;
+            color: var(--primary-green);
+        }
+
+        .type-recycling {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .type-community {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .location-name {
+            color: var(--dark-green);
+            margin-bottom: 10px;
+        }
+
+        .location-details {
+            margin-bottom: 15px;
+        }
+
+        .location-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .detail-icon {
+            color: var(--primary-green);
+            width: 20px;
+        }
+
+        .btn-location {
+            background-color: var(--primary-green);
+            color: var(--white);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 40px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--accent-color);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                padding: 15px 0;
+            }
+
+            nav ul {
+                margin: 15px 0;
+            }
+
+            .auth-buttons {
+                margin-top: 10px;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+    </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <span class="logo-icon">🌱</span>
+                <h1>Green & Social</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="home.html#events">Events</a></li>
+                    <li><a href="game.html">Games</a></li>
+                    <li><a href="home.html#news">News</a></li>
+                    <li><a href="map.html">Sustainable Aarhus</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons" id="authButtons">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Map Section -->
+    <section id="map-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Sustainable Locations in Aarhus</h2>
+                <p>Find flea markets, recycling centers, and community gardens across the city</p>
+            </div>
+            
+            <div class="map-container">
+                <div id="map"></div>
+                
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4CAF50;"></div>
+                        <span>Flea Markets</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2196F3;"></div>
+                        <span>Recycling Centers</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #FF9800;"></div>
+                        <span>Community Gardens</span>
+                    </div>
+                </div>
+                
+                <div class="locations-list" id="locationsList">
+                    <!-- Location cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Green & Social</h3>
+                    <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">in</a>
+                        <a href="#" class="social-icon">ig</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="home.html">Home</a></li>
+                        <li><a href="home.html#events">Events</a></li>
+                        <li><a href="game.html">Games</a></li>
+                        <li><a href="home.html#news">News</a></li>
+                        <li><a href="map.html">Sustainable Aarhus</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li>123 Green Street, Eco City</li>
+                        <li>+1 (123) 456-7890</li>
+                        <li>info@greensocial.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Green & Social. All rights reserved. | Designed with ♻️ for a greener planet</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        
+        // Update auth buttons based on login status
+        function updateAuthButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            
+            if (currentUser) {
+                // User is logged in
+                authButtons.innerHTML = `
+                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
+                    <a href="points.html" class="btn btn-login">My Points</a>
+                    <button class="btn btn-register" id="logoutBtn">Logout</button>
+                `;
+                
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    localStorage.removeItem('sustainalearn_currentUser');
+                    window.location.reload();
+                });
+            } else {
+                // User is not logged in
+                authButtons.innerHTML = `
+                    <button class="btn btn-login" id="loginBtn">Login</button>
+                    <button class="btn btn-register" id="registerBtn">Register</button>
+                `;
+                
+                document.getElementById('loginBtn').addEventListener('click', function() {
+                    window.location.href = 'login.html';
+                });
+                
+                document.getElementById('registerBtn').addEventListener('click', function() {
+                    window.location.href = 'register.html';
+                });
+            }
+        }
+        
+        // Initialize auth buttons on page load
+        document.addEventListener('DOMContentLoaded', updateAuthButtons);
+        
+        // Sustainable locations data
+        const sustainableLocations = [
+            {
+                id: 1,
+                name: "Ingerslevs Boulevard Flea Market",
+                type: "flea-market",
+                address: "Ingerslev Boulevard, Aarhus C",
+                description: "One of Aarhus' most popular flea markets with vendors selling everything from vintage clothing, antiques, books, furniture and crafts.",
+                hours: "Selected Sundays between April and September, 9:30 AM - 4:00 PM",
+                price: "Free",
+                lat: 56.1520,
+                lng: 10.1989,
+                website: ""
+            },
+            {
+                id: 2,
+                name: "Habengut Market at Godsbanen",
+                type: "flea-market",
+                address: "Godsbanen, Aarhus C",
+                description: "A lively and diverse flea market with a great mix of vintage clothing, retro furniture, crafts, design classics and much more.",
+                hours: "Selected weekends, 10:00 AM - 4:00 PM",
+                price: "20 DKK (Free for children)",
+                lat: 56.1539,
+                lng: 10.1992,
+                website: ""
+            },
+            {
+                id: 3,
+                name: "Trunk Market at Bispetorv",
+                type: "flea-market",
+                address: "Teatergaden 1, 8000 Aarhus C",
+                description: "A trunk market located near the cathedral in the center of Aarhus, perfect for finding hidden treasures.",
+                hours: "Selected weekends, 10:30 AM - 3:30 PM",
+                price: "Free",
+                lat: 56.1587,
+                lng: 10.2107,
+                website: ""
+            },
+            {
+                id: 4,
+                name: "Loppehuset in Højbjerg",
+                type: "flea-market",
+                address: "Søren Nymarks Vej 6L, 8270 Højbjerg",
+                description: "A hidden gem offering a wealth of used furniture, clothing, books, retro finds and much more.",
+                hours: "Selected weekends, 11:00 AM - 2:00 PM",
+                price: "Free",
+                lat: 56.1155,
+                lng: 10.1837,
+                website: ""
+            },
+            {
+                id: 5,
+                name: "Aarhus Recycling Center",
+                type: "recycling",
+                address: "Lystrupvej 62, 8200 Aarhus N",
+                description: "A facility where you can drop off various types of waste for recycling, including electronics, hazardous waste, and more.",
+                hours: "Mon-Fri: 8:00 AM - 6:00 PM, Sat-Sun: 9:00 AM - 4:00 PM",
+                price: "Free for most items",
+                lat: 56.1896,
+                lng: 10.1689,
+                website: ""
+            },
+            {
+                id: 6,
+                name: "Urban Garden Aarhus",
+                type: "community",
+                address: "Fredens Torv, 8000 Aarhus C",
+                description: "A community garden where locals can grow their own vegetables and herbs, promoting sustainable urban agriculture.",
+                hours: "Open daily during daylight hours",
+                price: "Free",
+                lat: 56.1559,
+                lng: 10.2043,
+                website: ""
+            },
+            {
+                id: 7,
+                name: "Secondhand Fashion Store",
+                type: "flea-market",
+                address: "Jægergårdsgade 42, 8000 Aarhus C",
+                description: "A curated secondhand fashion store offering high-quality used clothing and accessories.",
+                hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+                price: "Various",
+                lat: 56.1479,
+                lng: 10.2073,
+                website: ""
+            }
+        ];
+
+        let map;
+        let markers = {};
+
+        // Initialize the map
+        function initMap() {
+            // Create map centered on Aarhus - now using the global map variable
+            map = L.map('map').setView([56.1629, 10.2039], 12);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Define marker colors based on type
+            const typeColors = {
+                'flea-market': '#4CAF50',
+                'recycling': '#2196F3',
+                'community': '#FF9800'
+            };
+            
+            // Create custom icons
+            function createCustomIcon(type) {
+                return L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${typeColors[type]}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+            }
+    
+            // Add markers for each location and store references
+            sustainableLocations.forEach(location => {
+                const marker = L.marker([location.lat, location.lng], {
+                    icon: createCustomIcon(location.type)
+                }).addTo(map);
+                
+                // Store marker reference by ID
+                markers[location.id] = marker;
+                
+                // Create popup content
+                const popupContent = `
+                    <div style="max-width: 250px;">
+                        <h3 style="margin: 0 0 10px; color: ${typeColors[location.type]};">${location.name}</h3>
+                        <p><strong>Address:</strong> ${location.address}</p>
+                        <p><strong>Hours:</strong> ${location.hours}</p>
+                        <p><strong>Price:</strong> ${location.price}</p>
+                        <p>${location.description}</p>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+            });
+        }
+
+        // Function to show location on map - NOW WORKS!
+        function showOnMap(locationId) {
+            const location = sustainableLocations.find(loc => loc.id === locationId);
+            const marker = markers[locationId];
+            
+            if (location && marker) {
+                // Center map on the location and zoom in
+                map.setView([location.lat, location.lng], 16);
+                // Open the popup for that location
+                marker.openPopup();
+            }
+        }
+
+        // Initialize everything when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            initLocationCards();
+            updateAuthButtons(); // Also initialize auth buttons
+        });
+    </script>
+</body>
+</html>
