@@ -524,10 +524,43 @@
                     <li><a href="#statistics">Statistics</a></li>
                 </ul>
             </nav>
-            <div class="auth-buttons">
+            <div class="auth-buttons" id="authButtons">
+                <!-- Buttons will be dynamically shown based on login status -->
+            </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = localStorage.getItem('sustainalearn_currentUser');
+        const authButtons = document.getElementById('authButtons');
+        
+        if (currentUser) {
+            // User is logged in - show profile/logout buttons
+            const user = JSON.parse(currentUser);
+            authButtons.innerHTML = `
+                <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${user.firstName}</span>
+                <button class="btn btn-login" id="logoutBtn">Logout</button>
+            `;
+            
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                localStorage.removeItem('sustainalearn_currentUser');
+                window.location.reload();
+            });
+        } else {
+            // User is not logged in - show login/register buttons
+            authButtons.innerHTML = `
                 <button class="btn btn-login" id="loginBtn">Login</button>
                 <button class="btn btn-register" id="registerBtn">Register</button>
-            </div>
+            `;
+            
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                window.location.href = 'login.html';
+            });
+            
+            document.getElementById('registerBtn').addEventListener('click', function() {
+                window.location.href = 'register.html';
+            });
+        }
+    </script>
         </div>
     </header>
 
