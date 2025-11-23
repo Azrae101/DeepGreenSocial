@@ -245,6 +245,8 @@
 
     <button id="startBtn">Start Game</button>
 
+    <button id="homeBtn" style="background-color: #6c757d; color: white; padding: 10px 20px; font-size: 1rem; border-radius: 6px; border: none; cursor: pointer; margin-left: 10px; display: inline-block;">Back to Home</button>
+
     <div id="gameArea">
         <div class="bins">
             <div class="bin bin-recycle" data-type="recycling">Genbrug</div>
@@ -266,6 +268,12 @@
 </div>
 
 <script>
+// Add this JavaScript to handle the button click
+document.getElementById('homeBtn').addEventListener('click', function() {
+    // Replace with your actual home page URL
+    window.location.href = 'index.html';
+});
+
 let gameActive = false;
 let score = 0;
 let highScore = localStorage.getItem('trashSortingHighScore') || 0;

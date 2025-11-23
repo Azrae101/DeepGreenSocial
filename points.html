@@ -502,7 +502,7 @@
             document.getElementById('totalPoints').textContent = totalPoints;
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
             document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
-            document.getElementById('articlesPoints').textContent = `${articlesPoints + quizPoints} points (${articlesPoints} from reading + ${quizPoints} from quizzes)`;
+            document.getElementById('articlesPoints').textContent = `${articlesPoints + quizPoints} points`;
             
             // Display events list
             const eventsList = document.getElementById('eventsList');
@@ -526,35 +526,6 @@
                 });
             } else {
                 eventsList.innerHTML = '<div class="no-events">You haven\'t signed up for any events yet.</div>';
-            }
-            
-            // Display articles read
-            const articlesList = document.getElementById('articlesList');
-            if (user.articlesRead && user.articlesRead.length > 0) {
-                // Article name mapping
-                const articleNames = {
-                    'article1': '5 Simple Ways to Reduce Plastic Waste',
-                    'article2': 'Sustainable Eating Habits for a Healthier Planet',
-                    'article3': 'Simple Energy Conservation Tips for Your Home'
-                };
-                
-                articlesList.innerHTML = '';
-                user.articlesRead.forEach(article => {
-                    const articleItem = document.createElement('div');
-                    articleItem.className = 'event-item';
-                    
-                    // Check if quiz was passed for this article
-                    const quizPassed = user.articlesQuizPassed && user.articlesQuizPassed.includes(article);
-                    const quizPointsText = quizPassed ? ' +10 quiz points' : '';
-                    
-                    articleItem.innerHTML = `
-                        <span class="event-name">${articleNames[article] || article}</span>
-                        <span class="event-points">+5 points${quizPointsText}</span>
-                    `;
-                    articlesList.appendChild(articleItem);
-                });
-            } else {
-                articlesList.innerHTML = '<div class="no-events">You haven\'t read any articles yet.</div>';
             }
         }
         

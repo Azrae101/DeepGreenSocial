@@ -599,31 +599,28 @@
                 <div class="event-card">
                     <div class="event-image">Community Gardening</div>
                     <div class="event-details">
-                        <span class="event-date">January 15, 2025</span>
+                        <span class="event-date">June 15, 2023</span>
                         <h3>Community Gardening Workshop</h3>
                         <p>Learn how to grow your own food and create a sustainable garden in your backyard or balcony.</p>
-                        <a href="#" class="btn btn-event">Join Event</a>
-                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
+                        <button class="btn btn-event event-signup-btn" data-event="gardening">Sign Up</button>
                     </div>
                 </div>
                 <div class="event-card">
                     <div class="event-image">Sustainable Cooking</div>
                     <div class="event-details">
-                        <span class="event-date">December 15, 2025</span>
+                        <span class="event-date">June 22, 2023</span>
                         <h3>Sustainable Cooking Class</h3>
                         <p>Discover how to prepare delicious meals using seasonal, local ingredients with minimal waste.</p>
-                        <a href="#" class="btn btn-event">Join Event</a>
-                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
+                        <button class="btn btn-event event-signup-btn" data-event="cooking">Sign Up</button>
                     </div>
                 </div>
                 <div class="event-card">
                     <div class="event-image">Beach Cleanup</div>
                     <div class="event-details">
-                        <span class="event-date">November 30, 2025</span>
+                        <span class="event-date">June 29, 2023</span>
                         <h3>Beach Cleanup & Awareness</h3>
                         <p>Join us for a beach cleanup followed by a discussion on ocean conservation and plastic pollution.</p>
-                        <a href="#" class="btn btn-event">Join Event</a>
-                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
+                        <button class="btn btn-event event-signup-btn" data-event="beach-cleanup">Sign Up</button>
                     </div>
                 </div>
             </div>
@@ -846,63 +843,123 @@
             registerModal.style.display = 'none';
         });
 
-    // Event sign-up functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const signUpButtons = document.querySelectorAll('.sign-up-btn');
-        
-        signUpButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const eventName = this.getAttribute('data-event');
+        // Event sign-up functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventButtons = document.querySelectorAll('.event-signup-btn');
+            
+            // Function to update button states
+            function updateEventButtons() {
                 const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
                 
-                if (!currentUser) {
-                    alert('Please log in to sign up for events');
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Get user data
-                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                const userIndex = users.findIndex(u => u.username === currentUser.username);
-                
-                if (userIndex === -1) {
-                    alert('User not found. Please log in again.');
-                    return;
-                }
-                
-                // Initialize events array if it doesn't exist
-                if (!users[userIndex].events) {
-                    users[userIndex].events = [];
-                }
-                
-                // Check if user is already signed up
-                if (users[userIndex].events.includes(eventName)) {
-                    alert('You are already signed up for this event!');
-                    return;
-                }
-                
-                // Add event to user's events
-                users[userIndex].events.push(eventName);
-                
-                // Add points for signing up (10 points per event)
-                if (!users[userIndex].points) {
-                    users[userIndex].points = 0;
-                }
-                users[userIndex].points += 10;
-                
-                // Update localStorage
-                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-                
-                // Update button
-                this.textContent = 'Signed Up!';
-                this.disabled = true;
-                this.style.backgroundColor = '#6c757d';
-                
-                alert(`Successfully signed up for the event! You earned 10 points.`);
+                eventButtons.forEach(button => {
+                    const eventName = button.getAttribute('data-event');
+                    
+                    if (!currentUser) {
+                        // User is not logged in
+                        button.textContent = 'Login to Sign Up';
+                        button.style.backgroundColor = '#6c757d'; // Gray color
+                    } else {
+                        // User is logged in - check if already signed up
+                        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+                        const user = users.find(u => u.username === currentUser.username);
+                        
+                        if (user && user.events && user.events.includes(eventName)) {
+                            // Already signed up
+                            button.textContent = 'Signed Up';
+                            button.disabled = true;
+                            button.style.backgroundColor = '#6c757d'; // Gray color
+                        } else {
+                            // Not signed up yet
+                            button.textContent = 'Sign Up';
+                            button.disabled = false;
+                            button.style.backgroundColor = ''; // Reset to original color
+                        }
+                    }
+                });
+            }
+            
+            // Add click event listeners
+            eventButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const eventName = this.getAttribute('data-event');
+                    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+                    
+                    if (!currentUser) {
+                        // Redirect to login if not logged in
+                        alert('Please log in to sign up for events');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    // Get user data
+                    const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+                    const userIndex = users.findIndex(u => u.username === currentUser.username);
+                    
+                    if (userIndex === -1) {
+                        alert('User not found. Please log in again.');
+                        return;
+                    }
+                    
+                    // Initialize events array if it doesn't exist
+                    if (!users[userIndex].events) {
+                        users[userIndex].events = [];
+                    }
+                    
+                    // Check if user is already signed up
+                    if (users[userIndex].events.includes(eventName)) {
+                        alert('You are already signed up for this event!');
+                        return;
+                    }
+                    
+                    // Add event to user's events
+                    users[userIndex].events.push(eventName);
+                    
+                    // Add points for signing up (10 points per event)
+                    if (!users[userIndex].points) {
+                        users[userIndex].points = 0;
+                    }
+                    users[userIndex].points += 10;
+                    
+                    // Update localStorage
+                    localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+                    
+                    // Update button
+                    this.textContent = 'Signed Up';
+                    this.disabled = true;
+                    this.style.backgroundColor = '#6c757d';
+                    
+                    alert(`Successfully signed up for the event! You earned 10 points.`);
+                });
             });
+            
+            // Initialize button states
+            updateEventButtons();
+            
+            // Update buttons when auth status changes (if you have a login/logout system)
+            // This will be called when the user logs in or out
+            window.updateEventButtons = updateEventButtons;
         });
-        
+            
+            // Update button states based on existing sign-ups
+            function updateEventButtons() {
+                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+                
+                if (currentUser && currentUser.events) {
+                    signUpButtons.forEach(button => {
+                        const eventName = button.getAttribute('data-event');
+                        if (currentUser.events.includes(eventName)) {
+                            button.textContent = 'Signed Up!';
+                            button.disabled = true;
+                            button.style.backgroundColor = '#6c757d';
+                        }
+                    });
+                }
+            }
+            
+            updateEventButtons();
+        });
+
         // Update button states based on existing sign-ups
         function updateEventButtons() {
             const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
