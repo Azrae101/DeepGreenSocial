@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash Sorting Game - SustainaLearn</title>
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-color: #ff9800;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--primary-green);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-login {
+            background-color: transparent;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+
+        .btn-register {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Game Section */
+        .game-section {
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--primary-green);
+        }
+
+        .section-title h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .section-title p {
+            color: var(--dark-gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .game-container {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .btn-game {
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 12px 24px;
+            font-size: 1.1rem;
+        }
+
+        .game-area {
+            position: relative;
+            height: 500px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 2px solid var(--primary-green);
+        }
+
+        .bins-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+        }
+
+        .bin {
+            width: 120px;
+            height: 150px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .recycling-bin {
+            background-color: #2196f3;
+        }
+
+        .compost-bin {
+            background-color: #795548;
+        }
+
+        .trash-bin {
+            background-color: #424242;
+        }
+
+        .bin-label {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .falling-item {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .falling-item:hover {
+            transform: scale(1.1);
+        }
+
+        .game-instructions {
+            background-color: var(--light-gray);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .instructions-title {
+            color: var(--primary-green);
+            margin-bottom: 10px;
+        }
+
+        .instructions-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .instructions-list li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .instructions-list li::before {
+            content: "•";
+            color: var(--primary-green);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 40px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--accent-color);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                padding: 15px 0;
+            }
+
+            nav ul {
+                margin: 15px 0;
+            }
+
+            .auth-buttons {
+                margin-top: 10px;
+            }
+
+            .game-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-area {
+                height: 400px;
+            }
+
+            .bin {
+                width: 80px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <span class="logo-icon">🌱</span>
+                <h1>SustainaLearn</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="home.html#events">Events</a></li>
+                    <li><a href="#game">Games</a></li>
+                    <li><a href="home.html#news">News</a></li>
+                    <li><a href="home.html#statistics">Statistics</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="btn btn-login" id="loginBtn">Login</button>
+                <button class="btn btn-register" id="registerBtn">Register</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Game Section -->
+    <section class="game-section" id="game">
+        <div class="container">
+            <div class="section-title">
+                <h2>Trash Sorting Challenge</h2>
+                <p>Test your recycling knowledge by sorting items into the correct bins before they hit the ground!</p>
+            </div>
+
+            <div class="game-instructions">
+                <h3 class="instructions-title">How to Play:</h3>
+                <ul class="instructions-list">
+                    <li>Drag the falling items to the correct bins: Blue for Recycling, Brown for Compost, Black for Trash</li>
+                    <li>You have 3 lives - you lose a life if an item hits the ground or goes in the wrong bin</li>
+                    <li>Earn 10 points for each correctly sorted item</li>
+                    <li>The game gets faster as your score increases</li>
+                    <li>Try to beat your high score!</li>
+                </ul>
+            </div>
+
+            <div class="game-container">
+                <div class="game-header">
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="currentScore">0</div>
+                            <div class="stat-label">Current Score</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="highScore">0</div>
+                            <div class="stat-label">High Score</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="lives">3</div>
+                            <div class="stat-label">Lives</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-game" id="startGame">Start Game</button>
+                </div>
+
+                <div class="game-area" id="gameArea">
+                    <div class="bins-container">
+                        <div class="bin recycling-bin" data-type="recycling">
+                            <div class="bin-label">Recycling</div>
+                        </div>
+                        <div class="bin compost-bin" data-type="compost">
+                            <div class="bin-label">Compost</div>
+                        </div>
+                        <div class="bin trash-bin" data-type="trash">
+                            <div class="bin-label">Trash</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>SustainaLearn</h3>
+                    <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">in</a>
+                        <a href="#" class="social-icon">ig</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="home.html">Home</a></li>
+                        <li><a href="home.html#events">Events</a></li>
+                        <li><a href="#game">Games</a></li>
+                        <li><a href="home.html#news">News</a></li>
+                        <li><a href="home.html#statistics">Statistics</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li>123 Green Street, Eco City</li>
+                        <li>+1 (123) 456-7890</li>
+                        <li>info@sustainalearn.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 SustainaLearn. All rights reserved. | Designed with ♻️ for a greener planet</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Game variables
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem('trashSortingHighScore') || 0;
+        let lives = 3;
+        let items = [];
+        let itemInterval;
+        let gameSpeed = 1500; // Initial speed in milliseconds
+        let minSpeed = 500; // Minimum speed
+
+        // DOM elements
+        const gameArea = document.getElementById('gameArea');
+        const currentScoreEl = document.getElementById('currentScore');
+        const highScoreEl = document.getElementById('highScore');
+        const livesEl = document.getElementById('lives');
+        const startGameBtn = document.getElementById('startGame');
+        const bins = document.querySelectorAll('.bin');
+
+        // Initialize high score display
+        highScoreEl.textContent = highScore;
+
+        // Item types with their correct bin and image
+        const itemTypes = [
+            { type: 'plastic-bottle', correctBin: 'recycling', image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'banana-peel', correctBin: 'compost', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'chip-bag', correctBin: 'trash', image: 'https://images.unsplash.com/photo-1629203851127-26d5e6e04038?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'newspaper', correctBin: 'recycling', image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'apple-core', correctBin: 'compost', image: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'broken-glass', correctBin: 'trash', image: 'https://images.unsplash.com/photo-1584735264932-2d00cf0c3d22?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'cardboard-box', correctBin: 'recycling', image: 'https://images.unsplash.com/photo-1605244863941-3a3ed921c60f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'coffee-grounds', correctBin: 'compost', image: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' },
+            { type: 'plastic-straw', correctBin: 'trash', image: 'https://images.unsplash.com/photo-1584990347448-8988e6d203ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80' }
+        ];
+
+        // Start game function
+        function startGame() {
+            if (gameActive) return;
+            
+            gameActive = true;
+            score = 0;
+            lives = 3;
+            gameSpeed = 1500;
+            items = [];
+            
+            currentScoreEl.textContent = score;
+            livesEl.textContent = lives;
+            startGameBtn.textContent = 'Restart Game';
+            
+            // Clear any existing items
+            document.querySelectorAll('.falling-item').forEach(item => item.remove());
+            
+            // Start generating items
+            itemInterval = setInterval(createItem, gameSpeed);
+            
+            // Speed up the game as score increases
+            const speedUpInterval = setInterval(() => {
+                if (gameActive && gameSpeed > minSpeed) {
+                    gameSpeed -= 50;
+                    clearInterval(itemInterval);
+                    itemInterval = setInterval(createItem, gameSpeed);
+                }
+                
+                if (!gameActive) {
+                    clearInterval(speedUpInterval);
+                }
+            }, 5000);
+        }
+
+        // Create a new falling item
+        function createItem() {
+            if (!gameActive) return;
+            
+            const itemType = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+            const item = document.createElement('div');
+            item.className = 'falling-item';
+            item.dataset.type = itemType.type;
+            item.dataset.correctBin = itemType.correctBin;
+            
+            // Set a placeholder background color based on the correct bin
+            if (itemType.correctBin === 'recycling') {
+                item.style.backgroundColor = '#2196f3';
+            } else if (itemType.correctBin === 'compost') {
+                item.style.backgroundColor = '#795548';
+            } else {
+                item.style.backgroundColor = '#424242';
+            }
+            
+            // Set a text indicator for the item type (in a real game, you'd use images)
+            item.textContent = itemType.type.split('-')[0];
+            item.style.fontSize = '12px';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.justifyContent = 'center';
+            item.style.color = 'white';
+            item.style.fontWeight = 'bold';
+            
+            // Random horizontal position
+            const leftPosition = Math.random() * (gameArea.offsetWidth - 60);
+            item.style.left = `${leftPosition}px`;
+            item.style.top = '0px';
+            
+            // Make item draggable
+            item.draggable = true;
+            item.addEventListener('dragstart', handleDragStart);
+            
+            gameArea.appendChild(item);
+            items.push(item);
+            
+            // Start falling animation
+            let fallInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(fallInterval);
+                    return;
+                }
+                
+                const currentTop = parseInt(item.style.top) || 0;
+                const newTop = currentTop + 5;
+                item.style.top = `${newTop}px`;
+                
+                // Check if item hit the ground
+                if (newTop >= gameArea.offsetHeight - 150) {
+                    clearInterval(fallInterval);
+                    item.remove();
+                    loseLife();
+                }
+            }, 50);
+            
+            // Store the interval ID so we can clear it when needed
+            item.fallInterval = fallInterval;
+        }
+
+        // Handle drag start
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.type);
+        }
+
+        // Set up bin drop zones
+        bins.forEach(bin => {
+            bin.addEventListener('dragover', e => {
+                e.preventDefault();
+            });
+            
+            bin.addEventListener('drop', e => {
+                e.preventDefault();
+                if (!gameActive) return;
+                
+                const itemType = e.dataTransfer.getData('text/plain');
+                const item = document.querySelector(`.falling-item[data-type="${itemType}"]`);
+                
+                if (item) {
+                    const correctBin = item.dataset.correctBin;
+                    const droppedBin = e.currentTarget.dataset.type;
+                    
+                    if (correctBin === droppedBin) {
+                        // Correct bin - add points
+                        score += 10;
+                        currentScoreEl.textContent = score;
+                        
+                        if (score > highScore) {
+                            highScore = score;
+                            highScoreEl.textContent = highScore;
+                            localStorage.setItem('trashSortingHighScore', highScore);
+                        }
+                    } else {
+                        // Wrong bin - lose a life
+                        loseLife();
+                    }
+                    
+                    // Remove the item
+                    clearInterval(item.fallInterval);
+                    item.remove();
+                }
+            });
+        });
+
+        // Lose a life function
+        function loseLife() {
+            lives--;
+            livesEl.textContent = lives;
+            
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+
+        // End game function
+        function endGame() {
+            gameActive = false;
+            clearInterval(itemInterval);
+            
+            // Clear all falling items
+            document.querySelectorAll('.falling-item').forEach(item => {
+                clearInterval(item.fallInterval);
+                item.remove();
+            });
+            
+            alert(`Game Over! Your final score: ${score}`);
+            startGameBtn.textContent = 'Play Again';
+        }
+
+        // Start game button event listener
+        startGameBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
