@@ -1,4 +1,3 @@
-<!-- I'll generate a cleaned-up, working version with drag & drop, Danish sorting colors, and placeholders. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +26,7 @@
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        position: relative;
     }
 
     #gameArea {
@@ -40,16 +40,23 @@
 
     /* Placeholder item styling */
     .falling-item {
+        position: absolute;
         width: 70px;
         height: 70px;
-        position: absolute;
-        border-radius: 10px;
+        border-radius: 8px;
         color: white;
-        font-size: 14px;
+        font-weight: bold;
         display: flex;
         justify-content: center;
         align-items: center;
+        user-select: none;
         cursor: grab;
+        transition: transform 0.2s;
+    }
+
+    .falling-item.dragging {
+        transform: scale(1.1);
+        z-index: 100;
     }
 
     .bins {
@@ -73,6 +80,12 @@
         align-items: flex-end;
         padding-bottom: 10px;
         font-size: 14px;
+        transition: transform 0.2s;
+    }
+
+    .bin.highlight {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
     }
 
     /* Danish waste sorting colors */
@@ -88,24 +101,146 @@
     }
 
     #startBtn {
-        margin-top: 10px;
-        padding: 10px 20px;
-        background: #ff9800;
-        border: none;
+        background-color: #4CAF50;
         color: white;
-        font-size: 16px;
-        cursor: pointer;
+        padding: 12px 26px;
+        font-size: 1.2rem;
+        font-weight: 600;
         border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: 0.12s ease;
+        margin-bottom: 15px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #startBtn:hover {
+        background-color: #45a049;
+        transform: translateY(-2px);
+    }
+
+    #startBtn:active {
+        background-color: #3d8b40;
+        transform: scale(0.97);
+    }
+
+    /* Game Over Modal */
+    #gameOverModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        animation: modalAppear 0.3s ease-out;
+    }
+
+    @keyframes modalAppear {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-content h2 {
+        color: #d32f2f;
+        margin-top: 0;
+        font-size: 2.2rem;
+    }
+
+    .modal-content p {
+        font-size: 1.2rem;
+        margin: 15px 0;
+    }
+
+    .score-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2e7d32;
+        margin: 20px 0;
+    }
+
+    .new-highscore {
+        color: #ff9800;
+        font-weight: bold;
+        font-size: 1.3rem;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    #modalRestartBtn {
+        background-color: #ff9800;
+        color: white;
+        padding: 12px 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: 0.12s ease;
+        margin-top: 20px;
+    }
+
+    #modalRestartBtn:hover {
+        background-color: #e68900;
+        transform: translateY(-2px);
+    }
+
+    #modalRestartBtn:active {
+        background-color: #d17a00;
+        transform: scale(0.97);
+    }
+
+    .feedback {
+        position: absolute;
+        font-size: 1.5rem;
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 50;
+        animation: floatUp 1s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-50px); opacity: 0; }
+    }
+
+    .correct {
+        color: #4CAF50;
+    }
+
+    .incorrect {
+        color: #f44336;
     }
 </style>
 </head>
 <body>
-<h1>Dansk Affaldssortering – Spil</h1>
+<h1>Trash Sorting Game</h1>
 
 <div class="game-container">
     <div id="stats">
         <div>Score: <span id="score">0</span></div>
-        <div>Lives: <span id="lives">3</span></div>
+        <div>Lives: <span id="lives">5</span></div>
+        <div>High Score: <span id="highScore">0</span></div>
     </div>
 
     <button id="startBtn">Start Game</button>
@@ -119,160 +254,257 @@
     </div>
 </div>
 
+<!-- Game Over Modal -->
+<div id="gameOverModal">
+    <div class="modal-content">
+        <h2>Game Over!</h2>
+        <p>Your final score:</p>
+        <div class="score-display" id="finalScore">0</div>
+        <div id="highScoreMessage"></div>
+        <button id="modalRestartBtn">Play Again</button>
+    </div>
+</div>
+
 <script>
-let active = false;
+let gameActive = false;
 let score = 0;
-let lives = 3;
-let spawnInterval;
-let speed = 1500;
-const minSpeed = 450;
-let level = 1;
+let highScore = localStorage.getItem('trashSortingHighScore') || 0;
+let lives = 5;
+let items = [];
+let itemInterval;
+let gameSpeed = 2500; // Slower initial speed
+const minSpeed = 800; // Minimum speed
+let speedIncreaseCounter = 0;
 
-const scoreEl = document.getElementById("score");
-const livesEl = document.getElementById("lives");
-const startBtn = document.getElementById("startBtn");
-const gameArea = document.getElementById("gameArea");
-let dragged = null;
+const gameArea = document.getElementById('gameArea');
+const currentScoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const highScoreEl = document.getElementById('highScore');
+const startBtn = document.getElementById('startBtn');
+const gameOverModal = document.getElementById('gameOverModal');
+const finalScoreEl = document.getElementById('finalScore');
+const highScoreMessageEl = document.getElementById('highScoreMessage');
+const modalRestartBtn = document.getElementById('modalRestartBtn');
+const bins = document.querySelectorAll('.bin');
 
-// Sounds
-const sCorrect = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
-const sWrong = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
-const sLose = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+highScoreEl.textContent = highScore;
 
-// Danish sorting list
-const itemsDK = [
-    { name: "Pap", bin: "recycling", color: "#0072bc" },
-    { name: "Plast", bin: "recycling", color: "#0072bc" },
-    { name: "Mad", bin: "compost", color: "#7a5901" },
-    { name: "Æbleskrog", bin: "compost", color: "#7a5901" },
-    { name: "Rest", bin: "trash", color: "#1b1b1b" },
-    { name: "Chips pose", bin: "trash", color: "#1b1b1b" }
+// --- ITEM DEFINITIONS ---
+const itemTypes = [
+    { type: 'plastic', correctBin: 'recycling', color: '#2196f3' },
+    { type: 'food', correctBin: 'compost', color: '#795548' },
+    { type: 'trash', correctBin: 'trash', color: '#424242' }
 ];
 
-startBtn.onclick = startGame;
-
-document.querySelectorAll('.bin').forEach(bin => {
-    bin.addEventListener('dragover', e => e.preventDefault());
-    
-    // touch drop
-    bin.addEventListener('touchmove', e => e.preventDefault());
-
-    // visual hover effect
-    bin.addEventListener('dragenter', () => bin.style.transform = "scale(1.1)");
-    bin.addEventListener('dragleave', () => bin.style.transform = "scale(1)");
-
-    bin.addEventListener('drop', e => {
-        bin.style.transform = "scale(1)";
-        if (!active || !dragged) return;
-        handleDrop(bin);
-    });
-
-    // touch drop
-    bin.addEventListener('touchend', () => {
-        if (!active || !dragged) return;
-        handleDrop(bin);
-    });
-});
-
-function handleDrop(bin) {
-    if (!dragged) return;
-    const draggedBin = dragged.dataset.bin;
-    const correct = bin.dataset.type;
-
-    if (draggedBin === correct) {
-        score += 10;
-        scoreEl.textContent = score;
-        sCorrect.play();
-
-        // level up every 50 pts
-        const newLevel = Math.floor(score / 50) + 1;
-        if (newLevel > level) {
-            level = newLevel;
-            speed = Math.max(minSpeed, speed - 150);
-            restartSpawn();
-        }
-
-    } else {
-        loseLife();
-        sWrong.play();
-    }
-
-    dragged.classList.add('sorted');
-    setTimeout(() => dragged.remove(), 150);
-    dragged = null;
-}
-
+// --- START GAME ---
 function startGame() {
-    if (active) return;
+    if (gameActive) return;
 
-    active = true;
+    gameActive = true;
     score = 0;
-    lives = 3;
-    level = 1;
-    speed = 1500;
+    lives = 5;
+    gameSpeed = 2500; // Reset to slower speed
+    speedIncreaseCounter = 0;
 
-    scoreEl.textContent = score;
+    currentScoreEl.textContent = score;
     livesEl.textContent = lives;
+    startBtn.textContent = 'Restart Game';
+    gameOverModal.style.display = 'none';
 
+    // Clear any existing items
     document.querySelectorAll('.falling-item').forEach(i => i.remove());
 
-    restartSpawn();
+    // Clear any existing intervals
+    clearInterval(itemInterval);
+    
+    // Start creating items
+    itemInterval = setInterval(createItem, gameSpeed);
 }
 
-function restartSpawn() {
-    clearInterval(spawnInterval);
-    spawnInterval = setInterval(spawnItem, speed);
-}
+// --- CREATE FALLING ITEM ---
+function createItem() {
+    if (!gameActive) return;
 
-function spawnItem() {
-    const itemData = itemsDK[Math.floor(Math.random() * itemsDK.length)];
+    const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
     const item = document.createElement('div');
-    item.classList.add('falling-item');
-    item.style.left = Math.random() * (gameArea.offsetWidth - 70) + "px";
-    item.style.top = "0px";
-    item.style.background = itemData.color;
-    item.textContent = itemData.name;
-    item.dataset.bin = itemData.bin;
-    item.id = "item" + Math.random();
 
+    item.className = 'falling-item';
+    item.dataset.type = type.type;
+    item.dataset.correctBin = type.correctBin;
+    item.style.backgroundColor = type.color;
+
+    // Placeholder text
+    item.textContent = type.type.toUpperCase();
+    item.style.color = 'white';
+    item.style.fontWeight = 'bold';
+    item.style.fontSize = '12px';
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.justifyContent = 'center';
+
+    // Position
+    const left = Math.random() * (gameArea.offsetWidth - 60);
+    item.style.left = `${left}px`;
+    item.style.top = `0px`;
+
+    // DRAGGING
     item.draggable = true;
-
+    const uniqueId = 'item_' + Date.now() + Math.random().toString(36).substr(2, 5);
+    item.id = uniqueId;
+    
     item.addEventListener('dragstart', e => {
-        dragged = item;
-        e.dataTransfer.setData("text/plain", "x");
+        e.dataTransfer.setData('itemId', uniqueId);
+        item.classList.add('dragging');
+        // Set drag image to the element itself
+        e.dataTransfer.setDragImage(item, 35, 35);
     });
-
-    // touch support
-    item.addEventListener('touchstart', () => dragged = item);
+    
+    item.addEventListener('dragend', e => {
+        item.classList.remove('dragging');
+        // If the drag ends without a drop, the item remains
+    });
 
     gameArea.appendChild(item);
 
-    let fall = setInterval(() => {
-        if (!active) { clearInterval(fall); return; }
-        let currentTop = parseInt(item.style.top);
-        item.style.top = currentTop + (4 + level) + "px";
+    // FALLING
+    let fallSpeed = 1; // Slower initial fall speed
+    item.fallInterval = setInterval(() => {
+        if (!gameActive) return;
 
-        if (currentTop > gameArea.offsetHeight - 160) {
-            clearInterval(fall);
+        let top = parseInt(item.style.top);
+        top += fallSpeed;
+        item.style.top = `${top}px`;
+
+        // Hit ground
+        if (top >= gameArea.offsetHeight - 160) {
+            clearInterval(item.fallInterval);
             item.remove();
             loseLife();
         }
-    }, 40);
+    }, 30); // Slower update interval
 }
 
+// --- DROP SYSTEM ---
+bins.forEach(bin => {
+    bin.addEventListener('dragover', e => {
+        e.preventDefault();
+        bin.classList.add('highlight');
+    });
+    
+    bin.addEventListener('dragleave', e => {
+        bin.classList.remove('highlight');
+    });
+
+    bin.addEventListener('drop', e => {
+        e.preventDefault();
+        bin.classList.remove('highlight');
+        
+        const id = e.dataTransfer.getData('itemId');
+        const item = document.getElementById(id);
+
+        if (!item) return;
+
+        const correct = item.dataset.correctBin;
+        const dropped = bin.dataset.type;
+
+        // Create feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'feedback';
+        
+        if (correct === dropped) {
+            // Correct
+            score += 1;
+            currentScoreEl.textContent = score;
+            
+            feedback.textContent = '+1';
+            feedback.classList.add('correct');
+            
+            // Gradually increase difficulty
+            speedIncreaseCounter++;
+            if (speedIncreaseCounter % 5 === 0 && gameSpeed > minSpeed) {
+                gameSpeed -= 50;
+                clearInterval(itemInterval);
+                itemInterval = setInterval(createItem, gameSpeed);
+            }
+
+            if (score > highScore) {
+                highScore = score;
+                highScoreEl.textContent = highScore;
+                localStorage.setItem('trashSortingHighScore', highScore);
+            }
+        } else {
+            // Wrong
+            loseLife();
+            feedback.textContent = '-1 Life';
+            feedback.classList.add('incorrect');
+        }
+        
+        // Position and show feedback
+        feedback.style.left = (e.clientX - gameArea.getBoundingClientRect().left - 30) + 'px';
+        feedback.style.top = (e.clientY - gameArea.getBoundingClientRect().top - 20) + 'px';
+        gameArea.appendChild(feedback);
+        
+        // Remove feedback after animation
+        setTimeout(() => {
+            feedback.remove();
+        }, 1000);
+
+        // Remove the dragged item
+        clearInterval(item.fallInterval);
+        item.remove();
+    });
+});
+
+// --- LOSE LIFE ---
 function loseLife() {
     lives--;
     livesEl.textContent = lives;
-    sLose.play();
 
-    if (lives <= 0) endGame();
+    if (lives <= 0) {
+        endGame();
+    }
 }
 
+// --- END GAME ---
 function endGame() {
-    active = false;
-    clearInterval(spawnInterval);
-    alert("Game Over! Score: " + score);
+    gameActive = false;
+    clearInterval(itemInterval);
+
+    document.querySelectorAll('.falling-item').forEach(item => {
+        clearInterval(item.fallInterval);
+        item.remove();
+    });
+
+    // SAVE USER GAME POINTS
+    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+    if (currentUser) {
+        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        const i = users.findIndex(u => u.username === currentUser.username);
+
+        if (i !== -1) {
+            users[i].gamePoints = (users[i].gamePoints || 0) + score;
+
+            localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[i]));
+        }
+    }
+
+    // Show game over modal
+    finalScoreEl.textContent = score;
+    
+    if (score > highScore) {
+        highScoreMessageEl.textContent = "New High Score!";
+        highScoreMessageEl.className = "new-highscore";
+    } else {
+        highScoreMessageEl.textContent = `High Score: ${highScore}`;
+        highScoreMessageEl.className = "";
+    }
+    
+    gameOverModal.style.display = 'flex';
 }
+
+startBtn.addEventListener('click', startGame);
+modalRestartBtn.addEventListener('click', startGame);
 </script>
 </body>
 </html>

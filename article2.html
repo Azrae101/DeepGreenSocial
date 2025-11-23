@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustainable Eating Habits - SustainaLearn</title>
+    <style>
+        /* Reuse the same CSS from article1.html */
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-color: #ff9800;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--primary-green);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-login {
+            background-color: transparent;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+
+        .btn-register {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Article Styles */
+        .article-section {
+            padding: 40px 0;
+        }
+
+        .article-container {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .article-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .article-date {
+            color: var(--dark-gray);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .article-title {
+            font-size: 2rem;
+            color: var(--dark-green);
+            margin-bottom: 15px;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 300px;
+            background-color: var(--light-green);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+        }
+
+        .article-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+
+        .article-content h3 {
+            color: var(--primary-green);
+            margin: 25px 0 15px;
+        }
+
+        .article-content p {
+            margin-bottom: 15px;
+        }
+
+        .article-content ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .article-content li {
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn-read {
+            background-color: var(--primary-green);
+            color: var(--white);
+            padding: 12px 24px;
+            font-size: 1.1rem;
+        }
+
+        .btn-quiz {
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            margin-left: 15px;
+        }
+
+        .quiz-container {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .quiz-title {
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .quiz-question {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--dark-gray);
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--white);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .option:hover {
+            background-color: #e8f5e9;
+        }
+
+        .option input {
+            margin-right: 10px;
+        }
+
+        .quiz-result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .quiz-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .quiz-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .points-earned {
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 40px 0 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--accent-color);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                padding: 15px 0;
+            }
+
+            nav ul {
+                margin: 15px 0;
+            }
+
+            .auth-buttons {
+                margin-top: 10px;
+            }
+
+            .article-container {
+                padding: 20px;
+            }
+
+            .article-title {
+                font-size: 1.5rem;
+            }
+
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .btn-quiz {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <span class="logo-icon">🌱</span>
+                <h1>SustainaLearn</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="home.html#events">Events</a></li>
+                    <li><a href="game.html">Games</a></li>
+                    <li><a href="home.html#news">News</a></li>
+                    <li><a href="points.html">My Points</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons" id="authButtons">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Article Section -->
+    <section class="article-section">
+        <div class="container">
+            <div class="article-container">
+                <div class="article-header">
+                    <div class="article-date">June 12, 2023</div>
+                    <h1 class="article-title">Sustainable Eating Habits for a Healthier Planet</h1>
+                </div>
+
+                <div class="article-image">
+                    Sustainable Food Choices
+                </div>
+
+                <div class="article-content">
+                    <p>The food we eat has a significant impact on the environment. From production to transportation to waste, our dietary choices can either contribute to environmental problems or help solve them. Here are some sustainable eating habits you can adopt.</p>
+                    
+                    <h3>1. Choose Local and Seasonal Foods</h3>
+                    <p>Food that travels long distances requires more energy for transportation and often comes with excessive packaging. By choosing locally grown, seasonal foods, you reduce your carbon footprint and support local farmers. Visit farmers' markets or join a community-supported agriculture (CSA) program to access fresh, local produce.</p>
+                    
+                    <h3>2. Reduce Meat Consumption</h3>
+                    <p>Animal agriculture is a major contributor to greenhouse gas emissions, deforestation, and water pollution. You don't have to become vegan overnight, but even reducing your meat consumption by one or two days a week can make a difference. Try incorporating more plant-based proteins like beans, lentils, and tofu into your diet.</p>
+                    
+                    <h3>3. Minimize Food Waste</h3>
+                    <p>Approximately one-third of all food produced globally is wasted. To reduce food waste, plan your meals, make shopping lists, store food properly, and get creative with leftovers. Composting food scraps is another great way to reduce waste and create nutrient-rich soil for gardening.</p>
+                    
+                    <h3>4. Choose Sustainable Seafood</h3>
+                    <p>Overfishing and destructive fishing practices threaten marine ecosystems. When buying seafood, look for sustainable options that are certified by organizations like the Marine Stewardship Council. Avoid species that are overfished or caught using methods that harm the environment.</p>
+                    
+                    <h3>5. Grow Your Own Food</h3>
+                    <p>Even if you have limited space, you can grow herbs, vegetables, or fruits in containers or small garden plots. Growing your own food reduces packaging waste, transportation emissions, and gives you the freshest possible produce.</p>
+                    
+                    <p>By adopting these sustainable eating habits, you can enjoy delicious, nutritious food while reducing your environmental impact and supporting a healthier planet.</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-read" id="readBtn">I Have Read It</button>
+                    <button class="btn btn-quiz" id="quizBtn">Take Quiz</button>
+                </div>
+
+                <div class="quiz-container" id="quizContainer">
+                    <h2 class="quiz-title">Test Your Knowledge</h2>
+                    
+                    <div class="quiz-question">
+                        <div class="question-text">1. Why is choosing local and seasonal foods beneficial?</div>
+                        <div class="options-container">
+                            <label class="option">
+                                <input type="radio" name="q1" value="a"> It reduces transportation emissions and supports local farmers
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q1" value="b"> It makes food more expensive
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q1" value="c"> It requires more packaging
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-question">
+                        <div class="question-text">2. How can reducing meat consumption help the environment?</div>
+                        <div class="options-container">
+                            <label class="option">
+                                <input type="radio" name="q2" value="a"> It increases greenhouse gas emissions
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q2" value="b"> It reduces the environmental impact of animal agriculture
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q2" value="c"> It has no significant environmental impact
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-question">
+                        <div class="question-text">3. What is one way to minimize food waste mentioned in the article?</div>
+                        <div class="options-container">
+                            <label class="option">
+                                <input type="radio" name="q3" value="a"> Buy more food than you need
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q3" value="b"> Plan meals and make shopping lists
+                            </label>
+                            <label class="option">
+                                <input type="radio" name="q3" value="c"> Always eat out instead of cooking at home
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-read" id="submitQuiz">Submit Answers</button>
+                    
+                    <div class="quiz-result" id="quizResult"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>SustainaLearn</h3>
+                    <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">in</a>
+                        <a href="#" class="social-icon">ig</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="home.html">Home</a></li>
+                        <li><a href="home.html#events">Events</a></li>
+                        <li><a href="game.html">Games</a></li>
+                        <li><a href="home.html#news">News</a></li>
+                        <li><a href="points.html">My Points</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li>123 Green Street, Eco City</li>
+                        <li>+1 (123) 456-7890</li>
+                        <li>info@sustainalearn.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 SustainaLearn. All rights reserved. | Designed with ♻️ for a greener planet</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Update auth buttons based on login status
+        function updateAuthButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            
+            if (currentUser) {
+                // User is logged in
+                authButtons.innerHTML = `
+                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
+                    <a href="points.html" class="btn btn-login">My Points</a>
+                    <button class="btn btn-register" id="logoutBtn">Logout</button>
+                `;
+                
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    localStorage.removeItem('sustainalearn_currentUser');
+                    window.location.href = 'home.html';
+                });
+            } else {
+                // User is not logged in
+                authButtons.innerHTML = `
+                    <button class="btn btn-login" id="loginBtn">Login</button>
+                    <button class="btn btn-register" id="registerBtn">Register</button>
+                `;
+                
+                document.getElementById('loginBtn').addEventListener('click', function() {
+                    window.location.href = 'login.html';
+                });
+                
+                document.getElementById('registerBtn').addEventListener('click', function() {
+                    window.location.href = 'register.html';
+                });
+            }
+        }
+
+        // Article reading and quiz functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthButtons();
+            
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            if (!currentUser) {
+                alert('Please log in to read articles and earn points');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const readBtn = document.getElementById('readBtn');
+            const quizBtn = document.getElementById('quizBtn');
+            const quizContainer = document.getElementById('quizContainer');
+            const submitQuiz = document.getElementById('submitQuiz');
+            const quizResult = document.getElementById('quizResult');
+            
+            const articleId = 'article2';
+            
+            // Check if user has already read this article
+            const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+            const userIndex = users.findIndex(u => u.username === currentUser.username);
+            
+            if (userIndex !== -1) {
+                if (users[userIndex].articlesRead && users[userIndex].articlesRead.includes(articleId)) {
+                    readBtn.textContent = 'Already Read';
+                    readBtn.disabled = true;
+                    readBtn.style.backgroundColor = '#6c757d';
+                }
+                
+                if (users[userIndex].articlesQuizPassed && users[userIndex].articlesQuizPassed.includes(articleId)) {
+                    quizBtn.textContent = 'Quiz Completed';
+                    quizBtn.disabled = true;
+                    quizBtn.style.backgroundColor = '#6c757d';
+                }
+            }
+            
+            // Mark article as read
+            readBtn.addEventListener('click', function() {
+                if (userIndex === -1) return;
+                
+                // Initialize articlesRead array if it doesn't exist
+                if (!users[userIndex].articlesRead) {
+                    users[userIndex].articlesRead = [];
+                }
+                
+                // Check if already read
+                if (users[userIndex].articlesRead.includes(articleId)) {
+                    alert('You have already read this article');
+                    return;
+                }
+                
+                // Add article to read list
+                users[userIndex].articlesRead.push(articleId);
+                
+                // Add points for reading (50 points)
+                if (!users[userIndex].points) {
+                    users[userIndex].points = 0;
+                }
+                users[userIndex].points += 50;
+                
+                // Update localStorage
+                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+                
+                // Update button
+                readBtn.textContent = 'Already Read';
+                readBtn.disabled = true;
+                readBtn.style.backgroundColor = '#6c757d';
+                
+                alert('Thank you for reading! You earned 50 points.');
+            });
+            
+            // Show quiz
+            quizBtn.addEventListener('click', function() {
+                quizContainer.style.display = 'block';
+            });
+            
+            // Submit quiz
+            submitQuiz.addEventListener('click', function() {
+                // Get answers
+                const q1 = document.querySelector('input[name="q1"]:checked');
+                const q2 = document.querySelector('input[name="q2"]:checked');
+                const q3 = document.querySelector('input[name="q3"]:checked');
+                
+                // Check if all questions are answered
+                if (!q1 || !q2 || !q3) {
+                    alert('Please answer all questions');
+                    return;
+                }
+                
+                // Check answers (correct answers: a, b, b)
+                let correctCount = 0;
+                if (q1.value === 'a') correctCount++;
+                if (q2.value === 'b') correctCount++;
+                if (q3.value === 'b') correctCount++;
+                
+                // Show result
+                if (correctCount === 3) {
+                    quizResult.textContent = 'Perfect! You got all answers correct!';
+                    quizResult.className = 'quiz-result quiz-success';
+                    quizResult.style.display = 'block';
+                    
+                    // Check if user has already passed this quiz
+                    if (userIndex !== -1) {
+                        if (!users[userIndex].articlesQuizPassed) {
+                            users[userIndex].articlesQuizPassed = [];
+                        }
+                        
+                        if (!users[userIndex].articlesQuizPassed.includes(articleId)) {
+                            // Add to quiz passed list
+                            users[userIndex].articlesQuizPassed.push(articleId);
+                            
+                            // Add points for passing quiz (100 points)
+                            users[userIndex].points += 100;
+                            
+                            // Update localStorage
+                            localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+                            
+                            // Update button
+                            quizBtn.textContent = 'Quiz Completed';
+                            quizBtn.disabled = true;
+                            quizBtn.style.backgroundColor = '#6c757d';
+                            
+                            quizResult.innerHTML += '<div class="points-earned">You earned 50 bonus points!</div>';
+                        } else {
+                            quizResult.innerHTML += '<div>You have already earned points for this quiz.</div>';
+                        }
+                    }
+                } else {
+                    quizResult.textContent = `You got ${correctCount} out of 3 correct. Try again!`;
+                    quizResult.className = 'quiz-result quiz-error';
+                    quizResult.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

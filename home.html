@@ -525,42 +525,47 @@
                 </ul>
             </nav>
             <div class="auth-buttons" id="authButtons">
-                <!-- Buttons will be dynamically shown based on login status -->
+                <!-- Buttons will be dynamically inserted here -->
             </div>
 
-    <script>
-        // Check if user is logged in
-        const currentUser = localStorage.getItem('sustainalearn_currentUser');
-        const authButtons = document.getElementById('authButtons');
-        
-        if (currentUser) {
-            // User is logged in - show profile/logout buttons
-            const user = JSON.parse(currentUser);
-            authButtons.innerHTML = `
-                <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${user.firstName}</span>
-                <button class="btn btn-login" id="logoutBtn">Logout</button>
-            `;
-            
-            document.getElementById('logoutBtn').addEventListener('click', function() {
-                localStorage.removeItem('sustainalearn_currentUser');
-                window.location.reload();
-            });
-        } else {
-            // User is not logged in - show login/register buttons
-            authButtons.innerHTML = `
-                <button class="btn btn-login" id="loginBtn">Login</button>
-                <button class="btn btn-register" id="registerBtn">Register</button>
-            `;
-            
-            document.getElementById('loginBtn').addEventListener('click', function() {
-                window.location.href = 'login.html';
-            });
-            
-            document.getElementById('registerBtn').addEventListener('click', function() {
-                window.location.href = 'register.html';
-            });
-        }
-    </script>
+            <script>
+                // Update auth buttons based on login status
+                function updateAuthButtons() {
+                    const authButtons = document.getElementById('authButtons');
+                    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+                    
+                    if (currentUser) {
+                        // User is logged in
+                        authButtons.innerHTML = `
+                            <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
+                            <a href="points.html" class="btn btn-login">My Points</a>
+                            <button class="btn btn-register" id="logoutBtn">Logout</button>
+                        `;
+                        
+                        document.getElementById('logoutBtn').addEventListener('click', function() {
+                            localStorage.removeItem('sustainalearn_currentUser');
+                            window.location.reload();
+                        });
+                    } else {
+                        // User is not logged in
+                        authButtons.innerHTML = `
+                            <button class="btn btn-login" id="loginBtn">Login</button>
+                            <button class="btn btn-register" id="registerBtn">Register</button>
+                        `;
+                        
+                        document.getElementById('loginBtn').addEventListener('click', function() {
+                            window.location.href = 'login.html';
+                        });
+                        
+                        document.getElementById('registerBtn').addEventListener('click', function() {
+                            window.location.href = 'register.html';
+                        });
+                    }
+                }
+                
+                // Initialize auth buttons on page load
+                document.addEventListener('DOMContentLoaded', updateAuthButtons);
+            </script>
         </div>
     </header>
 
@@ -598,6 +603,7 @@
                         <h3>Community Gardening Workshop</h3>
                         <p>Learn how to grow your own food and create a sustainable garden in your backyard or balcony.</p>
                         <a href="#" class="btn btn-event">Join Event</a>
+                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
                     </div>
                 </div>
                 <div class="event-card">
@@ -607,6 +613,7 @@
                         <h3>Sustainable Cooking Class</h3>
                         <p>Discover how to prepare delicious meals using seasonal, local ingredients with minimal waste.</p>
                         <a href="#" class="btn btn-event">Join Event</a>
+                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
                     </div>
                 </div>
                 <div class="event-card">
@@ -616,6 +623,7 @@
                         <h3>Beach Cleanup & Awareness</h3>
                         <p>Join us for a beach cleanup followed by a discussion on ocean conservation and plastic pollution.</p>
                         <a href="#" class="btn btn-event">Join Event</a>
+                        <button class="btn btn-event sign-up-btn" data-event="gardening">Sign Up</button>
                     </div>
                 </div>
             </div>
@@ -636,7 +644,7 @@
                         <div class="news-date">November 5, 2025</div>
                         <h3>5 Simple Ways to Reduce Plastic Waste</h3>
                         <p>Discover easy-to-implement strategies to minimize your plastic footprint and contribute to a cleaner planet.</p>
-                        <a href="#" class="btn btn-news">Read More</a>
+                        <a href="article1.html" class="btn btn-news">Read More</a>
                     </div>
                 </div>
                 <div class="news-card">
@@ -645,7 +653,7 @@
                         <div class="news-date">October 28, 2025</div>
                         <h3>Local Community Reduces Carbon Footprint by 15%</h3>
                         <p>Learn how a neighborhood in Aarhus implemented community-wide sustainability initiatives with impressive results.</p>
-                        <a href="#" class="btn btn-news">Read More</a>
+                        <a href="article2.html" class="btn btn-news">Read More</a>
                     </div>
                 </div>
                 <div class="news-card">
@@ -654,7 +662,7 @@
                         <div class="news-date">October 20, 2025</div>
                         <h3>The Future of Sustainable Fashion</h3>
                         <p>Explore how innovative materials and circular economy models are transforming the fashion industry.</p>
-                        <a href="#" class="btn btn-news">Read More</a>
+                        <a href="article3.html" class="btn btn-news">Read More</a>
                     </div>
                 </div>
             </div>
@@ -837,6 +845,82 @@
             alert('Registration functionality would be implemented with backend integration');
             registerModal.style.display = 'none';
         });
+
+    // Event sign-up functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const signUpButtons = document.querySelectorAll('.sign-up-btn');
+        
+        signUpButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const eventName = this.getAttribute('data-event');
+                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+                
+                if (!currentUser) {
+                    alert('Please log in to sign up for events');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user data
+                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+                const userIndex = users.findIndex(u => u.username === currentUser.username);
+                
+                if (userIndex === -1) {
+                    alert('User not found. Please log in again.');
+                    return;
+                }
+                
+                // Initialize events array if it doesn't exist
+                if (!users[userIndex].events) {
+                    users[userIndex].events = [];
+                }
+                
+                // Check if user is already signed up
+                if (users[userIndex].events.includes(eventName)) {
+                    alert('You are already signed up for this event!');
+                    return;
+                }
+                
+                // Add event to user's events
+                users[userIndex].events.push(eventName);
+                
+                // Add points for signing up (10 points per event)
+                if (!users[userIndex].points) {
+                    users[userIndex].points = 0;
+                }
+                users[userIndex].points += 10;
+                
+                // Update localStorage
+                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+                
+                // Update button
+                this.textContent = 'Signed Up!';
+                this.disabled = true;
+                this.style.backgroundColor = '#6c757d';
+                
+                alert(`Successfully signed up for the event! You earned 10 points.`);
+            });
+        });
+        
+        // Update button states based on existing sign-ups
+        function updateEventButtons() {
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            
+            if (currentUser && currentUser.events) {
+                signUpButtons.forEach(button => {
+                    const eventName = button.getAttribute('data-event');
+                    if (currentUser.events.includes(eventName)) {
+                        button.textContent = 'Signed Up!';
+                        button.disabled = true;
+                        button.style.backgroundColor = '#6c757d';
+                    }
+                });
+            }
+        }
+        
+        updateEventButtons();
+    });
     </script>
 </body>
 </html>
