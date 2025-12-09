@@ -1188,10 +1188,10 @@
         
         function loadPointsBreakdown(user) {
             // Calculate points from different sources
-            const eventsPoints = (user.eventsAttended?.length || 0) * 50; // 50 points per event
+            const eventsPoints = (user.eventsAttended?.length || 0) * 10; // 10 points for signup (200 upon completion - to be implemented)
             const gamesPoints = user.gamePoints || 0;
-            const articlesPoints = (user.articlesRead?.length || 0) * 10; // 10 points per article
-            const quizzesPoints = (user.articlesQuizPassed?.length || 0) * 20; // 20 points per quiz
+            const articlesPoints = (user.articlesRead?.length || 0) * 50; // 50 points per article
+            const quizzesPoints = (user.articlesQuizPassed?.length || 0) * 100; // 100 points per quiz
             const dailyPoints = calculateDailyPoints(user);
             
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
@@ -1477,7 +1477,7 @@
                 eventItem.className = 'event-item';
                 eventItem.innerHTML = `
                     <span class="event-name">${eventNames[event] || event}</span>
-                    <span class="event-points">+50 points</span>
+                    <span class="event-points">+10 pts (signup)</span>
                 `;
                 container.appendChild(eventItem);
             });
