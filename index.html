@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green & social - Sustainable Living Platform</title>
+    <title>Social & Green - Sustainable Living Platform</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* Global Styles */
@@ -533,131 +533,22 @@
             font-size: 0.9rem;
         }
 
-    /* Map Section Styles */
-    .map-container {
-        display: flex;
-        flex-direction: column;
-        gap: 30px;
-    }
 
-    #map {
-        height: 500px;
-        width: 100%;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
 
-    .map-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        margin-top: 20px;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .legend-color {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-    }
-
-    .locations-list {
+    .events-container, #current-events-list, #old-events-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 25px;
-        margin-top: 30px;
     }
 
-    .location-card {
-        background-color: var(--white);
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .location-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .location-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-
-    .location-type {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-
-    .type-flea-market {
-        background-color: #e8f5e9;
-        color: var(--primary-green);
-    }
-
-    .type-secondhand {
-        background-color: #e3f2fd;
-        color: #1565c0;
-    }
-
-    .type-community {
-        background-color: #fff3e0;
-        color: #ef6c00;
-    }
-
-    .type-red-cross {
-        background-color: #ffebee;
-        color: #c62828;
-    }
-
-    .location-name {
-        color: var(--dark-green);
-        margin-bottom: 10px;
-    }
-
-    .location-details {
-        margin-bottom: 15px;
-    }
-
-    .location-detail {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-    }
-
-    .detail-icon {
-        color: var(--primary-green);
-        width: 20px;
-    }
-
-    .btn-location {
-        background-color: var(--primary-green);
-        color: var(--white);
-        padding: 8px 16px;
-        font-size: 0.9rem;
-        width: 100%;
-        margin-top: 10px;
+    @media (max-width: 1100px) {
+        .events-container, #current-events-list, #old-events-list {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     @media (max-width: 768px) {
-        #map {
-            height: 400px;
-        }
-        
-        .locations-list {
+        .events-container, #current-events-list, #old-events-list {
             grid-template-columns: 1fr;
         }
     }
@@ -669,7 +560,7 @@
         <div class="container header-container">
             <div class="logo">
                 <span class="logo-icon">🌱</span>
-                <h1>Green & Social</h1>
+                <h1>Social & Green</h1>
             </div>
             <nav>
                 <ul>
@@ -727,8 +618,8 @@
     <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="container">
-            <h2>Lighten Your Impact, Enrich Our Planet</h2>
-            <p>Join the movement of conscious citizens who learn, act, and connect to create a sustainable future through education, community events, and interactive games.</p>
+            <h2>Take Real Climate Action Together</h2>
+            <p>Social & Green is a youth-driven platform for hands-on, sustainable events and rewarding initiatives. We help you make a difference through action, not just activism or personal sacrifice.</p>
         </div>
     </section>
 
@@ -736,24 +627,27 @@
     <section>
         <div class="container">
             <div class="section-title">
-                <h2>Our Mission</h2>
-                <p>Solving the lack of awareness and education about sustainability for people who want to make a difference but don't know how.</p>
+                <h2>Why Social & Green?</h2>
+                <p>Most climate initiatives ask you to do less: eat less meat, fly less, or protest against polluters. We offer a solution where you take action and do something good for the climate, together.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Our Target</h3>
-                    <p>We focus on Aarhus residents between 18 and 30 years old who feel helpless about helping the environment but are willing to be social and make a difference.</p>
+                    <h3>Hands-On Events</h3>
+                    <p>Join group activities like trash cleanups, recycling drives, and repair workshops. Every event is designed to make a real, positive impact.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">💡</div>
-                    <h3>Our Solution</h3>
-                    <p>We provide a digital platform with social events, educational games, and engaging content focused on sustainability to make learning fun and actionable.</p>
+                    <h3>Social Community</h3>
+                    <p>Meet others who want to help the climate. Build friendships and work together for a better future.</p>
+                </div>
+            </div>
+            <div class="features-grid" style="margin-top:32px;">
+                <div class="feature-card">
+                    <h3>Point System & Rewards</h3>
+                    <p>Earn points for every action. Redeem them for eco-friendly rewards, experiences, or donations. Your effort is recognized and celebrated.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🌍</div>
-                    <h3>Our Impact</h3>
-                    <p>We help people learn about sustainability, feel responsible for our planet, and take easy actions to create a healthier future for all.</p>
+                    <h3>Educational & Gamified Learning</h3>
+                    <p>Access practical guides, workshops, and games that teach you how to help the climate in fun, effective ways.</p>
                 </div>
             </div>
         </div>
@@ -763,209 +657,52 @@
     <section>
         <div class="container">
             <div class="section-title">
-                <h2>Earn Points, Make a Difference</h2>
-                <p>Our rewards system helps you track your impact and redeem points for exciting benefits</p>
+                <h2>Track Your Impact</h2>
+                <p>Measure your contributions and see the difference you make through our transparent points system.</p>
             </div>
             <div class="points-system">
-                <h3>How Our Points System Works</h3>
-                <p>Every sustainable action you take earns you points that can be redeemed for rewards from our partners and sponsors. The more you participate, the more you earn!</p>
-                
+                <h3>How It Works</h3>
+                <p>Earn points for every sustainable action, event participation, and advocacy effort. Your impact is recognized and celebrated—because every action counts.</p>
                 <div class="points-benefits">
                     <div class="benefit-item">
-                        <div class="benefit-icon">🏆</div>
-                        <h4>Earn Points</h4>
-                        <p>Participate in events, complete games, and engage with our content to accumulate points.</p>
+                        <strong>Participate in Events</strong><br>
+                        Join workshops, cleanups, and campaigns to earn points and drive change.
                     </div>
                     <div class="benefit-item">
-                        <div class="benefit-icon">🛍️</div>
-                        <h4>Redeem Rewards</h4>
-                        <p>Use your points for gift cards, vouchers, and special offers from our sustainability-focused partners.</p>
+                        <strong>Share Knowledge</strong><br>
+                        Educate others and spread awareness to multiply your impact.
                     </div>
                     <div class="benefit-item">
-                        <div class="benefit-icon">🤝</div>
-                        <h4>Support Sponsors</h4>
-                        <p>Our sponsors are eco-conscious businesses that support our mission. Your rewards help sustain their green initiatives too.</p>
+                        <strong>Redeem Rewards</strong><br>
+                        Use your points for eco-friendly products, experiences, or donations.
                     </div>
                 </div>
-                
-                <p style="text-align: center; margin-top: 20px; font-style: italic;">
-                    <strong>Note:</strong> We're currently building partnerships with local and national sustainable businesses. Soon you'll be able to redeem points for exciting rewards!
+                <p style="margin-top: 20px; font-style: italic; color: var(--dark-gray);">
+                    Points are a reflection of your commitment to a sustainable future.
                 </p>
             </div>
         </div>
     </section>
-
+    
     <!-- Events Section -->
     <section id="events">
         <div class="container">
             <div class="section-title">
-                <h2>Sustainability Events in Aarhus</h2>
-                <p>Hand-curated selection of climate-focused activities happening in Aarhus.</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--dark-green);">
-                    <strong>🔄 Last updated: 4. december 2025</strong>
-                </p>
+                <h2>Upcoming Events</h2>
+                <p>Join our community events and make a difference. Participate in workshops, cleanups, and more.</p>
             </div>
-            
-            <div class="events-container">
-                <!-- Event 1 -->
-                <div class="event-card">
-                <div class="event-image" style="background-image: url('images/yoga.jpg')">                        
-                    <span>Yoga for Jorden</span>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-date">6/12 - 10:00–11:30</span>
-                        <h3>Yoga for Jorden - Morgenyoga & Morgenmad</h3>
-                        <p>
-                            Gratis yoga efterfulgt af morgenmad arrangeret af Den Grønne Ungdomsbevægelse Aarhus.
-                            Alle kan være med - ingen erfaring nødvendig. Et roligt fællesskab med fokus på kropslig
-                            omsorg, nærvær og bæredygtighed.
-                            <br><br>
-                            <strong>NB:</strong> Først-til-mølle.
-                        </p>
-                        <div class="event-signup-info">
-                            <div class="event-participants">Lokation: N. J. Fjords Gade 2, Aarhus C</div>
-                            <div class="event-points">+10 pts signup | +200 pts completion</div>
-                        </div>
-                        <a href="https://forms.gle/X7yoNK7Jb7xpUh6UA" target="_blank">
-                            <button class="btn btn-event event-signup-btn">Tilmelding 6/12</button>
-                        </a>
-                        <div style="margin-top: 10px;">
-                            <a href="https://fb.me/e/8poU3fKZ6" target="_blank" style="font-size: 0.9rem;">
-                                Facebook event link →
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Event 3 - Vejlby-Risskov Hallen -->
-                <div class="event-card">
-                    <div class="event-image" style="background-image: url('images/market.jpg')">
-                        <span>Julemarked</span>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-date">7/12 - 10:00–16:00</span>
-                        <h3>INDENDØRS JuleMARKED - Vejlby-Risskov Hallen</h3>
-                        <p>
-                            Kom til det store juleloppemarked med 82 stande fyldt med julepynt, antik, legetøj, tøj og brugskunst.
-                            Her finder du gran, kogler, nisser, kalenderlys, kravlenisser, kugler, gløgg, æbleskiver og meget mere.
-                            Gør noget for klimaet - køb genbrug! Forventer ca. 3.000 besøgende.
-                            <br><br>
-                            <strong>Praktisk info:</strong> Entre 50 kr. for voksne, børn under 14 gratis. Gratis parkering.
-                        </p>
-                        <div class="event-signup-info">
-                            <div class="event-participants">Lokation: Vejlby Centervej 51, 8240 Risskov</div>
-                            <div class="event-points">+10 pts signup | +200 pts completion</div>
-                        </div>
-                        <a href="mailto:kurt@kloborg.dk?subject=Tilmelding%20til%20Julemarked">
-                            <button class="btn btn-event event-signup-btn">Kontakt tilmelding</button>
-                        </a>
-                        <div style="margin-top: 10px;">
-                            <a href="https://fb.me/e/1R1q85Pw6a" target="_blank" style="font-size: 0.9rem;">
-                                Facebook event link →
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Event 4 - Hjerteland Julemarked -->
-                <div class="event-card">
-                    <div class="event-image" style="background-image: url('images/market2.jpg')">
-                        <span>Julemarked</span>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-date">7/12 - 12:00–17:00</span>
-                        <h3>Rå-hyggeligt Julemarked hos Hjerteland</h3>
-                        <p>
-                            Kom til et hyggeligt julemarked i smukke omgivelser med duften af gløgg og æbleskiver.
-                            Find unikke julegaver som smykker, keramik, tøj, sko, naturlige cremer, malerier, drømmefangere,
-                            øjenpuder, håndværk i træ, honning, cookies, pebernødder og meget mere.
-                            <br><br>
-                            Café med hjemmelavede boller, kage, æbleskiver og gløgg. Gratis adgang for alle!
-                        </p>
-                        <div class="event-signup-info">
-                            <div class="event-participants">Lokation: Nymøllevej 8, 8200 Aarhus N</div>
-                            <div class="event-points">+10 pts signup | +200 pts completion</div>
-                        </div>
-                        <a href="mailto:hjerteogko@live.dk?subject=Stand%20til%20Julemarked">
-                            <button class="btn btn-event event-signup-btn">Book stand</button>
-                        </a>
-                        <div style="margin-top: 10px;">
-                            <a href="https://fb.me/e/aAcdWxULL" target="_blank" style="font-size: 0.9rem;">
-                                Facebook event link →
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            <!-- Current Events -->
+            <div id="current-events-list" class="events-container"></div>
+            <div id="no-current-events-message" style="display:none; margin: 32px 0; text-align:center; color: var(--dark-gray); font-size: 1.1rem;"></div>
 
-                <!-- Event 2 -->
-                <div class="event-card">
-                    <div class="event-image" style="background-image: url('images/repaircafe.jpg')">
-                        <span>Repair Café</span>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-date">12/12 - 12:30–15:30</span>
-                        <h3>Repair Café Aarhus</h3>
-                        <p>
-                            Come by and repair your clothes, electronics, or bike with help from our team of volunteers! 
-                            We're all about giving our belongings a second chance instead of throwing them away and buying new. 
-                            It's free and we've got the tools, but remember to bring your own spare parts.
-                            You can find us on the stairs at Dokk1 – every month ♻️🛠<br><br>
-                        </p>
-                        <div class="event-signup-info">
-                            <div class="event-participants">Dokk1, 8000 Aarhus, Denmark</div>
-                            <div class="event-points">+10 pts signup | +200 pts completion</div>
-                        </div>
-                        <a href="https://www.dokk1.dk" target="_blank">
-                            <button class="btn btn-event event-signup-btn">Se flere datoer</button>
-                        </a>
-                        <div style="margin-top: 10px;">
-                            <a href="https://www.facebook.com/RepaircafeAarhus" target="_blank" style="font-size: 0.9rem;">
-                                Facebook side →
-                            </a>
-                        </div>
-                        <a href="https://fb.me/e/6aQ5B4V33" target="_blank" style="font-size: 0.9rem;">
-                            Facebook event link →
-                        </a>
-                    </div>
+            <!-- Old Events Toggle -->
+            <div style="margin-top:40px;">
+                <button id="toggle-old-events" class="btn btn-event" style="width:100%;max-width:340px;margin:0 auto;display:block;">Show Old Events</button>
+                <div id="old-events-section" style="display:none; margin-top:24px;">
+                    <div id="old-events-list" class="events-container"></div>
+                    <button id="see-more-old-events" class="btn btn-event" style="width:100%;max-width:340px;margin:24px auto 0 auto;display:none;">See more</button>
                 </div>
-
-                <!-- Event 5 - Ananda Organics Launch -->
-                <div class="event-card">
-                    <div class="event-image" style="background-image: url('images/health.png')">
-                        <span>Produktlancering</span>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-date">16/12 - 16:30–18:00</span>
-                        <h3>Ananda Organics - Økologisk Hudpleje Lancering</h3>
-                        <p>
-                            Kom og fejr lanceringen af Ananda Organics - certificeret økologisk hudpleje med 90-100% økologiske ingredienser.
-                            Få 30% rabat på luksuriøse ansigtsolier, fugtserum, mists, body butter, urtesalver og aromaterapi.
-                            <br><br>
-                            Byder på ceremonial grade chokolade og bobler. Begrænsede mængder hjemmelavede sukkerfri chokolader til salg.
-                            Alt overskud går til at dække udgifter til behandling af kronisk sygdom.
-                        </p>
-                        <div class="event-signup-info">
-                            <div class="event-participants">Lokation: Hjerterum, Aarhus</div>
-                            <div class="event-points">+10 pts signup | +200 pts completion</div>
-                        </div>
-                        <a href="https://www.annaananda.dk/" target="_blank">
-                            <button class="btn btn-event event-signup-btn">Besøg hjemmeside</button>
-                        </a>
-                        <div style="margin-top: 10px;">
-                            <a href="https://fb.me/e/8vGHoDabV" target="_blank" style="font-size: 0.9rem;">
-                                Facebook event link →
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="events-disclaimer">
-                <p><strong>Note:</strong> These events are hand-curated by the Green & Social team. All events are free and open to everyone unless otherwise noted. Points are awarded for participation.</p>
-                <p style="margin-top: 10px; font-size: 0.9rem;">
-                </p>
-                <p style="margin-top: 10px; font-size: 0.9rem;">
-                    <strong>Sources:</strong> Local Facebook groups, organizations' websites, community calendars
-                </p>
             </div>
         </div>
     </section>
@@ -974,8 +711,8 @@
     <section id="news">
         <div class="container">
             <div class="section-title">
-                <h2>Sustainability News</h2>
-                <p>Stay updated with the latest news, tips, and innovations in sustainability.</p>
+                <h2>Environmental News</h2>
+                <p>Stay informed with the latest updates, research, and stories from the frontlines of sustainability.</p>
             </div>
             <div class="news-container">
                 <div class="news-card">
@@ -1011,50 +748,14 @@
         </div>
     </section>
 
-    <!-- Sustainable Aarhus Map Section -->
-    <section id="sustainable-aarhus">
-        <div class="container">
-            <div class="section-title">
-                <h2>Sustainable Aarhus</h2>
-                <p>Explore environmentally friendly locations, flea markets, and community spots throughout Aarhus</p>
-            </div>
-        
-            <div class="map-container">
-                <div id="map"></div>
-                
-                <div class="map-legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #4CAF50;"></div>
-                        <span>Flea Markets</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #2196F3;"></div>
-                        <span>Secondhand Stores</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #f44336;"></div>
-                        <span>Red Cross Stores</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #9C27B0;"></div>
-                        <span>Recycling Centers</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #FF9800;"></div>
-                        <span>Community Gardens</span>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
-    </section>
+
 
     <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
-                    <h3>Green & social</h3>
+                    <h3>Social & Green</h3>
                     <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
                     <div class="social-links">
                         <a href="#" class="social-icon">f</a>
@@ -1082,40 +783,242 @@
                 </div>
             </div>
             <div class="copyright">
-                <p>&copy; 2025 Green & social. All rights reserved. | Designed with ♻️ for a greener planet</p>
+                <p>&copy; 2025 Social & Green. All rights reserved. | Designed with ♻️ for a greener planet</p>
             </div>
         </div>
     </footer>
 <script>
-    // Make map globally accessible
-    let map;
-    let markers = {};
-
-    // Sustainable locations data - including all the stores you listed
-    const sustainableLocations = [
-        // Original flea markets
+<script>
+    // Event data with proper date parsing
+    const eventData = [
         {
             id: 1,
-            name: "Ingerslevs Boulevard Flea Market",
-            type: "flea-market",
-            address: "Ingerslev Boulevard, Aarhus C",
-            description: "One of Aarhus' most popular flea markets with vendors selling everything from vintage clothing, antiques, books, furniture and crafts.",
-            hours: "Selected Sundays between April and September, 9:30 AM - 4:00 PM",
-            price: "Free",
-            lat: 56.1520,
-            lng: 10.1989
+            name: 'Yoga for Jorden - Morgenyoga & Morgenmad',
+            date: '6/12 - 10:00–11:30',
+            image: 'images/yoga.jpg',
+            title: 'Yoga for Jorden',
+            description: 'Gratis yoga efterfulgt af morgenmad arrangeret af Den Grønne Ungdomsbevægelse Aarhus. Alle kan være med - ingen erfaring nødvendig. Et roligt fællesskab med fokus på kropslig omsorg, nærvær og bæredygtighed. NB: Først-til-mølle.',
+            location: 'N. J. Fjords Gade 2, Aarhus C',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://forms.gle/X7yoNK7Jb7xpUh6UA',
+            linkText: 'Tilmelding 6/12'
         },
         {
             id: 2,
-            name: "Habengut Market at Godsbanen",
-            type: "flea-market",
-            address: "Godsbanen, Aarhus C",
-            description: "A lively and diverse flea market with a great mix of vintage clothing, retro furniture, crafts, design classics and much more.",
-            hours: "Selected weekends, 10:00 AM - 4:00 PM",
-            price: "20 DKK (Free for children)",
-            lat: 56.1539,
-            lng: 10.1992
+            name: 'Repair Café Aarhus',
+            date: '12/12 - 12:30–15:30',
+            image: 'images/repaircafe.jpg',
+            title: 'Repair Café',
+            description: 'Come by and repair your clothes, electronics, or bike with help from our team of volunteers! We\'re all about giving our belongings a second chance instead of throwing them away and buying new. It\'s free and we\'ve got the tools, but remember to bring your own spare parts. You can find us on the stairs at Dokk1 – every month ♻️🛠',
+            location: 'Dokk1, 8000 Aarhus, Denmark',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://www.dokk1.dk',
+            linkText: 'Se flere datoer'
         },
+        {
+            id: 3,
+            name: 'INDENDØRS JuleMARKED - Vejlby-Risskov Hallen',
+            date: '7/12 - 10:00–16:00',
+            image: 'images/market.jpg',
+            title: 'Julemarked',
+            description: 'Kom til det store juleloppemarked med 82 stande fyldt med julepynt, antik, legetøj, tøj og brugskunst. Her finder du gran, kogler, nisser, kalenderlys, kravlenisser, kugler, gløgg, æbleskiver og meget mere. Gør noget for klimaet - køb genbrug! Forventer ca. 3.000 besøgende.',
+            location: 'Vejlby Centervej 51, 8240 Risskov',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'mailto:kurt@kloborg.dk?subject=Tilmelding%20til%20Julemarked',
+            linkText: 'Kontakt tilmelding'
+        },
+        {
+            id: 4,
+            name: 'Rå-hyggeligt Julemarked hos Hjerteland',
+            date: '7/12 - 12:00–17:00',
+            image: 'images/market2.jpg',
+            title: 'Julemarked',
+            description: 'Kom til et hyggeligt julemarked i smukke omgivelser med duften af gløgg og æbleskiver. Find unikke julegaver som smykker, keramik, tøj, sko, naturlige cremer, malerier, drømmefangere, øjenpuder, håndværk i træ, honning, cookies, pebernødder og meget mere.',
+            location: 'Nymøllevej 8, 8200 Aarhus N',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'mailto:hjerteogko@live.dk?subject=Stand%20til%20Julemarked',
+            linkText: 'Book stand'
+        },
+        {
+            id: 5,
+            name: 'Ananda Organics - Økologisk Hudpleje Lancering',
+            date: '16/12 - 16:30–18:00',
+            image: 'images/health.png',
+            title: 'Produktlancering',
+            description: 'Kom og fejr lanceringen af Ananda Organics - certificeret økologisk hudpleje med 90-100% økologiske ingredienser. Få 30% rabat på luksuriøse ansigtsolier, fugtserum, mists, body butter, urtesalver og aromaterapi.',
+            location: 'Hjerterum, Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://www.annaananda.dk/',
+            linkText: 'Besøg hjemmeside'
+        },
+        {
+            id: 6,
+            name: 'Community Gardening Workshop',
+            date: '15/11 - 10:00–14:00',
+            image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            title: 'Gardening Workshop',
+            description: 'Learn sustainable gardening techniques and help maintain our community garden.',
+            location: 'Aarhus Community Garden, 8000 Aarhus C',
+            points: '+10 pts signup | +200 pts completion',
+            link: '#',
+            linkText: 'Event Ended'
+        },
+        {
+            id: 7,
+            name: 'Sustainable Cooking Class',
+            date: '22/11 - 17:00–20:00',
+            image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            title: 'Cooking Class',
+            description: 'Learn how to cook delicious meals using locally sourced, sustainable ingredients.',
+            location: 'Green Kitchen Aarhus, 8200 Aarhus N',
+            points: '+10 pts signup | +200 pts completion',
+            link: '#',
+            linkText: 'Event Ended'
+        },
+        {
+            id: 8,
+            name: 'Beach Cleanup & Awareness',
+            date: '29/11 - 09:00–12:00',
+            image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            title: 'Beach Cleanup',
+            description: 'Join us for a beach cleanup to protect our local marine environment.',
+            location: 'Aarhus Beach, 8000 Aarhus C',
+            points: '+10 pts signup | +200 pts completion',
+            link: '#',
+            linkText: 'Event Ended'
+        },
+        {
+            id: 9,
+            name: 'Plastic Reduction Workshop',
+            date: '5/11 - 13:00–16:00',
+            image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=2074&q=80',
+            title: 'Plastic Workshop',
+            description: 'Learn how to reduce plastic waste in your daily life with practical tips and alternatives.',
+            location: 'Eco Center Aarhus, 8000 Aarhus C',
+            points: '+10 pts signup | +200 pts completion',
+            link: '#',
+            linkText: 'Event Ended'
+        }
+    ];
+
+    // Function to parse Danish date format (d/m)
+    function parseDanishDate(dateStr) {
+        // Extract date part (e.g., "6/12 - 10:00–11:30" -> "6/12")
+        const datePart = dateStr.split(' - ')[0];
+        const [day, month] = datePart.split('/').map(num => parseInt(num, 10));
+        
+        // Get current year
+        const currentYear = new Date().getFullYear();
+        
+        // Create date object (months are 0-indexed in JavaScript)
+        return new Date(currentYear, month - 1, day);
+    }
+
+    // Function to render event card
+    function renderEventCard(event) {
+        return `
+        <div class="event-card">
+            <div class="event-image" style="background-image: url('${event.image}')">
+                <span>${event.title}</span>
+            </div>
+            <div class="event-details">
+                <span class="event-date">${event.date}</span>
+                <h3>${event.name}</h3>
+                <p>${event.description}</p>
+                <div class="event-signup-info">
+                    <div class="event-participants">${event.location}</div>
+                    <div class="event-points">${event.points}</div>
+                </div>
+                <a href="${event.link}" ${event.linkText.includes('Ended') ? '' : 'target="_blank"'} class="btn btn-event">${event.linkText}</a>
+            </div>
+        </div>
+        `;
+    }
+
+    // Initialize events when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
+        
+        let currentEvents = [];
+        let oldEvents = [];
+        
+        // Sort events by date (ascending)
+        eventData.sort((a, b) => {
+            const dateA = parseDanishDate(a.date);
+            const dateB = parseDanishDate(b.date);
+            return dateA - dateB;
+        });
+        
+        // Separate current and old events
+        eventData.forEach(event => {
+            const eventDate = parseDanishDate(event.date);
+            
+            // Check if event is today or in the future
+            if (eventDate >= today) {
+                currentEvents.push(event);
+            } else {
+                oldEvents.push(event);
+            }
+        });
+        
+        // Get DOM elements
+        const currentEventsList = document.getElementById('current-events-list');
+        const noCurrentMsg = document.getElementById('no-current-events-message');
+        const toggleBtn = document.getElementById('toggle-old-events');
+        const oldSection = document.getElementById('old-events-section');
+        const oldList = document.getElementById('old-events-list');
+        const seeMoreBtn = document.getElementById('see-more-old-events');
+        
+        let oldEventsShown = 5;
+        
+        // Function to render old events
+        function renderOldEvents() {
+            const eventsToShow = oldEvents.slice(0, oldEventsShown);
+            oldList.innerHTML = eventsToShow.map(renderEventCard).join('');
+            
+            // Show/hide "See more" button
+            if (oldEvents.length > oldEventsShown) {
+                seeMoreBtn.style.display = 'block';
+            } else {
+                seeMoreBtn.style.display = 'none';
+            }
+        }
+        
+        // Handle current events
+        if (currentEvents.length === 0) {
+            noCurrentMsg.style.display = 'block';
+            noCurrentMsg.textContent = 'No current events: the events will be updated once a week. Come back to check again soon.';
+        } else {
+            currentEventsList.innerHTML = currentEvents.map(renderEventCard).join('');
+        }
+        
+        // Handle old events toggle
+        toggleBtn.addEventListener('click', function() {
+            if (oldSection.style.display === 'none') {
+                oldSection.style.display = 'block';
+                toggleBtn.textContent = 'Hide Old Events';
+                renderOldEvents();
+            } else {
+                oldSection.style.display = 'none';
+                toggleBtn.textContent = 'Show Old Events';
+            }
+        });
+        
+        // Handle "See more" button
+        seeMoreBtn.addEventListener('click', function() {
+            oldEventsShown += 5;
+            renderOldEvents();
+        });
+        
+        // Hide "Show Old Events" button if there are no old events
+        if (oldEvents.length === 0) {
+            toggleBtn.style.display = 'none';
+        }
+    });
+</script>
+
+<script></script>
         {
             id: 3,
             name: "Trunk Market at Bispetorv",
@@ -1452,7 +1355,7 @@
         function createCustomIcon(type) {
             return L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="background-color: ${typeColors[type]}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>`,
+                html: '<div style="background-color: ' + typeColors[type] + '; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>',
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             });
@@ -1468,16 +1371,14 @@
             markers[location.id] = marker;
             
             // Create popup content
-            const popupContent = `
-                <div style="max-width: 250px;">
-                    <h3 style="margin: 0 0 10px; color: ${typeColors[location.type]};">${location.name}</h3>
-                    <p><strong>Address:</strong> ${location.address}</p>
-                    <p><strong>Hours:</strong> ${location.hours}</p>
-                    <p><strong>Price:</strong> ${location.price}</p>
-                    <p>${location.description}</p>
-                </div>
-            `;
-            
+            const popupContent =
+                '<div style="max-width: 250px;">' +
+                '<h3 style="margin: 0 0 10px; color: ' + typeColors[location.type] + ';">' + location.name + '</h3>' +
+                '<p><strong>Address:</strong> ' + location.address + '</p>' +
+                '<p><strong>Hours:</strong> ' + location.hours + '</p>' +
+                '<p><strong>Price:</strong> ' + location.price + '</p>' +
+                '<p>' + location.description + '</p>' +
+                '</div>';
             marker.bindPopup(popupContent);
         });
     }
@@ -1517,28 +1418,27 @@
                     break;
             }
             
-            card.innerHTML = `
-                <div class="location-header">
-                    <h3 class="location-name">${location.name}</h3>
-                    <span class="location-type ${typeClass}">${typeText}</span>
-                </div>
-                <div class="location-details">
-                    <div class="location-detail">
-                        <span class="detail-icon">📍</span>
-                        <span>${location.address}</span>
-                    </div>
-                    <div class="location-detail">
-                        <span class="detail-icon">🕒</span>
-                        <span>${location.hours}</span>
-                    </div>
-                    <div class="location-detail">
-                        <span class="detail-icon">💰</span>
-                        <span>${location.price}</span>
-                    </div>
-                </div>
-                <p>${location.description}</p>
-                <button class="btn btn-location" onclick="showOnMap(${location.id})">Show on Map</button>
-            `;
+            card.innerHTML =
+                '<div class="location-header">' +
+                    '<h3 class="location-name">' + location.name + '</h3>' +
+                    '<span class="location-type ' + typeClass + '">' + typeText + '</span>' +
+                '</div>' +
+                '<div class="location-details">' +
+                    '<div class="location-detail">' +
+                        '<span class="detail-icon">📍</span>' +
+                        '<span>' + location.address + '</span>' +
+                    '</div>' +
+                    '<div class="location-detail">' +
+                        '<span class="detail-icon">🕒</span>' +
+                        '<span>' + location.hours + '</span>' +
+                    '</div>' +
+                    '<div class="location-detail">' +
+                        '<span class="detail-icon">💰</span>' +
+                        '<span>' + location.price + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<p>' + location.description + '</p>' +
+                '<button class="btn btn-location" onclick="showOnMap(' + location.id + ')">Show on Map</button>';
             
             locationsList.appendChild(card);
         });
