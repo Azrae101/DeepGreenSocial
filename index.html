@@ -776,9 +776,7 @@
                 <div class="footer-column">
                     <h3>Contact Us</h3>
                     <ul>
-                        <li>123 Green Street, Eco City</li>
-                        <li>+1 (123) 456-7890</li>
-                        <li>info@greensocial.com</li>
+                        <li>Universitetsbyen 14, 8000 Aarhus C</li>
                     </ul>
                 </div>
             </div>
@@ -788,8 +786,79 @@
         </div>
     </footer>
 <script>
-<script>
-    // Event data with proper date parsing
+    // Global variables
+    let map;
+    const markers = {};
+    const sustainableLocations = [
+        {
+            id: 1,
+            name: "Aarhus Loppemarked",
+            type: "flea-market",
+            address: "Dokk1, Hack Kampmanns Plads 2, 8000 Aarhus C",
+            description: "Large flea market at Dokk1 with everything from clothes to furniture and antiques.",
+            hours: "Sundays: 10:00 AM - 3:00 PM",
+            price: "Free entry",
+            lat: 56.1539,
+            lng: 10.1992
+        },
+        {
+            id: 2,
+            name: "Trunk Market at Bispetorv",
+            type: "flea-market",
+            address: "Teatergaden 1, 8000 Aarhus C",
+            description: "A trunk market located near the cathedral in the center of Aarhus, perfect for finding hidden treasures.",
+            hours: "Selected weekends, 10:30 AM - 3:30 PM",
+            price: "Free",
+            lat: 56.1587,
+            lng: 10.2107
+        },
+        {
+            id: 3,
+            name: "Loppehuset in Højbjerg",
+            type: "flea-market",
+            address: "Søren Nymarks Vej 6L, 8270 Højbjerg",
+            description: "A hidden gem offering a wealth of used furniture, clothing, books, retro finds and much more.",
+            hours: "Selected weekends, 11:00 AM - 2:00 PM",
+            price: "Free",
+            lat: 56.1155,
+            lng: 10.1837
+        },
+        {
+            id: 4,
+            name: "Røde Kors Aarhus",
+            type: "red-cross",
+            address: "Muslingevej 24, 8250 Egå",
+            description: "Red Cross secondhand store offering quality used items at affordable prices.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1934,
+            lng: 10.1362
+        },
+        {
+            id: 5,
+            name: "Vintage Divine",
+            type: "secondhand",
+            address: "Klostergade 58, 8000 Aarhus C",
+            description: "Highly rated vintage store with curated selection of clothing and accessories.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1589,
+            lng: 10.2087
+        },
+        {
+            id: 6,
+            name: "Aarhus Recycling Center",
+            type: "recycling",
+            address: "Lystrupvej 62, 8200 Aarhus N",
+            description: "A facility where you can drop off various types of waste for recycling, including electronics, hazardous waste, and more.",
+            hours: "Mon-Fri: 8:00 AM - 6:00 PM, Sat-Sun: 9:00 AM - 4:00 PM",
+            price: "Free for most items",
+            lat: 56.1896,
+            lng: 10.1689
+        }
+    ];
+
+    // Event data
     const eventData = [
         {
             id: 1,
@@ -914,10 +983,29 @@
         return new Date(currentYear, month - 1, day);
     }
 
-    // Function to render event card
-    function renderEventCard(event) {
+    // Function to render event card with signup functionality
+    function renderEventCard(event, isOldEvent = false) {
+        const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        const user = currentUser ? users.find(u => u.username === currentUser.username) : null;
+        const isSignedUp = user && user.events && user.events.includes(event.id);
+        const isPastEvent = isOldEvent || parseDanishDate(event.date) < new Date();
+        
+        let buttonHtml = '';
+        let buttonClass = 'btn-event';
+        
+        if (isPastEvent) {
+            buttonHtml = `<button class="btn btn-event" disabled style="background-color: #6c757d;">Event Ended</button>`;
+        } else if (!currentUser) {
+            buttonHtml = `<button class="btn btn-event" onclick="redirectToLogin()" style="background-color: #6c757d;">Login to Sign Up</button>`;
+        } else if (isSignedUp) {
+            buttonHtml = `<button class="btn btn-event" disabled style="background-color: #6c757d;">Signed Up</button>`;
+        } else {
+            buttonHtml = `<button class="btn btn-event" onclick="signUpForEvent(${event.id})">Sign Up - Free</button>`;
+        }
+        
         return `
-        <div class="event-card">
+        <div class="event-card" data-event-id="${event.id}">
             <div class="event-image" style="background-image: url('${event.image}')">
                 <span>${event.title}</span>
             </div>
@@ -929,16 +1017,83 @@
                     <div class="event-participants">${event.location}</div>
                     <div class="event-points">${event.points}</div>
                 </div>
-                <a href="${event.link}" ${event.linkText.includes('Ended') ? '' : 'target="_blank"'} class="btn btn-event">${event.linkText}</a>
+                ${buttonHtml}
+                ${event.link && event.link !== '#' ? `<a href="${event.link}" ${event.linkText.includes('Ended') ? '' : 'target="_blank"'} class="btn btn-event" style="margin-top: 10px; background-color: var(--light-green);">${event.linkText}</a>` : ''}
             </div>
         </div>
         `;
     }
 
-    // Initialize events when page loads
-    document.addEventListener('DOMContentLoaded', function() {
+    // Function to redirect to login
+    function redirectToLogin() {
+        alert('Please log in to sign up for events');
+        window.location.href = 'login.html';
+    }
+
+    // Function to sign up for an event
+    function signUpForEvent(eventId) {
+        const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+        
+        if (!currentUser) {
+            redirectToLogin();
+            return;
+        }
+        
+        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        const userIndex = users.findIndex(u => u.username === currentUser.username);
+        
+        if (userIndex === -1) {
+            alert('User not found. Please log in again.');
+            return;
+        }
+        
+        // Initialize events array if it doesn't exist
+        if (!users[userIndex].events) {
+            users[userIndex].events = [];
+        }
+        
+        // Check if user is already signed up
+        if (users[userIndex].events.includes(eventId)) {
+            alert('You are already signed up for this event!');
+            return;
+        }
+        
+        // Check if event is in the past
+        const event = eventData.find(e => e.id === eventId);
+        if (event && parseDanishDate(event.date) < new Date()) {
+            alert('Cannot sign up for past events.');
+            return;
+        }
+        
+        // Add event to user's events
+        users[userIndex].events.push(eventId);
+        
+        // Add points for signing up (10 points per event)
+        if (!users[userIndex].points) {
+            users[userIndex].points = 0;
+        }
+        users[userIndex].points += 10;
+        
+        // Update localStorage
+        localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+        localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+        
+        // Update the button state
+        const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
+        if (eventCard) {
+            const button = eventCard.querySelector('.btn-event');
+            button.textContent = 'Signed Up';
+            button.disabled = true;
+            button.style.backgroundColor = '#6c757d';
+        }
+        
+        alert(`Successfully signed up for the event! You earned 10 points.`);
+    }
+
+    // Function to initialize events
+    function initializeEvents() {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
+        today.setHours(0, 0, 0, 0);
         
         let currentEvents = [];
         let oldEvents = [];
@@ -975,7 +1130,7 @@
         // Function to render old events
         function renderOldEvents() {
             const eventsToShow = oldEvents.slice(0, oldEventsShown);
-            oldList.innerHTML = eventsToShow.map(renderEventCard).join('');
+            oldList.innerHTML = eventsToShow.map(event => renderEventCard(event, true)).join('');
             
             // Show/hide "See more" button
             if (oldEvents.length > oldEventsShown) {
@@ -990,7 +1145,7 @@
             noCurrentMsg.style.display = 'block';
             noCurrentMsg.textContent = 'No current events: the events will be updated once a week. Come back to check again soon.';
         } else {
-            currentEventsList.innerHTML = currentEvents.map(renderEventCard).join('');
+            currentEventsList.innerHTML = currentEvents.map(event => renderEventCard(event, false)).join('');
         }
         
         // Handle old events toggle
@@ -1015,325 +1170,12 @@
         if (oldEvents.length === 0) {
             toggleBtn.style.display = 'none';
         }
-    });
-</script>
+    }
 
-<script></script>
-        {
-            id: 3,
-            name: "Trunk Market at Bispetorv",
-            type: "flea-market",
-            address: "Teatergaden 1, 8000 Aarhus C",
-            description: "A trunk market located near the cathedral in the center of Aarhus, perfect for finding hidden treasures.",
-            hours: "Selected weekends, 10:30 AM - 3:30 PM",
-            price: "Free",
-            lat: 56.1587,
-            lng: 10.2107
-        },
-        {
-            id: 4,
-            name: "Loppehuset in Højbjerg",
-            type: "flea-market",
-            address: "Søren Nymarks Vej 6L, 8270 Højbjerg",
-            description: "A hidden gem offering a wealth of used furniture, clothing, books, retro finds and much more.",
-            hours: "Selected weekends, 11:00 AM - 2:00 PM",
-            price: "Free",
-            lat: 56.1155,
-            lng: 10.1837
-        },
-        // Red Cross stores
-        {
-            id: 5,
-            name: "Røde Kors Aarhus",
-            type: "red-cross",
-            address: "Muslingevej 24, 8250 Egå",
-            description: "Red Cross secondhand store offering quality used items at affordable prices.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1934,
-            lng: 10.1362
-        },
-        {
-            id: 6,
-            name: "Røde Kors Højbjerg",
-            type: "red-cross",
-            address: "Oddervej 58A, 8270 Højbjerg",
-            description: "Red Cross secondhand store in Højbjerg area.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1178,
-            lng: 10.1765
-        },
-        {
-            id: 7,
-            name: "Røde Kors Holme",
-            type: "red-cross",
-            address: "Holme Byvej 38, 8270 Højbjerg",
-            description: "Red Cross secondhand store in Holme area.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1102,
-            lng: 10.1893
-        },
-        // Blue Cross and other stores
-        {
-            id: 8,
-            name: "Blue Cross Op Shop",
-            type: "secondhand",
-            address: "Paludan-Müllers Vej 38, 8200 Aarhus N",
-            description: "Blue Cross secondhand store with a good selection of clothing and household items.",
-            hours: "Mon-Fri: 10:00 AM - 5:30 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1712,
-            lng: 10.1754
-        },
-        {
-            id: 9,
-            name: "Vintage Divine",
-            type: "secondhand",
-            address: "Klostergade 58, 8000 Aarhus C",
-            description: "Highly rated vintage store with curated selection of clothing and accessories.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1589,
-            lng: 10.2087
-        },
-        {
-            id: 10,
-            name: "Brugtvare Terminalen",
-            type: "secondhand",
-            address: "Øllegårdsvej 3, 8000 Aarhus C",
-            description: "Large secondhand store with furniture, clothing, and various household items.",
-            hours: "Mon-Fri: 10:00 AM - 6:00 PM, Sat: 10:00 AM - 3:00 PM",
-            price: "Various",
-            lat: 56.1623,
-            lng: 10.2015
-        },
-        {
-            id: 11,
-            name: "Kirkens Korshær Nørre Allé",
-            type: "secondhand",
-            address: "Nørre Alle 25, 8000 Aarhus C",
-            description: "Army Salvation secondhand store in the city center.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1602,
-            lng: 10.2034
-        },
-        {
-            id: 12,
-            name: "Folkekirkens Nødhjælp",
-            type: "secondhand",
-            address: "Silkeborgvej 285, 8000 Aarhus C",
-            description: "DanChurchAid secondhand store supporting humanitarian work.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1689,
-            lng: 10.1623
-        },
-        {
-            id: 13,
-            name: "Resecond",
-            type: "secondhand",
-            address: "Jægergårdsgade 51, 8000 Aarhus C",
-            description: "Secondhand fashion store focusing on quality and style.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1479,
-            lng: 10.2073
-        },
-        {
-            id: 14,
-            name: "Kirkens Korshær Aarhus N",
-            type: "secondhand",
-            address: "Paludan-Müllers Vej 26, 8200 Aarhus N",
-            description: "Army Salvation secondhand store in Aarhus N.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1710,
-            lng: 10.1758
-        },
-        {
-            id: 15,
-            name: "Blå Kors",
-            type: "secondhand",
-            address: "Paludan-Müllers Vej 38, 8200 Aarhus N",
-            description: "Blue Cross secondhand store.",
-            hours: "Mon-Fri: 10:00 AM - 5:30 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1712,
-            lng: 10.1754
-        },
-        {
-            id: 16,
-            name: "Kirkens Korshær Mejlgade",
-            type: "secondhand",
-            address: "Mejlgade 19, 8000 Aarhus C",
-            description: "Army Salvation secondhand store in the Latin Quarter.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1592,
-            lng: 10.2098
-        },
-        {
-            id: 17,
-            name: "Igen Genbrugsbutik",
-            type: "secondhand",
-            address: "Åbogade 36A, 8200 Aarhus N",
-            description: "Secondhand store with focus on sustainability and recycling.",
-            hours: "Mon-Fri: 10:00 AM - 6:00 PM, Sat: 10:00 AM - 3:00 PM",
-            price: "Various",
-            lat: 56.1698,
-            lng: 10.1789
-        },
-        {
-            id: 18,
-            name: "Lille Nor",
-            type: "secondhand",
-            address: "Frederiks Allé 116, 8000 Aarhus C",
-            description: "Small secondhand store with curated selection.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1512,
-            lng: 10.1923
-        },
-        {
-            id: 19,
-            name: "Reshop Vintage",
-            type: "secondhand",
-            address: "Haslegårdsvej 8, 8210 Aarhus V",
-            description: "Vintage clothing store in Hasle area.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1402,
-            lng: 10.1498
-        },
-        {
-            id: 20,
-            name: "Folkekirkens Nødhjælp Vesterbro",
-            type: "secondhand",
-            address: "Vesterbro Torv 1A, 8000 Aarhus C",
-            description: "DanChurchAid secondhand store at Vesterbro Torv.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1567,
-            lng: 10.1923
-        },
-        {
-            id: 21,
-            name: "And Vintage",
-            type: "secondhand",
-            address: "Studsgade 40, 8000 Aarhus C",
-            description: "Vintage store with unique finds and retro items.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1598,
-            lng: 10.2112
-        },
-        {
-            id: 22,
-            name: "Røde Kors Åbyhøj",
-            type: "red-cross",
-            address: "Silkeborgvej 236, 8230 Åbyhøj",
-            description: "Red Cross secondhand store in Åbyhøj area.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1389,
-            lng: 10.1567
-        },
-        {
-            id: 23,
-            name: "Folkekirkens Nødhjælp Randersvej",
-            type: "secondhand",
-            address: "Randersvej 73, 8200 Aarhus N",
-            description: "DanChurchAid secondhand store on Randersvej.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1801,
-            lng: 10.1892
-        },
-        {
-            id: 24,
-            name: "Trojborg Retro & Lopper",
-            type: "secondhand",
-            address: "Tordenskjoldsgade 63, 8200 Aarhus N",
-            description: "Retro and flea market style store in Trøjborg.",
-            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
-            price: "Various",
-            lat: 56.1667,
-            lng: 10.2015
-        },
-        {
-            id: 25,
-            name: "Århus Kræmmermarked",
-            type: "flea-market",
-            address: "Strandparken 27, 8000 Aarhus C",
-            description: "Traditional flea market in Aarhus.",
-            hours: "Selected weekends, check locally",
-            price: "Free entry",
-            lat: 56.1502,
-            lng: 10.2101
-        },
-        {
-            id: 26,
-            name: "Røde Kors Brabrand",
-            type: "red-cross",
-            address: "Edwin Rahrs Vej 32P, 8220 Brabrand",
-            description: "Red Cross secondhand store in Brabrand.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1589,
-            lng: 10.1298
-        },
-        {
-            id: 27,
-            name: "Kirkens Korshær Vestergade",
-            type: "secondhand",
-            address: "Vestergade 37, 8000 Aarhus C",
-            description: "Army Salvation secondhand store on Vestergade.",
-            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
-            price: "Various",
-            lat: 56.1562,
-            lng: 10.2034
-        },
-        // Recycling centers
-        {
-            id: 28,
-            name: "Aarhus Recycling Center",
-            type: "recycling",
-            address: "Lystrupvej 62, 8200 Aarhus N",
-            description: "A facility where you can drop off various types of waste for recycling, including electronics, hazardous waste, and more.",
-            hours: "Mon-Fri: 8:00 AM - 6:00 PM, Sat-Sun: 9:00 AM - 4:00 PM",
-            price: "Free for most items",
-            lat: 56.1896,
-            lng: 10.1689
-        },
-        {
-            id: 29,
-            name: "Red Cross Recycling Container",
-            type: "recycling",
-            address: "Bildbjergvej 2, 8200 Aarhus N",
-            description: "Red Cross recycling container for clothing and textiles.",
-            hours: "24/7",
-            price: "Free",
-            lat: 56.1734,
-            lng: 10.1821
-        },
-        {
-            id: 30,
-            name: "Red Cross Genbrugscontainer",
-            type: "recycling",
-            address: "Fjældevænget 114, 8210 Aarhus V",
-            description: "Red Cross recycling container for clothing and textiles.",
-            hours: "24/7",
-            price: "Free",
-            lat: 56.1423,
-            lng: 10.1389
-        }
-    ];
-
-    // Initialize the map
+    // Map functionality
     function initMap() {
+        if (!document.getElementById('map')) return;
+        
         // Create map centered on Aarhus
         map = L.map('map').setView([56.1629, 10.2039], 12);
         
@@ -1383,524 +1225,18 @@
         });
     }
 
-    // Initialize location cards
-    function initLocationCards() {
-        const locationsList = document.getElementById('locationsList');
-        
-        sustainableLocations.forEach(location => {
-            const card = document.createElement('div');
-            card.className = 'location-card';
-            
-            // Determine type class and display text
-            let typeClass = '';
-            let typeText = '';
-            
-            switch(location.type) {
-                case 'flea-market':
-                    typeClass = 'type-flea-market';
-                    typeText = 'Flea Market';
-                    break;
-                case 'secondhand':
-                    typeClass = 'type-secondhand';
-                    typeText = 'Secondhand Store';
-                    break;
-                case 'recycling':
-                    typeClass = 'type-recycling';
-                    typeText = 'Recycling Center';
-                    break;
-                case 'community':
-                    typeClass = 'type-community';
-                    typeText = 'Community Garden';
-                    break;
-                case 'red-cross':
-                    typeClass = 'type-red-cross';
-                    typeText = 'Red Cross Store';
-                    break;
-            }
-            
-            card.innerHTML =
-                '<div class="location-header">' +
-                    '<h3 class="location-name">' + location.name + '</h3>' +
-                    '<span class="location-type ' + typeClass + '">' + typeText + '</span>' +
-                '</div>' +
-                '<div class="location-details">' +
-                    '<div class="location-detail">' +
-                        '<span class="detail-icon">📍</span>' +
-                        '<span>' + location.address + '</span>' +
-                    '</div>' +
-                    '<div class="location-detail">' +
-                        '<span class="detail-icon">🕒</span>' +
-                        '<span>' + location.hours + '</span>' +
-                    '</div>' +
-                    '<div class="location-detail">' +
-                        '<span class="detail-icon">💰</span>' +
-                        '<span>' + location.price + '</span>' +
-                    '</div>' +
-                '</div>' +
-                '<p>' + location.description + '</p>' +
-                '<button class="btn btn-location" onclick="showOnMap(' + location.id + ')">Show on Map</button>';
-            
-            locationsList.appendChild(card);
-        });
-    }
-    
-    // Function to show location on map
-    function showOnMap(locationId) {
-        const location = sustainableLocations.find(loc => loc.id === locationId);
-        const marker = markers[locationId];
-        
-        if (location && marker) {
-            // Center map on the location and zoom in
-            map.setView([location.lat, location.lng], 16);
-            // Open the popup for that location
-            marker.openPopup();
-        }
-    }
-
-    // Initialize everything when the page loads
+    // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize random participant counts for events
-        document.getElementById('gardening-participants').textContent = 
-            Math.floor(Math.random() * 10) + 1 + " people signed up";
-        document.getElementById('cooking-participants').textContent = 
-            Math.floor(Math.random() * 10) + 1 + " people signed up";
-        document.getElementById('beach-cleanup-participants').textContent = 
-            Math.floor(Math.random() * 10) + 1 + " people signed up";
-
-        // Event sign-up functionality
-        const eventButtons = document.querySelectorAll('.event-signup-btn');
+        // Initialize events
+        initializeEvents();
         
-        // Function to update button states
-        function updateEventButtons() {
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            
-            eventButtons.forEach(button => {
-                const eventName = button.getAttribute('data-event');
-                
-                if (!currentUser) {
-                    // User is not logged in
-                    button.textContent = 'Login to Sign Up - Free';
-                    button.style.backgroundColor = '#6c757d'; // Gray color
-                } else {
-                    // User is logged in - check if already signed up
-                    const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                    const user = users.find(u => u.username === currentUser.username);
-                    
-                    if (user && user.events && user.events.includes(eventName)) {
-                        // Already signed up
-                        button.textContent = 'Signed Up';
-                        button.disabled = true;
-                        button.style.backgroundColor = '#6c757d'; // Gray color
-                    } else {
-                        // Not signed up yet
-                        button.textContent = 'Sign Up - Free';
-                        button.disabled = false;
-                        button.style.backgroundColor = ''; // Reset to original color
-                    }
-                }
-            });
-        }
-        
-        // Add click event listeners
-        eventButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const eventName = this.getAttribute('data-event');
-                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-                
-                if (!currentUser) {
-                    // Redirect to login if not logged in
-                    alert('Please log in to sign up for events');
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Get user data
-                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                const userIndex = users.findIndex(u => u.username === currentUser.username);
-                
-                if (userIndex === -1) {
-                    alert('User not found. Please log in again.');
-                    return;
-                }
-                
-                // Initialize events array if it doesn't exist
-                if (!users[userIndex].events) {
-                    users[userIndex].events = [];
-                }
-                
-                // Check if user is already signed up
-                if (users[userIndex].events.includes(eventName)) {
-                    alert('You are already signed up for this event!');
-                    return;
-                }
-                
-                // Add event to user's events
-                users[userIndex].events.push(eventName);
-                
-                // Add points for signing up (10 points per event)
-                if (!users[userIndex].points) {
-                    users[userIndex].points = 0;
-                }
-                users[userIndex].points += 10;
-                
-                // Update localStorage
-                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-                
-                // Update button
-                this.textContent = 'Signed Up';
-                this.disabled = true;
-                this.style.backgroundColor = '#6c757d';
-                
-                // Update participant count
-                const participantElement = document.getElementById(eventName + '-participants');
-                const currentCount = parseInt(participantElement.textContent);
-                participantElement.textContent = (currentCount + 1) + " people signed up";
-                
-                alert(`Successfully signed up for the event! You earned 10 points.`);
-            });
-        });
-        
-        // Initialize button states
-        updateEventButtons();
-        
-        // Update buttons when auth status changes
-        window.updateEventButtons = updateEventButtons;
-        
-        // Initialize map and location cards
+        // Initialize map if the element exists
         initMap();
-        initLocationCards();
-        updateAuthButtons();
+        
+        // Initialize auth buttons
+        if (typeof updateAuthButtons === 'function') {
+            updateAuthButtons();
+        }
     });
 </script>
-<script>
-    // Event data with addresses and times
-    const eventData = {
-        "gardening": {
-            name: "Community Gardening Workshop",
-            date: "June 15, 2023",
-            time: "10:00 AM - 2:00 PM",
-            address: "Aarhus Community Garden, 8000 Aarhus C",
-            image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-            participants: Math.floor(Math.random() * 10) + 1
-        },
-        "cooking": {
-            name: "Sustainable Cooking Class", 
-            date: "June 22, 2023",
-            time: "5:00 PM - 8:00 PM",
-            address: "Green Kitchen Aarhus, 8200 Aarhus N",
-            image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-            participants: Math.floor(Math.random() * 10) + 1
-        },
-        "beach-cleanup": {
-            name: "Beach Cleanup & Awareness",
-            date: "June 29, 2023",
-            time: "9:00 AM - 12:00 PM",
-            address: "Aarhus Beach, 8000 Aarhus C",
-            image: "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-            participants: Math.floor(Math.random() * 10) + 1
-        }
-    };
-
-    // Initialize event functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize event cards with addresses and participant counts
-        Object.keys(eventData).forEach(eventId => {
-            const event = eventData[eventId];
-            const eventCard = document.querySelector(`.event-signup-btn[data-event="${eventId}"]`);
-            
-            if (eventCard) {
-                const eventCardContainer = eventCard.closest('.event-card');
-                
-                // Add address and time to event details if not already present
-                if (!eventCardContainer.querySelector('.event-address')) {
-                    const eventDetails = eventCardContainer.querySelector('.event-details');
-                    const addressElement = document.createElement('div');
-                    addressElement.className = 'event-address';
-                    addressElement.innerHTML = `
-                        <div style="margin-bottom: 10px;">
-                            <strong>Time:</strong> ${event.time}
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <strong>Location:</strong> ${event.address}
-                        </div>
-                    `;
-                    eventDetails.insertBefore(addressElement, eventDetails.querySelector('.event-signup-info'));
-                }
-                
-                // Create cancel button container after signup info
-                const signupInfo = eventCardContainer.querySelector('.event-signup-info');
-                if (signupInfo && !eventCardContainer.querySelector('.event-cancel-btn')) {
-                    const cancelButton = document.createElement('button');
-                    cancelButton.className = 'btn btn-cancel event-cancel-btn';
-                    cancelButton.setAttribute('data-event', eventId);
-                    cancelButton.textContent = 'Cancel';
-                    cancelButton.style.display = 'none';
-                    cancelButton.style.marginTop = '5px';
-                    cancelButton.style.padding = '6px 12px';
-                    cancelButton.style.fontSize = '0.8rem';
-                    
-                    signupInfo.parentNode.insertBefore(cancelButton, signupInfo.nextSibling);
-                }
-                
-                // Set participant count
-                const participantElement = document.getElementById(`${eventId}-participants`);
-                if (participantElement) {
-                    participantElement.textContent = event.participants + " people signed up";
-                }
-            }
-        });
-
-        // Event sign-up functionality with separate cancel button
-        const eventButtons = document.querySelectorAll('.event-signup-btn');
-        
-        // Function to update button states
-        function updateEventButtons() {
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            
-            eventButtons.forEach(button => {
-                const eventName = button.getAttribute('data-event');
-                const cancelButton = document.querySelector(`.event-cancel-btn[data-event="${eventName}"]`);
-                
-                if (!currentUser) {
-                    // User is not logged in
-                    button.textContent = 'Login to Sign Up - Free';
-                    button.style.backgroundColor = '#6c757d';
-                    button.disabled = false;
-                    if (cancelButton) cancelButton.style.display = 'none';
-                } else {
-                    // User is logged in - check if already signed up
-                    const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                    const user = users.find(u => u.username === currentUser.username);
-                    
-                    if (user && user.events && user.events.includes(eventName)) {
-                        // Already signed up - show "Signed Up" and show cancel button
-                        button.textContent = 'Signed Up';
-                        button.disabled = true;
-                        button.style.backgroundColor = '#6c757d';
-                        if (cancelButton) cancelButton.style.display = 'inline-block';
-                    } else {
-                        // Not signed up yet
-                        button.textContent = 'Sign Up - Free';
-                        button.disabled = false;
-                        button.style.backgroundColor = '';
-                        if (cancelButton) cancelButton.style.display = 'none';
-                    }
-                }
-            });
-        }
-        
-        // Add click event listeners for sign up
-        eventButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const eventName = this.getAttribute('data-event');
-                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-                
-                if (!currentUser) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                const userIndex = users.findIndex(u => u.username === currentUser.username);
-                
-                if (userIndex === -1) {
-                    return;
-                }
-                
-                if (!users[userIndex].events) {
-                    users[userIndex].events = [];
-                }
-                
-                // Check if already signed up to prevent duplicates
-                if (users[userIndex].events.includes(eventName)) {
-                    return;
-                }
-                
-                // Sign up for event
-                users[userIndex].events.push(eventName);
-                
-                // Add 10 points for signing up
-                if (!users[userIndex].points) {
-                    users[userIndex].points = 0;
-                }
-                users[userIndex].points += 10;
-                
-                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-                
-                const participantElement = document.getElementById(eventName + '-participants');
-                if (participantElement) {
-                    const currentCount = parseInt(participantElement.textContent) || 0;
-                    participantElement.textContent = (currentCount + 1) + " people signed up";
-                }
-                
-                updateEventButtons();
-            });
-        });
-        
-        // Add click event listeners for cancellation
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('event-cancel-btn')) {
-                const eventName = e.target.getAttribute('data-event');
-                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-                
-                if (!currentUser) {
-                    return;
-                }
-                
-                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                const userIndex = users.findIndex(u => u.username === currentUser.username);
-                
-                if (userIndex === -1) {
-                    return;
-                }
-                
-                if (!users[userIndex].events) {
-                    users[userIndex].events = [];
-                    return;
-                }
-                
-                // Remove the event from user's events
-                const eventIndex = users[userIndex].events.indexOf(eventName);
-                if (eventIndex > -1) {
-                    users[userIndex].events.splice(eventIndex, 1);
-                    
-                    // Remove 10 points (the sign-up points)
-                    if (users[userIndex].points && users[userIndex].points >= 10) {
-                        users[userIndex].points -= 10;
-                    }
-                    
-                    localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-                    
-                    const participantElement = document.getElementById(eventName + '-participants');
-                    if (participantElement) {
-                        const currentCount = parseInt(participantElement.textContent) || 0;
-                        participantElement.textContent = Math.max(0, currentCount - 1) + " people signed up";
-                    }
-                    
-                    updateEventButtons();
-                }
-            }
-        });
-        
-        // Initialize button states
-        updateEventButtons();
-        window.updateEventButtons = updateEventButtons;
-    });
-        // Load sustainability events from JSON
-    async function loadSustainabilityEvents() {
-        try {
-            const response = await fetch('aarhus_sustainability_events.json');
-            const data = await response.json();
-            
-            // Update metadata
-            document.getElementById('last-updated').textContent = 
-                new Date(data.metadata.last_updated).toLocaleDateString('da-DK');
-            document.getElementById('event-count').textContent = data.metadata.total_events;
-            
-            displayEvents(data.events);
-        } catch (error) {
-            console.error('Error loading events:', error);
-            document.getElementById('events-container').innerHTML = `
-                <div style="text-align: center; padding: 40px; background: white; border-radius: 8px;">
-                    <h3>Could not load events</h3>
-                    <p>Please try again later or check the JSON file.</p>
-                    <p>Error: ${error.message}</p>
-                </div>
-            `;
-        }
-    }
-    
-    function displayEvents(events) {
-        const container = document.getElementById('events-container');
-        
-        let html = '';
-        
-        events.forEach((event, index) => {
-            // Get category icon
-            const categoryIcons = {
-                'cleaning': '🗑️',
-                'food': '🍽️',
-                'repair': '🔧',
-                'workshop': '👨‍🏫',
-                'gardening': '🌿',
-                'transport': '🚲',
-                'energy': '⚡',
-                'community': '👥',
-                'sustainability': '🌱'
-            };
-            
-            const mainCategory = event.categories && event.categories.length > 0 ? event.categories[0] : 'sustainability';
-            const icon = categoryIcons[mainCategory] || '📅';
-            
-            // Truncate description if too long
-            const description = event.description.length > 150 ? 
-                event.description.substring(0, 150) + '...' : event.description;
-            
-            html += `
-            <div class="event-card" data-event-id="${index}">
-                <div class="event-image" style="background-image: url('${event.image || getDefaultImage(mainCategory)}'); background-color: ${getCategoryColor(mainCategory)}">
-                    <span>${icon} ${mainCategory.toUpperCase()}</span>
-                </div>
-                <div class="event-details">
-                    <span class="event-date">${event.date || 'Dato varierer'}</span>
-                    ${event.time ? `<span style="margin-left: 10px; color: var(--dark-gray);">${event.time}</span>` : ''}
-                    <h3>${event.title}</h3>
-                    <div class="event-address">
-                        ${event.location ? `<div style="margin-bottom: 10px;"><strong>📍</strong> ${event.location}</div>` : ''}
-                        ${event.address ? `<div style="margin-bottom: 15px; font-size: 0.9em;">${event.address}</div>` : ''}
-                    </div>
-                    <p>${description}</p>
-                    <div class="event-signup-info">
-                        <div class="event-participants">${event.source || 'Local event'}</div>
-                        ${event.points ? `<div class="event-points">+${event.points} points</div>` : ''}
-                    </div>
-                    ${event.organizer ? `<div style="margin-top: 10px; font-size: 0.9rem; color: var(--dark-gray);"><strong>Organizer:</strong> ${event.organizer}</div>` : ''}
-                    <a href="${event.link}" target="_blank" class="btn btn-event">View Event & Details</a>
-                </div>
-            </div>`;
-        });
-        
-        container.innerHTML = html;
-    }
-    
-    function getDefaultImage(category) {
-        const categoryImages = {
-            'cleaning': 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-            'food': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-            'repair': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2058&q=80',
-            'workshop': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=2074&q=80',
-            'gardening': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-            'transport': 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-            'default': 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'
-        };
-        
-        return categoryImages[category] || categoryImages.default;
-    }
-    
-    function getCategoryColor(category) {
-        const colors = {
-            'cleaning': '#4CAF50',
-            'food': '#FF9800',
-            'repair': '#2196F3',
-            'workshop': '#9C27B0',
-            'gardening': '#8BC34A',
-            'transport': '#3F51B5',
-            'energy': '#FFC107',
-            'community': '#E91E63',
-            'sustainability': '#009688'
-        };
-        
-        return colors[category] || '#607D8B';
-    }
-    
-    // Load events when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        loadSustainabilityEvents();
-    });
-</script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-</body>
-</html>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
