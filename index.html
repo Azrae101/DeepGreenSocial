@@ -125,48 +125,78 @@
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(46, 125, 50, 0.8), rgba(46, 125, 50, 0.9)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80');
-            background-size: cover;
-            background-position: center;
-            color: var(--white);
-            padding: 80px 0;
+            background: linear-gradient(120deg, #388e3c 0%, #4caf50 100%);
+            color: #fff;
+            padding: 100px 0 80px 0;
             text-align: center;
+            box-shadow: 0 4px 24px rgba(56,142,60,0.10);
+            position: relative;
         }
-
+        .hero::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 0; bottom: 0;
+            background: url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80') center/cover no-repeat;
+            opacity: 0.18;
+            z-index: 0;
+        }
+        .hero .container {
+            position: relative;
+            z-index: 1;
+        }
         .hero h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 3rem;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(56,142,60,0.10);
         }
-
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.35em;
+            margin: 0 auto 32px auto;
+            color: #e8f5e9;
             max-width: 700px;
-            margin: 0 auto 30px;
         }
-
         .btn-hero {
-            background-color: var(--accent-color);
-            color: var(--white);
-            padding: 12px 24px;
-            font-size: 1.1rem;
+            background: #fff;
+            color: #388e3c;
+            padding: 16px 48px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(56,142,60,0.10);
+            border: 2px solid #388e3c;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+            display: inline-block;
+        }
+        .btn-hero:hover {
+            background: #388e3c;
+            color: #fff;
+        }
+        @media (max-width: 900px) {
+            .hero h2 {
+                font-size: 2.1em;
+            }
         }
 
         /* Section Styles */
         section {
             padding: 60px 0;
         }
-
+        .features-section {
+            background: #f0f4c3;
+            padding: 60px 0 50px 0;
+        }
         .section-title {
             text-align: center;
             margin-bottom: 40px;
             color: var(--primary-green);
         }
-
         .section-title h2 {
             font-size: 2rem;
             margin-bottom: 10px;
         }
-
         .section-title p {
             color: var(--dark-gray);
             max-width: 700px;
@@ -176,32 +206,47 @@
         /* Features Grid */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 36px;
+            max-width: 1100px;
+            margin: 48px auto 0 auto;
         }
-
+        @media (max-width: 900px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+            }
+        }
+        }
         .feature-card {
-            background-color: var(--white);
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            background: #fff;
+            padding: 28px 20px 24px 20px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(56,142,60,0.10), 0 1.5px 8px rgba(0,0,0,0.03);
+            text-align: left;
+            transition: box-shadow 0.18s, transform 0.18s;
+            border: 1.5px solid #e0e0e0;
         }
-
+        }
         .feature-card:hover {
-            transform: translateY(-10px);
+            box-shadow: 0 8px 32px rgba(56,142,60,0.16), 0 2px 12px rgba(0,0,0,0.06);
+            transform: translateY(-4px) scale(1.01);
         }
-
-        .feature-icon {
-            font-size: 40px;
-            color: var(--primary-green);
-            margin-bottom: 20px;
-        }
-
         .feature-card h3 {
-            margin-bottom: 15px;
-            color: var(--dark-green);
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2e7d32;
+            font-size: 1.13em;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .feature-card p {
+            color: #333;
+            font-size: 1em;
+            margin-bottom: 0;
+        }
+        @media (max-width: 900px) {
+            /* Already handled above for grid */
         }
 
         /* Events Section */
@@ -624,7 +669,7 @@
     </section>
 
     <!-- Features Section -->
-    <section>
+    <section class="features-section">
         <div class="container">
             <div class="section-title">
                 <h2>Why Social & Green?</h2>
@@ -639,8 +684,6 @@
                     <h3>Social Community</h3>
                     <p>Meet others who want to help the climate. Build friendships and work together for a better future.</p>
                 </div>
-            </div>
-            <div class="features-grid" style="margin-top:32px;">
                 <div class="feature-card">
                     <h3>Point System & Rewards</h3>
                     <p>Earn points for every action. Redeem them for eco-friendly rewards, experiences, or donations. Your effort is recognized and celebrated.</p>
@@ -648,6 +691,14 @@
                 <div class="feature-card">
                     <h3>Educational & Gamified Learning</h3>
                     <p>Access practical guides, workshops, and games that teach you how to help the climate in fun, effective ways.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Track Your Impact</h3>
+                    <p>Measure your contributions and see the difference you make through our transparent points system.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>How It Works</h3>
+                    <p>Earn points for every sustainable action, event participation, and advocacy effort. Your impact is recognized and celebrated; because every action counts.</p>
                 </div>
             </div>
         </div>
@@ -657,13 +708,11 @@
     <section>
         <div class="container">
             <div class="section-title">
-                <h2>Track Your Impact</h2>
-                <p>Measure your contributions and see the difference you make through our transparent points system.</p>
+                <h2>Points & Rewards</h2>
+                <p>Earn and redeem points for every sustainable action, event participation, and advocacy effort. Your impact is recognized and celebrated; because every action counts.</p>
             </div>
             <div class="points-system">
-                <h3>How It Works</h3>
-                <p>Earn points for every sustainable action, event participation, and advocacy effort. Your impact is recognized and celebrated—because every action counts.</p>
-                <div class="points-benefits">
+                <div class="points-benefits" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
                     <div class="benefit-item">
                         <strong>Participate in Events</strong><br>
                         Join workshops, cleanups, and campaigns to earn points and drive change.
@@ -677,7 +726,7 @@
                         Use your points for eco-friendly products, experiences, or donations.
                     </div>
                 </div>
-                <p style="margin-top: 20px; font-style: italic; color: var(--dark-gray);">
+                <p style="margin-top: 20px; font-style: italic; color: var(--dark-gray); text-align:center;">
                     Points are a reflection of your commitment to a sustainable future.
                 </p>
             </div>
