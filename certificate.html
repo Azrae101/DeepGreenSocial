@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Certificate - Social & Green</title>
+    <style>
+        /* Certificate Styles */
+        .certificate-section {
+            padding: 40px 0;
+            background-color: #f9f9f9;
+        }
+        
+        .certificate-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+            border: 20px solid #2e7d32;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .certificate-container::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(46, 125, 50, 0.1) 0%, rgba(46, 125, 50, 0) 70%);
+            border-radius: 50%;
+        }
+        
+        .certificate-container::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0) 70%);
+            border-radius: 50%;
+        }
+        
+        .certificate-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .certificate-title {
+            font-size: 3.5rem;
+            color: #1b5e20;
+            margin-bottom: 10px;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+        }
+        
+        .certificate-subtitle {
+            font-size: 1.2rem;
+            color: #424242;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+        
+        .certificate-seal {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .certificate-body {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .award-text {
+            font-size: 1.8rem;
+            color: #424242;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+        
+        .recipient-name {
+            font-size: 2.5rem;
+            color: #1b5e20;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-bottom: 3px solid #ff9800;
+            display: inline-block;
+        }
+        
+        .achievement-text {
+            font-size: 1.3rem;
+            color: #424242;
+            margin: 30px 0;
+            line-height: 1.6;
+        }
+        
+        .achievement-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .stat-item {
+            background: linear-gradient(135deg, #fafafa, #ffffff);
+            border-radius: 10px;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            color: #1b5e20;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-family: 'Georgia', serif;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #616161;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .activity-details {
+            background-color: #f0f7f0;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 5px solid #ff9800;
+        }
+        
+        .activity-title {
+            font-size: 1.5rem;
+            color: #1b5e20;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .activity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .activity-item {
+            text-align: center;
+            padding: 20px 15px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .activity-count {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1b5e20;
+            margin-bottom: 8px;
+            font-family: 'Georgia', serif;
+        }
+        
+        .activity-name {
+            font-size: 0.95rem;
+            color: #424242;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        .hours-section {
+            background: linear-gradient(135deg, #fff8e1, #ffecb3);
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            border: 2px solid #ffb74d;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.15);
+        }
+        
+        .hours-title {
+            font-size: 1.3rem;
+            color: #1b5e20;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-family: 'Georgia', serif;
+        }
+        
+        .hours-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #ef6c00;
+            font-family: 'Georgia', serif;
+        }
+        
+        .hours-label {
+            font-size: 1rem;
+            color: #5d4037;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .climate-impact {
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 40px 0;
+            border-right: 5px solid #2e7d32;
+        }
+        
+        .impact-title {
+            font-size: 1.5rem;
+            color: #1b5e20;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .impact-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .impact-list li {
+            padding: 12px 0;
+            font-size: 1.1rem;
+            color: #424242;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .impact-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .impact-value {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        
+        .certificate-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .signature-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .signature-line {
+            width: 200px;
+            height: 1px;
+            background-color: #424242;
+            margin: 40px auto 10px;
+        }
+        
+        .signature-name {
+            font-size: 1.2rem;
+            color: #424242;
+            font-weight: bold;
+        }
+        
+        .signature-title {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .certificate-date {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1.1rem;
+            color: #424242;
+        }
+        
+        .certificate-id {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .certificate-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .btn-print, .btn-download {
+            padding: 12px 35px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .btn-print {
+            background-color: #2e7d32;
+            color: white;
+        }
+        
+        .btn-download {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .btn-print:hover, .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            color: rgba(46, 125, 50, 0.05);
+            white-space: nowrap;
+            font-weight: bold;
+            z-index: 0;
+        }
+        
+        /* Media query for printing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            
+            .certificate-section, .certificate-section * {
+                visibility: visible;
+            }
+            
+            .certificate-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                background: white;
+            }
+            
+            .certificate-controls {
+                display: none;
+            }
+            
+            .certificate-container {
+                box-shadow: none;
+                border: 15px solid #2e7d32;
+                page-break-inside: avoid;
+            }
+            
+            .btn-print, .btn-download {
+                display: none;
+            }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .certificate-container {
+                padding: 20px;
+                border-width: 10px;
+            }
+            
+            .certificate-title {
+                font-size: 2.5rem;
+            }
+            
+            .recipient-name {
+                font-size: 2rem;
+            }
+            
+            .achievement-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .activity-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .certificate-footer {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .watermark {
+                font-size: 80px;
+            }
+        }
+    </style>
+    <!-- Include jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Include html2canvas for capturing the certificate as image -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <!-- Header (Same as points page) -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <span class="logo-icon">🌱</span>
+                <h1>Social & Green</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="index.html#events">Events</a></li>
+                    <li><a href="index.html#sustainable-aarhus">Secondhand Stores</a></li>
+                    <li><a href="game.html">Games</a></li>
+                    <li><a href="points.html">My Points</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons" id="authButtons">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+        </div>
+    </header>
+
+        <!-- Certificate Section -->
+        <section class="certificate-section">
+            <div class="container">
+                <div class="certificate-header">
+                    <h1 class="certificate-title">Certificate of Achievement</h1>
+                    <div class="certificate-subtitle">in Sustainability & Environmental Stewardship</div>
+                    <div class="certificate-seal" style="background: linear-gradient(135deg, #1b5e20, #2e7d32); font-family: 'Georgia', serif; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px;">Social & Green</div>
+                </div>
+                
+                <div class="certificate-container" id="certificateContent">
+                    <!-- Decorative Corner Elements -->
+                    <div style="position: absolute; top: 10px; left: 10px; width: 80px; height: 80px; border-top: 4px solid #1b5e20; border-left: 4px solid #1b5e20; z-index: 1;"></div>
+                    <div style="position: absolute; top: 10px; right: 10px; width: 80px; height: 80px; border-top: 4px solid #1b5e20; border-right: 4px solid #1b5e20; z-index: 1;"></div>
+                    <div style="position: absolute; bottom: 10px; left: 10px; width: 80px; height: 80px; border-bottom: 4px solid #1b5e20; border-left: 4px solid #1b5e20; z-index: 1;"></div>
+                    <div style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; border-bottom: 4px solid #1b5e20; border-right: 4px solid #1b5e20; z-index: 1;"></div>
+                    
+                    <!-- Watermark -->
+                    <div class="watermark">Social & Green</div>
+                    
+                    <div class="certificate-body">
+                        <p class="award-text" style="font-style: italic; font-weight: 300; font-family: 'Georgia', serif;">This is to certify that</p>
+                        
+                        <div class="recipient-name" id="certificateRecipient" style="text-transform: capitalize; letter-spacing: 1px; font-family: 'Georgia', serif;">Loading...</div>
+                        
+                        <p class="achievement-text" style="max-width: 800px; margin: 30px auto; line-height: 1.8; font-family: 'Georgia', serif;">
+                            has demonstrated exceptional commitment to environmental sustainability and social responsibility
+                            through active participation in educational programs, community initiatives, and sustainable practices,
+                            thereby contributing meaningfully to the advancement of environmental stewardship.
+                        </p>
+                        
+                        <!-- Activity Stats -->
+                        <div class="activity-details" style="background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e9 100%); box-shadow: 0 4px 15px rgba(46, 125, 50, 0.1);">
+                            <h3 class="activity-title" style="font-family: 'Georgia', serif; font-weight: 600;">
+                                Summary of Achievements
+                            </h3>
+                            <div class="activity-grid" id="activitySummary">
+                                <!-- Activity items will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Hours Section (only shown if ≥1 hour) -->
+                        <div class="hours-section" id="hoursSection" style="display: none; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);">
+                            <h3 class="hours-title" style="font-family: 'Georgia', serif; font-weight: 600;">
+                                Documented Hours of Community Service
+                            </h3>
+                            <div class="hours-value" id="totalHours" style="text-shadow: none; font-family: 'Georgia', serif;">0</div>
+                            <div class="hours-label" style="font-style: italic; font-family: 'Georgia', serif;">Hours dedicated to environmental initiatives</div>
+                        </div>
+                        
+                        <!-- Points Breakdown -->
+                        <div class="achievement-stats" id="pointsBreakdown" style="margin: 50px 0;">
+                            <!-- Points breakdown will be populated by JavaScript -->
+                        </div>
+                    
+                    <div class="certificate-date" style="margin-top: 50px; font-style: italic; color: #1b5e20; font-weight: 600;">
+                        Awarded on <span id="certificateDate" style="color: #ff9800;">Loading...</span>
+                    </div>
+                    
+                    <div class="certificate-id" style="font-family: 'Courier New', monospace; background: #f5f5f5; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-top: 15px;">
+                        Certificate ID: <span id="certificateId" style="color: #2e7d32; font-weight: bold;">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="certificate-footer" style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 30px; margin-top: 70px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                    <div class="signature-box">
+                        <div class="signature-line" style="background: linear-gradient(to right, transparent, #2e7d32, transparent);"></div>
+                        <div class="signature-name" style="color: #1b5e20;">Clara Holst</div>
+                        <div class="signature-title" style="color: #666; font-style: italic; font-size: 0.95rem;">Developer & Founder</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="signature-line" style="background: linear-gradient(to right, transparent, #2e7d32, transparent);"></div>
+                        <div class="signature-name" style="color: #1b5e20;">Lya Zhang</div>
+                        <div class="signature-title" style="color: #666; font-style: italic; font-size: 0.95rem;">Founder</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="signature-line" style="background: linear-gradient(to right, transparent, #2e7d32, transparent);"></div>
+                        <div class="signature-name" style="color: #1b5e20;">Howard Yoni Paa Quecy</div>
+                        <div class="signature-title" style="color: #666; font-style: italic; font-size: 0.95rem;">Founder</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="certificate-controls">
+                <button class="btn-print" onclick="printCertificate()">
+                    Print Certificate
+                </button>
+                <button class="btn-download" onclick="downloadAsPDF()">
+                    Download as PDF
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (Same as points page) -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Social & Green</h3>
+                    <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">in</a>
+                        <a href="#" class="social-icon">ig</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="index.html#events">Events</a></li>
+                        <li><a href="game.html">Games</a></li>
+                        <li><a href="index.html#news">News</a></li>
+                        <li><a href="points.html">My Points</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li>123 Green Street, Eco City</li>
+                        <li>+1 (123) 456-7890</li>
+                        <li>info@Social & Green.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Social & Green. All rights reserved. | Designed with 💚 for a greener planet</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            
+            if (!currentUser) {
+                alert('Please log in to view your certificate');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Update auth buttons
+            updateAuthButtons();
+            
+            // Load certificate data
+            loadCertificateData(currentUser);
+        });
+        
+        function updateAuthButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            
+            if (currentUser) {
+                authButtons.innerHTML = `
+                    <span style="margin-right: 15px; color: #2e7d32;">Welcome, ${currentUser.firstName}</span>
+                    <a href="index.html" class="btn" style="background-color: transparent; color: #2e7d32; border: 1px solid #2e7d32; padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">Home</a>
+                    <a href="points.html" class="btn" style="background-color: #2e7d32; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">My Points</a>
+                    <button class="btn" onclick="logout()" style="background-color: #ff9800; color: white; padding: 8px 16px; border-radius: 4px; border: none;">Logout</button>
+                `;
+            } else {
+                authButtons.innerHTML = `
+                    <a href="login.html" class="btn" style="background-color: transparent; color: #2e7d32; border: 1px solid #2e7d32; padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">Login</a>
+                    <a href="register.html" class="btn" style="background-color: #2e7d32; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Register</a>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('sustainalearn_currentUser');
+            window.location.href = 'index.html';
+        }
+        
+        function loadCertificateData(user) {
+            // Set recipient name
+            document.getElementById('certificateRecipient').textContent = 
+                `${user.firstName} ${user.lastName || ''}`;
+            
+            // Calculate certificate data
+            const activityStats = calculateActivityStats(user);
+            const pointsStats = calculatePointsStats(user);
+            const climateImpact = calculateClimateImpact(user);
+            const today = new Date();
+            
+            // Format date
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('certificateDate').textContent = 
+                today.toLocaleDateString('en-US', options);
+            
+            // Generate certificate ID
+            const certificateId = `SL-${user.username.substring(0, 3).toUpperCase()}-${Date.now().toString().substr(-6)}`;
+            document.getElementById('certificateId').textContent = certificateId;
+            
+            // Populate activity summary
+            populateActivitySummary(activityStats);
+            
+            // Populate points breakdown
+            populatePointsBreakdown(pointsStats);
+            
+            // Populate climate impact
+            populateClimateImpact(climateImpact);
+            
+            // Show/hide hours section based on hours
+            if (activityStats.hours >= 1) {
+                document.getElementById('hoursSection').style.display = 'block';
+                document.getElementById('totalHours').textContent = activityStats.hours;
+            }
+        }
+        
+        function calculateActivityStats(user) {
+            // Get actual activity data from user
+            const eventsAttended = user.eventsAttended || [];
+            const articlesRead = user.articlesRead || [];
+            const quizzesPassed = user.articlesQuizPassed || [];
+            const dailyCheckins = user.dailyCheckins || [];
+            const gamePoints = user.gamePoints || 0;
+            
+            // Calculate hours (assuming 2 hours per event)
+            const hours = eventsAttended.length * 2;
+            
+            return {
+                events: eventsAttended.length,
+                articles: articlesRead.length,
+                quizzes: quizzesPassed.length,
+                checkins: dailyCheckins.length,
+                games: gamePoints > 0 ? Math.ceil(gamePoints / 10) : 0, // Assuming ~10 points per game
+                hours: hours,
+                streak: user.streak || 0,
+                level: Math.floor((user.points || 0) / 100) + 1
+            };
+        }
+        
+        function calculatePointsStats(user) {
+            // Calculate points from different sources (same as points page)
+            const eventsPoints = (user.eventsAttended?.length || 0) * 10; // 10 points for signup
+            const gamesPoints = user.gamePoints || 0;
+            const articlesPoints = (user.articlesRead?.length || 0) * 50; // 50 points per article
+            const quizzesPoints = (user.articlesQuizPassed?.length || 0) * 100; // 100 points per quiz
+            const dailyPoints = calculateDailyPoints(user);
+            
+            const totalPoints = user.points || 0;
+            
+            return {
+                total: totalPoints,
+                events: eventsPoints,
+                games: gamesPoints,
+                articles: articlesPoints,
+                quizzes: quizzesPoints,
+                daily: dailyPoints
+            };
+        }
+        
+        function calculateDailyPoints(user) {
+            // Calculate points from daily check-ins
+            const checkins = user.dailyCheckins || [];
+            let dailyPoints = checkins.length * 10; // 10 points per check-in
+            
+            // Add streak bonuses
+            const streak = user.streak || 0;
+            const streakBonuses = Math.floor(streak / 7) * 70; // 70 points per 7-day streak
+            
+            return dailyPoints + streakBonuses;
+        }
+        
+        function calculateClimateImpact(user) {
+            const activityStats = calculateActivityStats(user);
+            const pointsStats = calculatePointsStats(user);
+            
+            // Calculate based on actual activities
+            const impact = [];
+            
+            // Events impact (each event ~3kg CO2 saved)
+            if (activityStats.events > 0) {
+                const co2FromEvents = activityStats.events * 3; // kg
+                impact.push({
+                    label: 'CO₂ Reduction from Events',
+                    value: `${co2FromEvents} kg`,
+                    description: 'Based on community cleanups & workshops'
+                });
+            }
+            
+            // Learning impact
+            const learningActivities = activityStats.articles + activityStats.quizzes;
+            if (learningActivities > 0) {
+                impact.push({
+                    label: 'Sustainability Knowledge Activities',
+                    value: `${learningActivities}`,
+                    description: 'Articles read & quizzes completed'
+                });
+            }
+            
+            // Community engagement
+            if (activityStats.checkins > 0) {
+                impact.push({
+                    label: 'Days of Active Engagement',
+                    value: `${activityStats.checkins} days`,
+                    description: 'Consistent daily participation'
+                });
+            }
+            
+            // Streak achievement
+            if (activityStats.streak > 0) {
+                impact.push({
+                    label: 'Longest Sustainability Streak',
+                    value: `${activityStats.streak} days`,
+                    description: 'Continuous environmental commitment'
+                });
+            }
+            
+            // Level achievement
+            impact.push({
+                label: 'Sustainability Level Achieved',
+                value: `Level ${activityStats.level}`,
+                description: 'Based on total points earned'
+            });
+            
+            // Total points impact
+            impact.push({
+                label: 'Total Points Earned',
+                value: `${pointsStats.total}`,
+                description: 'Overall sustainability score'
+            });
+            
+            return impact;
+        }
+        
+        function populateActivitySummary(stats) {
+            const container = document.getElementById('activitySummary');
+            container.innerHTML = '';
+            
+            // Define activity items with professional labels
+            const activities = [
+                {
+                    name: 'Community Events Attended',
+                    count: stats.events,
+                    icon: '',
+                    points: stats.events * 10,
+                    showPoints: false
+                },
+                {
+                    name: 'Educational Articles Completed',
+                    count: stats.articles,
+                    icon: '',
+                    points: stats.articles * 50,
+                    showPoints: false
+                },
+                {
+                    name: 'Knowledge Assessments Passed',
+                    count: stats.quizzes,
+                    icon: '',
+                    points: stats.quizzes * 100,
+                    showPoints: false
+                },
+                {
+                    name: 'Days of Active Participation',
+                    count: stats.checkins,
+                    icon: '',
+                    points: stats.checkins * 10,
+                    showPoints: false
+                },
+                {
+                    name: 'Educational Games Completed',
+                    count: stats.games,
+                    icon: '',
+                    points: stats.games * 10,
+                    showPoints: false
+                }
+            ];
+            
+            // Filter out activities with 0 count (except we might want to show all)
+            const activitiesToShow = activities.filter(activity => activity.count > 0);
+            
+            // If all are 0, show at least one message
+            if (activitiesToShow.length === 0) {
+                container.innerHTML = `
+                    <div class="activity-item" style="grid-column: 1 / -1;">
+                        <div class="activity-count">0</div>
+                        <div class="activity-name">Activities Completed</div>
+                        <div style="font-style: italic; color: #666; margin-top: 10px;">Begin your sustainability journey today</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Populate activity grid
+            activitiesToShow.forEach(activity => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-count" style="font-size: 2.5rem; color: #1b5e20; font-weight: 700;">${activity.count}</div>
+                    <div class="activity-name" style="font-size: 0.95rem; color: #424242; margin-top: 8px; font-weight: 500;">${activity.name}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function populatePointsBreakdown(stats) {
+            const container = document.getElementById('pointsBreakdown');
+            container.innerHTML = '';
+            
+            const breakdownItems = [
+                {
+                    label: 'Total Sustainability Points',
+                    value: stats.total,
+                    isTotal: true
+                },
+                {
+                    label: 'Community Events',
+                    value: stats.events
+                },
+                {
+                    label: 'Educational Games',
+                    value: stats.games
+                },
+                {
+                    label: 'Learning Articles',
+                    value: stats.articles
+                },
+                {
+                    label: 'Knowledge Assessments',
+                    value: stats.quizzes
+                },
+                {
+                    label: 'Daily Participation',
+                    value: stats.daily
+                }
+            ];
+            
+            breakdownItems.forEach(item => {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'stat-item';
+                if (item.isTotal) {
+                    statDiv.style.background = 'linear-gradient(135deg, #e8f5e9, #c8e6c9)';
+                    statDiv.style.border = '2px solid #2e7d32';
+                    statDiv.style.boxShadow = '0 4px 12px rgba(46, 125, 50, 0.2)';
+                }
+                statDiv.innerHTML = `
+                    <div class="stat-value" style="font-family: 'Georgia', serif;">${item.value}</div>
+                    <div class="stat-label" style="font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">${item.label}</div>
+                `;
+                container.appendChild(statDiv);
+            });
+        }
+        
+        function populateClimateImpact(impact) {
+            const container = document.getElementById('climateImpact');
+            container.innerHTML = '';
+            
+            impact.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div>
+                        <strong>${item.label}</strong>
+                        <div style="font-size: 0.9rem; color: #666; margin-top: 3px;">${item.description}</div>
+                    </div>
+                    <div class="impact-value">${item.value}</div>
+                `;
+                container.appendChild(li);
+            });
+        }
+        
+        function printCertificate() {
+            window.print();
+        }
+        
+        async function downloadAsPDF() {
+            try {
+                // Show loading state
+                const downloadBtn = document.querySelector('.btn-download');
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = 'Generating PDF...';
+                downloadBtn.disabled = true;
+                
+                // Wait a moment for any animations to complete
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Use html2canvas to capture the certificate
+                const certificateElement = document.getElementById('certificateContent');
+                
+                // Temporarily hide controls for capture
+                const controls = document.querySelector('.certificate-controls');
+                const originalDisplay = controls.style.display;
+                controls.style.display = 'none';
+                
+                // Capture the certificate
+                const canvas = await html2canvas(certificateElement, {
+                    scale: 2, // Higher quality
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                // Restore controls
+                controls.style.display = originalDisplay;
+                
+                // Convert canvas to image
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Calculate dimensions
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                
+                // Calculate image dimensions to fit page
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = imgWidth / imgHeight;
+                
+                let finalWidth = pageWidth - 20; // 10mm margin on each side
+                let finalHeight = finalWidth / ratio;
+                
+                // If height is too large, scale down
+                if (finalHeight > pageHeight - 20) {
+                    finalHeight = pageHeight - 20;
+                    finalWidth = finalHeight * ratio;
+                }
+                
+                // Center the image
+                const x = (pageWidth - finalWidth) / 2;
+                const y = (pageHeight - finalHeight) / 2;
+                
+                // Add image to PDF
+                pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+                
+                // Add metadata
+                const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+                const fileName = `Sustainability_Certificate_${currentUser.firstName}_${currentUser.lastName || ''}_${Date.now()}.pdf`;
+                
+                // Save PDF
+                pdf.save(fileName);
+                
+                // Restore button state
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+                
+                // Show success message
+                alert('Certificate downloaded successfully!');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('There was an error generating the PDF. Please try printing instead.');
+                
+                // Restore button state
+                const downloadBtn = document.querySelector('.btn-download');
+                downloadBtn.innerHTML = 'Download as PDF';
+                downloadBtn.disabled = false;
+            }
+        }
+        
+        // Add this CSS for the button styling
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn {
+                padding: 8px 16px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                border: none;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            
+            .btn:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+            
+            .container {
+                width: 100%;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+            }
+            
+            .header-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 0;
+            }
+            
+            .logo {
+                display: flex;
+                align-items: center;
+            }
+            
+            .logo h1 {
+                color: #2e7d32;
+                font-size: 24px;
+                margin-left: 10px;
+            }
+            
+            .logo-icon {
+                font-size: 28px;
+                color: #2e7d32;
+            }
+            
+            nav ul {
+                display: flex;
+                list-style: none;
+            }
+            
+            nav ul li {
+                margin-left: 20px;
+            }
+            
+            nav ul li a {
+                text-decoration: none;
+                color: #424242;
+                font-weight: 500;
+                padding: 8px 12px;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+            }
+            
+            nav ul li a:hover {
+                background-color: #4caf50;
+                color: white;
+            }
+            
+            .social-links {
+                display: flex;
+                gap: 15px;
+                margin-top: 15px;
+            }
+            
+            .social-icon {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                background-color: #4caf50;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                text-decoration: none;
+                transition: background-color 0.3s ease;
+            }
+            
+            .social-icon:hover {
+                background-color: #ff9800;
+            }
+            
+            footer {
+                background-color: #1b5e20;
+                color: white;
+                padding: 40px 0 20px;
+                margin-top: 60px;
+            }
+            
+            .footer-content {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 30px;
+                margin-bottom: 30px;
+            }
+            
+            .footer-column h3 {
+                margin-bottom: 20px;
+                font-size: 1.2rem;
+            }
+            
+            .footer-column ul {
+                list-style: none;
+            }
+            
+            .footer-column ul li {
+                margin-bottom: 10px;
+            }
+            
+            .footer-column ul li a {
+                color: #f5f5f5;
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
+            
+            .footer-column ul li a:hover {
+                color: #ff9800;
+            }
+            
+            .copyright {
+                text-align: center;
+                padding-top: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                font-size: 0.9rem;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
