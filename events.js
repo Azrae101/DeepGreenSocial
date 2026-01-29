@@ -87,7 +87,7 @@ const eventData = [
             id: 8,
             name: 'Beach Cleanup & Awareness',
             date: '29/11/2025 - 09:00–12:00',
-            image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
             title: 'Beach Cleanup',
             description: 'Join us for a beach cleanup to protect our local marine environment.',
             location: 'Aarhus Beach, 8000 Aarhus C',
@@ -166,5 +166,17 @@ const eventData = [
             points: '+10 pts signup | +200 pts completion',
             link: 'https://fb.me/e/9lWjWnOfE',
             linkText: 'Facebook Event'
+        },
+        {
+            id: 15,
+            name: "Collage Workshop - One man's trash is this woman's treasure!",
+            date: '8/2/2026 - 14:00–17:00',
+            image: 'images/collage.png',
+            title: 'Collage Workshop',
+            description: 'Kom med til workshop med kunstner Marina Rubini Rordam aka Marina Scissorhands, hvis finurlige og detaljerige tankegang præger hendes tilgang til både kunst og liv. Du inviteres ind i hendes enorme arkiv af billeder og materialer, hvor du kan skabe dit eget humoristiske, modige eller quirky collagekunstværk. Kaffe/te og snacks er inkluderet. Begrænsede pladser – booking og betaling er påkrævet.',
+            location: 'Rosenkrantzgade 22, baghuset, 8000 Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://allevents.in/arhus/collage-workshop-one-mans-trash-is-this-womans-treasure/200029308050526',
+            linkText: 'Event Info'
         }
     ];
