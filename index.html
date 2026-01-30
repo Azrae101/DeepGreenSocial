@@ -50,7 +50,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
+            padding: 20px 0;
         }
 
         .logo {
@@ -285,7 +285,7 @@
                 max-width: 500px;
             }
         }
-        }
+        
         .feature-card {
             background: #fff;
             padding: 28px 20px 24px 20px;
@@ -295,7 +295,7 @@
             transition: box-shadow 0.18s, transform 0.18s;
             border: 1.5px solid #e0e0e0;
         }
-        }
+        
         .feature-card:hover {
             box-shadow: 0 8px 32px rgba(56,142,60,0.16), 0 2px 12px rgba(0,0,0,0.06);
             transform: translateY(-4px) scale(1.01);
@@ -794,6 +794,115 @@
             height: 400px;
         }
     }
+
+    /* Scroll to Top Button */
+    #scrollToTop {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 55px;
+        height: 55px;
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        transition: all 0.3s ease;
+        z-index: 999;
+    }
+
+    #scrollToTop:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+    }
+
+    #scrollToTop::before {
+        content: '↑';
+        font-size: 32px;
+        font-weight: bold;
+        color: white;
+        display: block;
+    }
+
+    #scrollToTop.show {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        #scrollToTop {
+            width: 50px;
+            height: 50px;
+            bottom: 20px;
+            right: 20px;
+        }
+        
+        #scrollToTop::before {
+            font-size: 28px;
+        }
+    }
+
+    /* Fun Fact Section */
+    #fun-fact {
+        padding: 80px 20px;
+        background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+    }
+
+    .fun-fact-card {
+        max-width: 900px;
+        margin: auto;
+        padding: 40px 50px;
+        border-radius: 20px;
+        background: white;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fun-fact-card::before {
+        content: "💡";
+        font-size: 120px;
+        position: absolute;
+        top: -25px;
+        right: 20px;
+        opacity: 0.08;
+    }
+
+    .fun-fact-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #2e7d32;
+    }
+
+    #fun-fact-text {
+        font-size: 1.25rem;
+        line-height: 1.7;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .fun-fact-source {
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+    }
+
     </style>
 </head>
 <body>
@@ -801,7 +910,7 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 30px; width: auto;">
                 <h1>Social & Green</h1>
             </div>
             <nav>
@@ -1018,9 +1127,20 @@
                     <div style="color: #f44336; font-weight: bold; font-size: 0.9rem;">SIMPLE & EFFECTIVE</div>
                 </div>
             </div>
+
+            <!-- Fun Fact Section -->
+            <section id="fun-fact">
+                <div class="container">
+                    <div class="fun-fact-card">
+                        <h2 class="fun-fact-title">🌱 Climate Fun Fact</h2>
+                        <p id="fun-fact-text"></p>
+                        <p id="fun-fact-source" class="fun-fact-source"></p>
+                    </div>
+                </div>
+            </section>
             
             <!-- CTA Button -->
-            <div style="text-align: center; margin-top: 60px;">
+            <div style="text-align: center; margin-top: 1px;">
                 <a href="#events" class="btn-hero" style="background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%); color: white; padding: 18px 50px; font-size: 1.2rem; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(46, 125, 50, 0.3); transition: all 0.3s ease;">
                     <span>Start Making a Difference</span>
                     <span style="font-size: 1.2rem;">→</span>
@@ -1176,10 +1296,14 @@
             </div>
         </div>
     </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop" aria-label="Scroll to top"></button>
+
 <script>
     // Replace the parseDanishDate function with this corrected version:
     function parseDanishDate(dateStr) {
-        // Extract date part (e.g., "6/12/2025 - 10:00–11:30" -> "6/12/2025")
+        // Extract date part (e.g., "6/12/2025 - 10:00-11:30" -> "6/12/2025")
         const datePart = dateStr.split(' - ')[0];
         
         // Parse day, month, year
@@ -1789,6 +1913,113 @@
             updateAuthButtons();
         }
     });
+
+    const funFacts = [
+    {
+    text: "Danish households sorting trash correctly reached 68% recycling. Your bin accuracy saves 500-700 kg CO2e per home each year by keeping waste out of methane-producing landfills.",
+    source: "European Parliament (2024)"
+    },
+    {
+    text: "Picking up 1 kg of litter avoids 0.7 kg CO2e. Multiply that by millions of people and cleanups like yours scale into national climate impact.",
+    source: "CONCITO (2023)"
+    },
+    {
+    text: "Buying recycled paper cuts energy use by 50% compared to virgin paper. Recycling just 1 tonne avoids 1.2 tonnes CO2e: your office or school choice matters.",
+    source: "Danish Energy Agency (2024)"
+    },
+    {
+    text: "Community cleanups remove 1,000+ kg of waste. When you join one, your effort helps prevent hundreds of kilos of CO2e emissions short-term.",
+    source: "Climate Action WA (2024)"
+    },
+    {
+    text: "Recycling 1 tonne of plastic saves 1.8 tonnes CO2e versus producing new plastic: your sorted bottles directly drive that reduction.",
+    source: "European Parliament (2024)"
+    },
+    {
+    text: "If households across Denmark sorted fully, emissions could drop by 3 million tonnes CO2e. One person’s habit helps power that national shift.",
+    source: "Danish Energy Agency (2024)"
+    },
+    {
+    text: "Choosing recycled goods reduces Denmark’s import emissions. A single conscious purchase can avoid up to 0.5 tonnes CO2e across supply chains.",
+    source: "Danish Energy Agency (2024)"
+    },
+    {
+    text: "Better sorting boosts city recycling recovery by 25%. Your quick check at the bin can save around 300 kg CO2e per year.",
+    source: "CONCITO (2023)"
+    },
+    {
+    text: "Recycling 100 aluminum cans saves about 13 kg CO2e thanks to energy-efficient Danish systems: your drink choices add up fast.",
+    source: "David Suzuki Foundation (2025)"
+    },
+    {
+    text: "Scaling recycled buying habits could halve Denmark’s non-ETS emissions by 2030. Your shopping cart helps push that transition.",
+    source: "UNFCCC (2024)"
+    },
+    {
+    text: "Picking up just 1 kg of litter avoids 0.7 kg CO2e: about the impact of running an LED bulb for a year. Your walk can double as climate action.",
+    source: "CONCITO (2023)"
+    },
+    {
+    text: "Sorting plastics correctly helps municipalities reach 75% recycling rates, saving around 400 kg CO2e per household annually.",
+    source: "European Parliament (2024)"
+    },
+    {
+    text: "Buying recycled toilet paper avoids roughly 1 tonne CO2e per 1,000 rolls produced: your everyday essentials can protect forests and climate.",
+    source: "Danish Energy Agency (2024)"
+    },
+    {
+    text: "Daily litter pickup in parks can avoid about 2 kg CO2e per month per person. Stack that with neighbors and the impact multiplies.",
+    source: "Climate Action WA (2024)"
+    },
+    {
+    text: "Correct glass sorting allows 1 tonne to be recycled into about 800 kg CO2e savings: your jar and bottle habits really count.",
+    source: "European Parliament (2024)"
+    },
+    {
+    text: "Producing recycled cardboard avoids 0.9 tonnes CO2e per tonne. Choosing recycled packaging supports lower-emission industry.",
+    source: "Danish Energy Agency (2024)"
+    },
+    {
+    text: "Returning one pant bottle saves about 0.2 kg CO2e. Return 50 and that’s 10 kg avoided: your small routine creates steady impact.",
+    source: "CONCITO (2023)"
+    },
+    {
+    text: "Removing beach microplastics can prevent 1.5 kg CO2e per kg collected by stopping breakdown and landfill methane: your cleanup protects coasts and climate.",
+    source: "David Suzuki Foundation (2025)"
+    },
+    {
+    text: "Recycling metals saves up to 95% of the energy needed for new production: your decision to recycle keeps high-emission mining lower.",
+    source: "Climate Action WA (2024)"
+    },
+    {
+    text: "When whole neighborhoods sort properly, emissions can drop by 250 kg CO2e per home each year. Your example encourages wider change.",
+    source: "UNFCCC (2024)"
+    }
+    ];
+
+    const randomFact = funFacts[Math.floor(Math.random() * funFacts.length)];
+
+    document.getElementById("fun-fact-text").textContent = randomFact.text;
+    document.getElementById("fun-fact-source").textContent = randomFact.source;
+
+    // Scroll to Top Button Functionality
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    });
+
+    scrollToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="events.js"></script>
