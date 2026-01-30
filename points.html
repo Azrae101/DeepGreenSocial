@@ -858,7 +858,7 @@
                             <strong>Monthly Points:</strong> <span id="monthlyPoints">0</span> pts
                         </p>
                         <p style="color: var(--dark-gray); font-size: 0.9rem;">
-                            <strong>Next rank up:</strong> <span id="nextRankPoints">0</span> pts
+                            <strong>Next rank up:</strong> <span id="nextRankPoints">0</span> <span id="nextRankLabel">pts</span>
                         </p>
                     </div>
                     
@@ -907,7 +907,7 @@
                 </div>
                 
                 <div class="events-list">
-                    <h3 class="events-title">Events You've Signed Up For</h3>
+                    <h3 class="events-title">Events You Have Signed Up For</h3>
                     <div id="eventsList">
                         <!-- Events will be listed here -->
                     </div>
@@ -1427,13 +1427,18 @@
                 document.getElementById('monthlyProgress').style.width = `${progressPercent}%`;
                 
                 // Find next rank points
-                if (currentUserRank > 1 && currentUserRank <= 5) {
-                    const nextUser = topUsers[currentUserRank - 1];
+                if (currentUserRank === 1) {
+                    document.getElementById('nextRankPoints').textContent = 'You are number one';
+                    document.getElementById('nextRankLabel').textContent = '';
+                } else if (currentUserRank > 1 && currentUserRank <= topUsers.length) {
+                    const nextUser = topUsers[currentUserRank - 2];
                     const nextPoints = nextUser.monthlyPoints[monthKey] || 0;
                     const pointsNeeded = nextPoints - currentPoints + 1;
                     document.getElementById('nextRankPoints').textContent = pointsNeeded;
+                    document.getElementById('nextRankLabel').textContent = 'pts';
                 } else {
                     document.getElementById('nextRankPoints').textContent = 'N/A';
+                    document.getElementById('nextRankLabel').textContent = '';
                 }
             }
             
@@ -1462,29 +1467,41 @@
         
         function loadEventsList(user) {
             const container = document.getElementById('eventsList');
-            const userEvents = user.eventsAttended || [];
+            const userEvents = user.events || [];
             
-            if (userEvents.length === 0) {
+            // Helper function to parse Danish date format
+            function parseDanishDate(dateStr) {
+                const datePart = dateStr.split(' - ')[0];
+                const [day, month, year] = datePart.split('/').map(num => parseInt(num, 10));
+                return new Date(year, month - 1, day, 23, 59, 59);
+            }
+            
+            // Filter out past events
+            const today = new Date();
+            const upcomingEventIds = userEvents.filter(eventId => {
+                const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
+                if (!event || !event.date) return false;
+                return parseDanishDate(event.date) >= today;
+            });
+            
+            if (upcomingEventIds.length === 0) {
                 container.innerHTML = `
-                    <div class="no-events">You haven't signed up for any events yet.</div>
+                    <div class="no-events">You haven't signed up for any upcoming events.</div>
                 `;
                 return;
             }
             
-            // Sample event data - in reality, this would come from your events.json
-            const eventNames = {
-                'gardening': 'Community Gardening Workshop',
-                'cooking': 'Sustainable Cooking Class',
-                'beach-cleanup': 'Beach Cleanup & Awareness'
-            };
-            
+            // Load actual events data from events.js
             container.innerHTML = '';
             
-            userEvents.forEach(event => {
+            upcomingEventIds.forEach(eventId => {
+                // Find the event in eventData (from events.js)
+                const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
+                
                 const eventItem = document.createElement('div');
                 eventItem.className = 'event-item';
                 eventItem.innerHTML = `
-                    <span class="event-name">${eventNames[event] || event}</span>
+                    <span class="event-name">${event ? event.name : `Event #${eventId}`}</span>
                     <span class="event-points">+10 pts (signup)</span>
                 `;
                 container.appendChild(eventItem);
@@ -1617,5 +1634,6 @@
             // In a real implementation, this would open a modal or navigate to a full leaderboard page
         }
     </script>
+    <script src="events.js"></script>
 </body>
 </html>

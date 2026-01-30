@@ -5,6 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Certificate - Social & Green</title>
     <style>
+        /* Global Styles */
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-color: #ff9800;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 40px 0 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--accent-color);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
         /* Certificate Styles */
         .certificate-section {
             padding: 40px 0;
@@ -248,9 +418,14 @@
             font-size: 1.1rem;
             color: #424242;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             border-bottom: 1px dashed #ddd;
+        }
+        
+        .impact-list li > div:first-child {
+            flex: 1;
+            text-align: left;
         }
         
         .impact-list li:last-child {
@@ -457,10 +632,14 @@
                 <div class="certificate-header">
                     <h1 class="certificate-title">Certificate of Achievement</h1>
                     <div class="certificate-subtitle">in Sustainability & Environmental Stewardship</div>
-                    <div class="certificate-seal" style="background: linear-gradient(135deg, #1b5e20, #2e7d32); font-family: 'Georgia', serif; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px;">Social & Green</div>
                 </div>
                 
                 <div class="certificate-container" id="certificateContent">
+                    <!-- Logo in top left -->
+                    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <img src="images/logodgi.webp" alt="Social & Green Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                    </div>
+                    
                     <!-- Decorative Corner Elements -->
                     <div style="position: absolute; top: 10px; left: 10px; width: 80px; height: 80px; border-top: 4px solid #1b5e20; border-left: 4px solid #1b5e20; z-index: 1;"></div>
                     <div style="position: absolute; top: 10px; right: 10px; width: 80px; height: 80px; border-top: 4px solid #1b5e20; border-right: 4px solid #1b5e20; z-index: 1;"></div>
@@ -476,9 +655,9 @@
                         <div class="recipient-name" id="certificateRecipient" style="text-transform: capitalize; letter-spacing: 1px; font-family: 'Georgia', serif;">Loading...</div>
                         
                         <p class="achievement-text" style="max-width: 800px; margin: 30px auto; line-height: 1.8; font-family: 'Georgia', serif;">
-                            has demonstrated exceptional commitment to environmental sustainability and social responsibility
-                            through active participation in educational programs, community initiatives, and sustainable practices,
-                            thereby contributing meaningfully to the advancement of environmental stewardship.
+                            has successfully participated in a comprehensive program in Environmental Sustainability and Social Responsibility,
+                            demonstrating proficiency through active engagement in community-based environmental initiatives,
+                            educational curricula, and practical application of sustainable practices.
                         </p>
                         
                         <!-- Activity Stats -->
@@ -500,9 +679,12 @@
                             <div class="hours-label" style="font-style: italic; font-family: 'Georgia', serif;">Hours dedicated to environmental initiatives</div>
                         </div>
                         
-                        <!-- Points Breakdown -->
-                        <div class="achievement-stats" id="pointsBreakdown" style="margin: 50px 0;">
-                            <!-- Points breakdown will be populated by JavaScript -->
+                        <!-- Climate Impact Statement -->
+                        <div class="climate-impact" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);">
+                            <h3 class="impact-title" style="font-family: 'Georgia', serif; font-weight: 600;">Environmental Impact</h3>
+                            <ul class="impact-list" id="climateImpact">
+                                <!-- Climate impact will be populated by JavaScript -->
+                            </ul>
                         </div>
                     
                     <div class="certificate-date" style="margin-top: 50px; font-style: italic; color: #1b5e20; font-weight: 600;">
@@ -647,9 +829,6 @@
             // Populate activity summary
             populateActivitySummary(activityStats);
             
-            // Populate points breakdown
-            populatePointsBreakdown(pointsStats);
-            
             // Populate climate impact
             populateClimateImpact(climateImpact);
             
@@ -719,60 +898,42 @@
             const activityStats = calculateActivityStats(user);
             const pointsStats = calculatePointsStats(user);
             
-            // Calculate based on actual activities
             const impact = [];
             
-            // Events impact (each event ~3kg CO2 saved)
+            // CO2 impact from events
             if (activityStats.events > 0) {
-                const co2FromEvents = activityStats.events * 3; // kg
+                const co2FromEvents = activityStats.events * 3;
                 impact.push({
-                    label: 'CO₂ Reduction from Events',
-                    value: `${co2FromEvents} kg`,
-                    description: 'Based on community cleanups & workshops'
+                    label: 'Estimated Carbon Footprint Reduction',
+                    value: `${co2FromEvents} kg CO₂e`,
+                    description: 'Through community environmental initiatives'
                 });
             }
             
-            // Learning impact
-            const learningActivities = activityStats.articles + activityStats.quizzes;
-            if (learningActivities > 0) {
+            // Total engagement hours
+            if (activityStats.hours > 0) {
                 impact.push({
-                    label: 'Sustainability Knowledge Activities',
-                    value: `${learningActivities}`,
-                    description: 'Articles read & quizzes completed'
+                    label: 'Community Service Hours',
+                    value: `${activityStats.hours} hours`,
+                    description: 'Documented volunteer participation'
                 });
             }
             
-            // Community engagement
-            if (activityStats.checkins > 0) {
-                impact.push({
-                    label: 'Days of Active Engagement',
-                    value: `${activityStats.checkins} days`,
-                    description: 'Consistent daily participation'
-                });
-            }
-            
-            // Streak achievement
-            if (activityStats.streak > 0) {
-                impact.push({
-                    label: 'Longest Sustainability Streak',
-                    value: `${activityStats.streak} days`,
-                    description: 'Continuous environmental commitment'
-                });
-            }
-            
-            // Level achievement
+            // Achievement level
             impact.push({
-                label: 'Sustainability Level Achieved',
+                label: 'Program Completion Level',
                 value: `Level ${activityStats.level}`,
-                description: 'Based on total points earned'
+                description: `Achieved ${pointsStats.total} points through measurable contributions to environmental sustainability initiatives`
             });
             
-            // Total points impact
-            impact.push({
-                label: 'Total Points Earned',
-                value: `${pointsStats.total}`,
-                description: 'Overall sustainability score'
-            });
+            // Streak for commitment
+            if (activityStats.streak >= 7) {
+                impact.push({
+                    label: 'Sustained Commitment',
+                    value: `${activityStats.streak} consecutive days`,
+                    description: 'Demonstrated ongoing environmental dedication'
+                });
+            }
             
             return impact;
         }
@@ -812,7 +973,7 @@
                     showPoints: false
                 },
                 {
-                    name: 'Educational Games Completed',
+                    name: 'Educational Games Played',
                     count: stats.games,
                     icon: '',
                     points: stats.games * 10,
@@ -848,51 +1009,7 @@
         }
         
         function populatePointsBreakdown(stats) {
-            const container = document.getElementById('pointsBreakdown');
-            container.innerHTML = '';
-            
-            const breakdownItems = [
-                {
-                    label: 'Total Sustainability Points',
-                    value: stats.total,
-                    isTotal: true
-                },
-                {
-                    label: 'Community Events',
-                    value: stats.events
-                },
-                {
-                    label: 'Educational Games',
-                    value: stats.games
-                },
-                {
-                    label: 'Learning Articles',
-                    value: stats.articles
-                },
-                {
-                    label: 'Knowledge Assessments',
-                    value: stats.quizzes
-                },
-                {
-                    label: 'Daily Participation',
-                    value: stats.daily
-                }
-            ];
-            
-            breakdownItems.forEach(item => {
-                const statDiv = document.createElement('div');
-                statDiv.className = 'stat-item';
-                if (item.isTotal) {
-                    statDiv.style.background = 'linear-gradient(135deg, #e8f5e9, #c8e6c9)';
-                    statDiv.style.border = '2px solid #2e7d32';
-                    statDiv.style.boxShadow = '0 4px 12px rgba(46, 125, 50, 0.2)';
-                }
-                statDiv.innerHTML = `
-                    <div class="stat-value" style="font-family: 'Georgia', serif;">${item.value}</div>
-                    <div class="stat-label" style="font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">${item.label}</div>
-                `;
-                container.appendChild(statDiv);
-            });
+            // Points breakdown removed to avoid repetition - information is in activity summary
         }
         
         function populateClimateImpact(impact) {

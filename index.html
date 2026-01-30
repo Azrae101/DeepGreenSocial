@@ -1330,7 +1330,7 @@
         } else if (!currentUser) {
             buttonHtml = `<button class="btn btn-event" onclick="redirectToLogin()" style="background-color: #6c757d;">Login to Sign Up</button>`;
         } else if (isSignedUp) {
-            buttonHtml = `<button class="btn btn-event" disabled style="background-color: #6c757d;">Signed Up</button>`;
+            buttonHtml = `<button class="btn btn-cancel" onclick="cancelSignUp(${event.id})">Cancel Sign Up</button>`;
         } else {
             buttonHtml = `<button class="btn btn-event" onclick="signUpForEvent(${event.id})">Sign Up</button>`;
         }
@@ -1357,7 +1357,6 @@
 
     // Function to redirect to login
     function redirectToLogin() {
-        alert('Please log in to sign up for events');
         window.location.href = 'login.html';
     }
 
@@ -1374,7 +1373,6 @@
         const userIndex = users.findIndex(u => u.username === currentUser.username);
         
         if (userIndex === -1) {
-            alert('User not found. Please log in again.');
             return;
         }
         
@@ -1385,14 +1383,12 @@
         
         // Check if user is already signed up
         if (users[userIndex].events.includes(eventId)) {
-            alert('You are already signed up for this event!');
             return;
         }
         
         // Check if event is in the past
         const event = eventData.find(e => e.id === eventId);
         if (event && parseDanishDate(event.date) < new Date()) {
-            alert('Cannot sign up for past events.');
             return;
         }
         
@@ -1413,12 +1409,54 @@
         const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
         if (eventCard) {
             const button = eventCard.querySelector('.btn-event');
-            button.textContent = 'Signed Up';
-            button.disabled = true;
-            button.style.backgroundColor = '#6c757d';
+            button.textContent = 'Cancel Sign Up';
+            button.className = 'btn btn-cancel';
+            button.onclick = function() { cancelSignUp(eventId); };
+        }
+    }
+
+    // Function to cancel sign up for an event
+    function cancelSignUp(eventId) {
+        const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+        
+        if (!currentUser) {
+            redirectToLogin();
+            return;
         }
         
-        alert(`Successfully signed up for the event! You earned 10 points.`);
+        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        const userIndex = users.findIndex(u => u.username === currentUser.username);
+        
+        if (userIndex === -1) {
+            return;
+        }
+        
+        // Check if user is signed up for this event
+        if (!users[userIndex].events || !users[userIndex].events.includes(eventId)) {
+            return;
+        }
+        
+        // Remove event from user's events
+        users[userIndex].events = users[userIndex].events.filter(id => id !== eventId);
+        
+        // Deduct points for cancelling (10 points per event)
+        if (!users[userIndex].points) {
+            users[userIndex].points = 0;
+        }
+        users[userIndex].points = Math.max(0, users[userIndex].points - 10);
+        
+        // Update localStorage
+        localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+        localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+        
+        // Update the button state
+        const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
+        if (eventCard) {
+            const button = eventCard.querySelector('.btn-cancel');
+            button.textContent = 'Sign Up';
+            button.className = 'btn btn-event';
+            button.onclick = function() { signUpForEvent(eventId); };
+        }
     }
 
     // Also update the initializeEvents function to properly compare dates:
