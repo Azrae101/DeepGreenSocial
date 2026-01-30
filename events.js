@@ -173,10 +173,58 @@ const eventData = [
             date: '8/2/2026 - 14:00–17:00',
             image: 'images/collage.png',
             title: 'Collage Workshop',
-            description: 'Kom med til workshop med kunstner Marina Rubini Rordam aka Marina Scissorhands, hvis finurlige og detaljerige tankegang præger hendes tilgang til både kunst og liv. Du inviteres ind i hendes enorme arkiv af billeder og materialer, hvor du kan skabe dit eget humoristiske, modige eller quirky collagekunstværk. Kaffe/te og snacks er inkluderet. Begrænsede pladser – booking og betaling er påkrævet.',
+            description: 'Kom med til workshop med kunstner Marina Rubini Rordam aka Marina Scissorhands, hvis finurlige og detaljerige tankegang præger hendes tilgang til både kunst og liv. Kaffe/te og snacks er inkluderet. Begrænsede pladser – booking og betaling er påkrævet.',
             location: 'Rosenkrantzgade 22, baghuset, 8000 Aarhus',
             points: '+10 pts signup | +200 pts completion',
             link: 'https://allevents.in/arhus/collage-workshop-one-mans-trash-is-this-womans-treasure/200029308050526',
+            linkText: 'Event Info'
+        },
+        {
+            id: 18,
+            name: 'HÅNDVÆRK',
+            date: '4/2/2026 - 09:00–17:00',
+            image: 'images/håndværk.png',
+            title: ' ',
+            description: 'Vær med til årets fedeste festival, hvor vi hylder det gode håndværk og sætter fokus på flere spændende emner.',
+            location: 'Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://xn--hndvrk-iual.eu/',
+            linkText: 'Event Info'
+        },
+        {
+            id: 19,
+            name: 'BEVARING & TRANSFORMATION',
+            date: '16/3/2026 - 09:00–17:00',
+            image: 'images/bevaring.png',
+            title: ' ',
+            description: 'Du får konkret viden om, hvorfor og hvornår det giver mening at transformere bygninger, og hvordan transformation kan bidrage til social revitalisering.',
+            location: 'Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://buildinggreen.eu/bevaringogtransformation/',
+            linkText: 'Event Info'
+        },
+        {
+            id: 20,
+            name: 'BUILD FOR BIODIVERSITY',
+            date: '24/3/2026 - 09:00–17:00',
+            image: 'images/bio.png',
+            title: ' ',
+            description: 'Oplev en række dybt kompetente og inspirerende talere, der gennem oplæg og debatter gør dig klogere på urban biodiversitet.',
+            location: 'Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://www.buildinggreen.com/events',
+            linkText: 'Event Info'
+        },
+        {
+            id: 21,
+            name: 'BG:VEST',
+            date: '22/4/2026 - 09:00–17:00',
+            image: 'images/bg.png',
+            title: ' ',
+            description: 'I løbet af 2 tætpakkede dage i Aarhus kan du opleve 4 faglige spor på 3 scener og en fyldt sal med spændende løsninger til byggeriet. Helt gratis!',
+            location: 'Aarhus',
+            points: '+10 pts signup | +200 pts completion',
+            link: 'https://buildinggreen.eu/bg-vest/',
             linkText: 'Event Info'
         }
     ];

@@ -188,6 +188,74 @@
             background: #f0f4c3;
             padding: 60px 0 50px 0;
         }
+
+        /* Events Section Background */
+        #events {
+            background: linear-gradient(135deg, #d4e8f1 0%, #e3f2e1 50%, #f0f9f4 100%);
+            position: relative;
+            border-top: 3px solid rgba(33, 150, 243, 0.15);
+            box-shadow: inset 0 10px 30px rgba(76, 175, 80, 0.03);
+        }
+        #events::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 15% 30%, rgba(33, 150, 243, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(76, 175, 80, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(0, 150, 136, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* News Section Background */
+        #news {
+            background: linear-gradient(135deg, #e3f4fd 0%, #d6eefb 50%, #cae8f9 100%);
+            position: relative;
+            box-shadow: inset 0 10px 30px rgba(33, 150, 243, 0.04);
+        }
+        #news::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 35%, rgba(33, 150, 243, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 80% 65%, rgba(0, 150, 136, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 45% 10%, rgba(66, 165, 245, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Map Section Background */
+        #map {
+            background: linear-gradient(135deg, #f4faf6 0%, #e8f5ea 50%, #dff0e3 100%);
+            position: relative;
+            box-shadow: inset 0 10px 30px rgba(46, 125, 50, 0.03);
+        }
+        #map::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(46, 125, 50, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 75% 60%, rgba(76, 175, 80, 0.04) 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(67, 160, 71, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Ensure content is above background overlays */
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
         .section-title {
             text-align: center;
             margin-bottom: 40px;
@@ -597,6 +665,135 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* Map Section Styles */
+    .map-container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    #mapContainer {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+    }
+
+    .locations-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+
+    .location-card {
+        background-color: var(--white);
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .location-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .location-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .location-type {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .type-flea-market {
+        background-color: #e8f5e9;
+        color: var(--primary-green);
+    }
+
+    .type-recycling {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .type-community {
+        background-color: #fff3e0;
+        color: #ef6c00;
+    }
+
+    .type-secondhand {
+        background-color: #e3f2fd;
+        color: #2196F3;
+    }
+
+    .type-red-cross {
+        background-color: #ffebee;
+        color: #f44336;
+    }
+
+    .location-name {
+        color: var(--dark-green);
+        margin-bottom: 10px;
+    }
+
+    .location-details {
+        margin-bottom: 15px;
+    }
+
+    .location-detail {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .detail-icon {
+        color: var(--primary-green);
+        width: 20px;
+    }
+
+    .btn-location {
+        background-color: var(--primary-green);
+        color: var(--white);
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        #mapContainer {
+            height: 400px;
+        }
+    }
     </style>
 </head>
 <body>
@@ -604,14 +801,15 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <span class="logo-icon">🌱</span>
+                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
                 <h1>Social & Green</h1>
             </div>
             <nav>
                 <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#events">Events</a></li>
-                    <li><a href="#map">Secondhand Stores</a></li>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="index.html#events">Events</a></li>
+                    <li><a href="index.html#news">News</a></li>
+                    <li><a href="index.html#map">Sustainable Aarhus</a></li>
                     <li><a href="game.html">Games</a></li>
                 </ul>
             </nav>
@@ -895,6 +1093,47 @@
         </div>
     </section>
 
+    <!-- Map Section -->
+    <section id="map">
+        <div class="container">
+            <div class="section-title">
+                <h2>Sustainable Locations in Aarhus</h2>
+                <p>Find flea markets, recycling centers, and community gardens across the city</p>
+            </div>
+            
+            <div class="map-container">
+                <div id="mapContainer"></div>
+                
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4CAF50;"></div>
+                        <span>Flea Markets</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #9C27B0;"></div>
+                        <span>Recycling Centers</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #FF9800;"></div>
+                        <span>Community Gardens</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2196F3;"></div>
+                        <span>Secondhand stores</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f44336;"></div>
+                        <span>Red Cross Stores</span>
+                    </div>
+                </div>
+                
+                <div class="locations-list" id="locationsList">
+                    <!-- Location cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
 
 
     <!-- Footer -->
@@ -1147,12 +1386,349 @@
         }
     }
 
+    // Sustainable locations data for map
+    const sustainableLocations = [
+        {
+            id: 1,
+            name: "Ingerslevs Boulevard Flea Market",
+            type: "flea-market",
+            address: "Ingerslev Boulevard, Aarhus C",
+            description: "One of Aarhus' most popular flea markets with vendors selling everything from vintage clothing, antiques, books, furniture and crafts.",
+            hours: "Selected Sundays between April and September, 9:30 AM - 4:00 PM",
+            price: "Free",
+            lat: 56.1520,
+            lng: 10.1989
+        },
+        {
+            id: 2,
+            name: "Habengut Market at Godsbanen",
+            type: "flea-market",
+            address: "Godsbanen, Aarhus C",
+            description: "A lively and diverse flea market with a great mix of vintage clothing, retro furniture, crafts, design classics and much more.",
+            hours: "Selected weekends, 10:00 AM - 4:00 PM",
+            price: "20 DKK (Free for children)",
+            lat: 56.1539,
+            lng: 10.1992
+        },
+        {
+            id: 3,
+            name: "Trunk Market at Bispetorv",
+            type: "flea-market",
+            address: "Teatergaden 1, 8000 Aarhus C",
+            description: "A trunk market located near the cathedral in the center of Aarhus, perfect for finding hidden treasures.",
+            hours: "Selected weekends, 10:30 AM - 3:30 PM",
+            price: "Free",
+            lat: 56.1587,
+            lng: 10.2107
+        },
+        {
+            id: 4,
+            name: "Loppehuset in Højbjerg",
+            type: "flea-market",
+            address: "Søren Nymarks Vej 6L, 8270 Højbjerg",
+            description: "A hidden gem offering a wealth of used furniture, clothing, books, retro finds and much more.",
+            hours: "Selected weekends, 11:00 AM - 2:00 PM",
+            price: "Free",
+            lat: 56.1155,
+            lng: 10.1837
+        },
+        {
+            id: 5,
+            name: "Aarhus Recycling Center",
+            type: "recycling",
+            address: "Lystrupvej 62, 8200 Aarhus N",
+            description: "A facility where you can drop off various types of waste for recycling, including electronics, hazardous waste, and more.",
+            hours: "Mon-Fri: 8:00 AM - 6:00 PM, Sat-Sun: 9:00 AM - 4:00 PM",
+            price: "Free for most items",
+            lat: 56.1896,
+            lng: 10.1689
+        },
+        {
+            id: 6,
+            name: "Urban Garden Aarhus",
+            type: "community",
+            address: "Fredens Torv, 8000 Aarhus C",
+            description: "A community garden where locals can grow their own vegetables and herbs, promoting sustainable urban agriculture.",
+            hours: "Open daily during daylight hours",
+            price: "Free",
+            lat: 56.1559,
+            lng: 10.2043
+        },
+        {
+            id: 7,
+            name: "Secondhand Fashion Store",
+            type: "flea-market",
+            address: "Jægergårdsgade 42, 8000 Aarhus C",
+            description: "A curated secondhand fashion store offering high-quality used clothing and accessories.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1479,
+            lng: 10.2073
+        },
+        {
+            id: 8,
+            name: "Blue Cross Op Shop",
+            type: "secondhand",
+            address: "Paludan-Müllers Vej 38, 8200 Aarhus N",
+            description: "Blue Cross secondhand store with a good selection of clothing and household items.",
+            hours: "Mon-Fri: 10:00 AM - 5:30 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1712,
+            lng: 10.1754
+        },
+        {
+            id: 9,
+            name: "Vintage Divine",
+            type: "secondhand",
+            address: "Klostergade 58, 8000 Aarhus C",
+            description: "Highly rated vintage store with curated selection of clothing and accessories.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1589,
+            lng: 10.2087
+        },
+        {
+            id: 10,
+            name: "Brugtvare Terminalen",
+            type: "secondhand",
+            address: "Øllegårdsvej 3, 8000 Aarhus C",
+            description: "Large secondhand store with furniture, clothing, and various household items.",
+            hours: "Mon-Fri: 10:00 AM - 6:00 PM, Sat: 10:00 AM - 3:00 PM",
+            price: "Various",
+            lat: 56.1623,
+            lng: 10.2015
+        },
+        {
+            id: 11,
+            name: "Kirkens Korshær Nørre Allé",
+            type: "secondhand",
+            address: "Nørre Alle 25, 8000 Aarhus C",
+            description: "Army Salvation secondhand store in the city center.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1602,
+            lng: 10.2034
+        },
+        {
+            id: 12,
+            name: "Folkekirkens Nødhjælp",
+            type: "secondhand",
+            address: "Silkeborgvej 285, 8000 Aarhus C",
+            description: "DanChurchAid secondhand store supporting humanitarian work.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1689,
+            lng: 10.1623
+        },
+        {
+            id: 13,
+            name: "Resecond",
+            type: "secondhand",
+            address: "Jægergårdsgade 51, 8000 Aarhus C",
+            description: "Secondhand fashion store focusing on quality and style.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1479,
+            lng: 10.2073
+        },
+        {
+            id: 14,
+            name: "Kirkens Korshær Aarhus N",
+            type: "secondhand",
+            address: "Paludan-Müllers Vej 26, 8200 Aarhus N",
+            description: "Army Salvation secondhand store in Aarhus N.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1710,
+            lng: 10.1758
+        },
+        {
+            id: 15,
+            name: "Blå Kors",
+            type: "secondhand",
+            address: "Paludan-Müllers Vej 38, 8200 Aarhus N",
+            description: "Blue Cross secondhand store.",
+            hours: "Mon-Fri: 10:00 AM - 5:30 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1712,
+            lng: 10.1754
+        },
+        {
+            id: 16,
+            name: "Kirkens Korshær Mejlgade",
+            type: "secondhand",
+            address: "Mejlgade 19, 8000 Aarhus C",
+            description: "Army Salvation secondhand store in the Latin Quarter.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1592,
+            lng: 10.2098
+        },
+        {
+            id: 17,
+            name: "Igen Genbrugsbutik",
+            type: "secondhand",
+            address: "Åbogade 36A, 8200 Aarhus N",
+            description: "Secondhand store with focus on sustainability and recycling.",
+            hours: "Mon-Fri: 10:00 AM - 6:00 PM, Sat: 10:00 AM - 3:00 PM",
+            price: "Various",
+            lat: 56.1698,
+            lng: 10.1789
+        },
+        {
+            id: 18,
+            name: "Lille Nor",
+            type: "secondhand",
+            address: "Frederiks Allé 116, 8000 Aarhus C",
+            description: "Small secondhand store with curated selection.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1512,
+            lng: 10.1923
+        },
+        {
+            id: 19,
+            name: "Reshop Vintage",
+            type: "secondhand",
+            address: "Haslegårdsvej 8, 8210 Aarhus V",
+            description: "Vintage clothing store in Hasle area.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1402,
+            lng: 10.1498
+        },
+        {
+            id: 20,
+            name: "Folkekirkens Nødhjælp Vesterbro",
+            type: "secondhand",
+            address: "Vesterbro Torv 1A, 8000 Aarhus C",
+            description: "DanChurchAid secondhand store at Vesterbro Torv.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1567,
+            lng: 10.1923
+        },
+        {
+            id: 21,
+            name: "And Vintage",
+            type: "secondhand",
+            address: "Studsgade 40, 8000 Aarhus C",
+            description: "Vintage store with unique finds and retro items.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1598,
+            lng: 10.2112
+        },
+        {
+            id: 22,
+            name: "Røde Kors Åbyhøj",
+            type: "red-cross",
+            address: "Silkeborgvej 236, 8230 Åbyhøj",
+            description: "Red Cross secondhand store in Åbyhøj area.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1389,
+            lng: 10.1567
+        },
+        {
+            id: 23,
+            name: "Folkekirkens Nødhjælp Randersvej",
+            type: "secondhand",
+            address: "Randersvej 73, 8200 Aarhus N",
+            description: "DanChurchAid secondhand store on Randersvej.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1801,
+            lng: 10.1892
+        },
+        {
+            id: 24,
+            name: "Trojborg Retro & Lopper",
+            type: "secondhand",
+            address: "Tordenskjoldsgade 63, 8200 Aarhus N",
+            description: "Retro and flea market style store in Trøjborg.",
+            hours: "Mon-Fri: 11:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM",
+            price: "Various",
+            lat: 56.1667,
+            lng: 10.2015
+        },
+        {
+            id: 25,
+            name: "Århus Kræmmermarked",
+            type: "flea-market",
+            address: "Strandparken 27, 8000 Aarhus C",
+            description: "Traditional flea market in Aarhus.",
+            hours: "Selected weekends, check locally",
+            price: "Free entry",
+            lat: 56.1502,
+            lng: 10.2101
+        },
+        {
+            id: 26,
+            name: "Røde Kors Brabrand",
+            type: "red-cross",
+            address: "Edwin Rahrs Vej 32P, 8220 Brabrand",
+            description: "Red Cross secondhand store in Brabrand.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1589,
+            lng: 10.1298
+        },
+        {
+            id: 27,
+            name: "Kirkens Korshær Vestergade",
+            type: "secondhand",
+            address: "Vestergade 37, 8000 Aarhus C",
+            description: "Army Salvation secondhand store on Vestergade.",
+            hours: "Mon-Fri: 10:00 AM - 5:00 PM, Sat: 10:00 AM - 2:00 PM",
+            price: "Various",
+            lat: 56.1562,
+            lng: 10.2034
+        },
+        {
+            id: 28,
+            name: "Aarhus Recycling Center",
+            type: "recycling",
+            address: "Lystrupvej 62, 8200 Aarhus N",
+            description: "A facility where you can drop off various types of waste for recycling, including electronics, hazardous waste, and more.",
+            hours: "Mon-Fri: 8:00 AM - 6:00 PM, Sat-Sun: 9:00 AM - 4:00 PM",
+            price: "Free for most items",
+            lat: 56.1896,
+            lng: 10.1689
+        },
+        {
+            id: 29,
+            name: "Red Cross Recycling Container",
+            type: "recycling",
+            address: "Bildbjergvej 2, 8200 Aarhus N",
+            description: "Red Cross recycling container for clothing and textiles.",
+            hours: "24/7",
+            price: "Free",
+            lat: 56.1734,
+            lng: 10.1821
+        },
+        {
+            id: 30,
+            name: "Red Cross Genbrugscontainer",
+            type: "recycling",
+            address: "Fjældevænget 114, 8210 Aarhus V",
+            description: "Red Cross recycling container for clothing and textiles.",
+            hours: "24/7",
+            price: "Free",
+            lat: 56.1423,
+            lng: 10.1389
+        }
+    ];
+
+    let map;
+    let markers = {};
+
     // Map functionality
     function initMap() {
-        if (!document.getElementById('map')) return;
+        if (!document.getElementById('mapContainer')) return;
         
         // Create map centered on Aarhus
-        map = L.map('map').setView([56.1629, 10.2039], 12);
+        map = L.map('mapContainer').setView([56.1629, 10.2039], 12);
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
