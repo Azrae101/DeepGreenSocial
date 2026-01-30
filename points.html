@@ -908,6 +908,8 @@
                 
                 <div class="events-list">
                     <h3 class="events-title">Events You Have Signed Up For</h3>
+                    <p style="text-align: center; color: var(--dark-gray); margin-bottom: 10px; font-size: 0.95rem;">Remember to check the event links for any updates or changes.</p>
+                    <p style="text-align: center; color: var(--dark-gray); margin-bottom: 20px; font-size: 0.9rem; font-style: italic;">NB: Some of the events require sign ups on their page</p>
                     <div id="eventsList">
                         <!-- Events will be listed here -->
                     </div>
@@ -1204,7 +1206,8 @@
             
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
             document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
-            document.getElementById('articlesPoints').textContent = `${articlesPoints + quizzesPoints} points`;
+            document.getElementById('articlesPoints').textContent = `${articlesPoints} points`;
+            document.getElementById('quizzesPoints').textContent = `${quizzesPoints} points`;
             document.getElementById('dailyPoints').textContent = `${dailyPoints} points`;
         }
         
