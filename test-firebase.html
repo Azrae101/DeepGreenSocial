@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Test</title>
+    <script type="module">
+        // Modular SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
+            authDomain: "social-green-4d772.firebaseapp.com",
+            projectId: "social-green-4d772",
+            storageBucket: "social-green-4d772.firebasestorage.app",
+            messagingSenderId: "81847906637",
+            appId: "1:81847906637:web:d1f76632b8516e0c230704",
+            measurementId: "G-KQ0K9S913X"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Test connection
+        const statusEl = document.getElementById('status');
+        try {
+            await addDoc(collection(db, 'test'), {
+                test: 'connection',
+                timestamp: serverTimestamp()
+            });
+            statusEl.innerHTML = '✅ Firebase connected successfully!';
+            console.log('Firebase connected');
+        } catch (error) {
+            statusEl.innerHTML = '❌ Error: ' + error.message;
+            console.error('Firebase error:', error);
+        }
+    </script>
+</head>
+<body>
+    <h1>Firebase Test</h1>
+    <div id="status">Testing connection...</div>
+</body>
+</html>

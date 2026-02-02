@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Points - SustainaLearn</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
         /* Combined CSS with enhanced features */
         :root {
@@ -713,6 +719,187 @@
             font-size: 0.9rem;
         }
 
+        /* Trash Competition Styles */
+        .trash-competition {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 40px;
+            color: var(--white);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .trash-competition h3 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .trash-competition > p {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .trash-upload-section {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 25px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .file-input-label .icon {
+            font-size: 1.5rem;
+        }
+
+        .selected-file {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(76, 175, 80, 0.3);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .btn-submit-trash {
+            width: 100%;
+            padding: 15px 30px;
+            background-color: var(--accent-color);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-submit-trash:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+        }
+
+        .btn-submit-trash:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .trash-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .trash-status.success {
+            background-color: rgba(76, 175, 80, 0.3);
+            display: block;
+        }
+
+        .trash-status.error {
+            background-color: rgba(244, 67, 54, 0.3);
+            display: block;
+        }
+
+        .trash-rewards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .reward-card {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .reward-card .medal {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .reward-card .place {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .reward-card .points {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .trash-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .trash-stat-item {
+            text-align: center;
+        }
+
+        .trash-stat-item .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .trash-stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
         @media (max-width: 768px) {
             .header-container {
                 flex-direction: column;
@@ -770,6 +957,7 @@
                     <li><a href="index.html#news">News</a></li>
                     <li><a href="index.html#map">Sustainable Aarhus</a></li>
                     <li><a href="game.html">Games</a></li>
+                    <li><a href="community.html">Community</a></li>
                 </ul>
             </nav>
             <div class="auth-buttons" id="authButtons">
@@ -921,6 +1109,62 @@
                 <a href="certificate.html" class="btn" style="background-color: var(--accent-color); color: white; padding: 15px 30px; font-size: 1.2rem; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
                     🏅 View My Certificate
                 </a>
+            </div>
+
+            <!-- Trash Collection Competition -->
+            <div class="trash-competition">
+                <h3>🗑️ Trash Collection Challenge</h3>
+                <p>Upload a photo of the trash you collect. The top contributors each month get bonus points!</p>
+                
+                <div class="trash-upload-section">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="trashUpload" accept="image/*">
+                        <label for="trashUpload" class="file-input-label">
+                            <span class="icon">📸</span>
+                            <span id="fileLabel">Choose a photo or drag & drop</span>
+                        </label>
+                    </div>
+                    <div id="selectedFile" class="selected-file" style="display: none;"></div>
+                    
+                    <button class="btn-submit-trash" id="submitTrashBtn">
+                        <span>Submit Your Contribution</span>
+                    </button>
+                    
+                    <div id="trashStatus" class="trash-status"></div>
+                </div>
+
+                <div class="trash-rewards">
+                    <div class="reward-card">
+                        <div class="medal">🥇</div>
+                        <div class="place">1st Place</div>
+                        <div class="points">+500 pts</div>
+                    </div>
+                    <div class="reward-card">
+                        <div class="medal">🥈</div>
+                        <div class="place">2nd Place</div>
+                        <div class="points">+250 pts</div>
+                    </div>
+                    <div class="reward-card">
+                        <div class="medal">🥉</div>
+                        <div class="place">3rd Place</div>
+                        <div class="points">+100 pts</div>
+                    </div>
+                </div>
+
+                <div class="trash-stats">
+                    <div class="trash-stat-item">
+                        <div class="value" id="trashPoints">0</div>
+                        <div class="label">Your Submissions</div>
+                    </div>
+                    <div class="trash-stat-item">
+                        <div class="value" id="trashRank">-</div>
+                        <div class="label">Monthly Rank</div>
+                    </div>
+                    <div class="trash-stat-item">
+                        <div class="value" id="trashThisMonth">0</div>
+                        <div class="label">This Month</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Impact Statistics -->
@@ -1203,7 +1447,9 @@
             const articlesPoints = (user.articlesRead?.length || 0) * 50; // 50 points per article
             const quizzesPoints = (user.articlesQuizPassed?.length || 0) * 100; // 100 points per quiz
             const dailyPoints = calculateDailyPoints(user);
-            
+            const trashPoints = (user.trashCollected?.length || 0); // 1 point per submission for record
+
+            document.getElementById('trashPoints').textContent = `${trashPoints} item(s)`;
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
             document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
             document.getElementById('articlesPoints').textContent = `${articlesPoints} points`;
@@ -1636,6 +1882,202 @@
             alert('Full leaderboard feature coming soon! For now, you can see the top 5 contributors above.');
             // In a real implementation, this would open a modal or navigate to a full leaderboard page
         }
+
+        // Trash competition!!! ---------------------
+        function initTrashCompetition(user) {
+            const submitBtn = document.getElementById('submitTrashBtn');
+            const trashInput = document.getElementById('trashUpload');
+            const trashStatus = document.getElementById('trashStatus');
+            const selectedFile = document.getElementById('selectedFile');
+            const fileLabel = document.getElementById('fileLabel');
+
+            // File input change handler
+            trashInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    const fileName = this.files[0].name;
+                    fileLabel.textContent = 'Photo selected ✓';
+                    selectedFile.textContent = `📷 ${fileName}`;
+                    selectedFile.style.display = 'block';
+                } else {
+                    fileLabel.textContent = 'Choose a photo or drag & drop';
+                    selectedFile.style.display = 'none';
+                }
+            });
+
+            submitBtn.addEventListener('click', function() {
+                if (!trashInput.files || trashInput.files.length === 0) {
+                    trashStatus.textContent = '⚠️ Please select a photo of the trash you collected.';
+                    trashStatus.className = 'trash-status error';
+                    return;
+                }
+
+                const file = trashInput.files[0];
+
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    trashStatus.textContent = '⚠️ File size too large. Please choose a photo under 5MB.';
+                    trashStatus.className = 'trash-status error';
+                    return;
+                }
+
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Uploading... ⏳</span>';
+
+                // Convert to base64 for localStorage (simplified storage)
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+
+                    const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+                    const userIndex = users.findIndex(u => u.username === user.username);
+                    if (userIndex === -1) return;
+
+                    if (!users[userIndex].trashCollected) users[userIndex].trashCollected = [];
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    users[userIndex].trashCollected.push({
+                        date: today,
+                        image: imageData
+                    });
+
+                    // Update points history (1 point per submission for record keeping)
+                    if (!users[userIndex].pointsHistory) users[userIndex].pointsHistory = [];
+                    users[userIndex].pointsHistory.push({
+                        date: today,
+                        description: 'Trash submission',
+                        points: 1,
+                        type: 'earned'
+                    });
+
+                    // Save
+                    localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
+
+                    // Show success message
+                    trashStatus.textContent = '✅ Submission successful! Thank you for helping the environment!';
+                    trashStatus.className = 'trash-status success';
+
+                    // Reset form
+                    trashInput.value = '';
+                    fileLabel.textContent = 'Choose a photo or drag & drop';
+                    selectedFile.style.display = 'none';
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Submit Your Contribution</span>';
+
+                    // Update dashboard
+                    loadPointsBreakdown(users[userIndex]);
+                    loadPointsHistory(users[userIndex]);
+                    updateTrashStats(users[userIndex]);
+
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        trashStatus.className = 'trash-status';
+                    }, 5000);
+                };
+                
+                reader.onerror = function() {
+                    trashStatus.textContent = '⚠️ Error reading file. Please try again.';
+                    trashStatus.className = 'trash-status error';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Submit Your Contribution</span>';
+                };
+                
+                reader.readAsDataURL(file);
+            });
+
+            // Load initial trash stats
+            updateTrashStats(user);
+        }
+
+        function updateTrashStats(user) {
+            const allUsers = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+            const now = new Date();
+            
+            // Total submissions
+            const totalSubmissions = (user.trashCollected || []).length;
+            document.getElementById('trashPoints').textContent = totalSubmissions;
+            
+            // This month's submissions
+            const thisMonth = (user.trashCollected || []).filter(t => {
+                const tDate = new Date(t.date);
+                return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+            }).length;
+            document.getElementById('trashThisMonth').textContent = thisMonth;
+            
+            // Calculate rank
+            const userCounts = allUsers.map(u => {
+                const trashThisMonth = (u.trashCollected || []).filter(t => {
+                    const tDate = new Date(t.date);
+                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                });
+                return { username: u.username, count: trashThisMonth.length };
+            });
+            
+            userCounts.sort((a, b) => b.count - a.count);
+            const rank = userCounts.findIndex(u => u.username === user.username) + 1;
+            
+            if (rank > 0 && thisMonth > 0) {
+                document.getElementById('trashRank').textContent = `#${rank}`;
+            } else {
+                document.getElementById('trashRank').textContent = '-';
+            }
+        }
+
+        // Call this when DOM content is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+            if (currentUser) {
+                initTrashCompetition(currentUser);
+            }
+        });
+
+        function awardTrashCompetitionPoints() {
+            const allUsers = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+
+            // Count submissions per user this month
+            const userCounts = allUsers.map(u => {
+                const trashThisMonth = (u.trashCollected || []).filter(t => {
+                    const tDate = new Date(t.date);
+                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                });
+                return { username: u.username, count: trashThisMonth.length };
+            });
+
+            // Sort descending
+            userCounts.sort((a, b) => b.count - a.count);
+
+            // Award points to top 3
+            const pointsForPlaces = [500, 250, 100];
+
+            for (let i = 0; i < 3; i++) {
+                if (userCounts[i] && userCounts[i].count > 0) {
+                    const userIndex = allUsers.findIndex(u => u.username === userCounts[i].username);
+                    if (userIndex !== -1) {
+                        allUsers[userIndex].points = (allUsers[userIndex].points || 0) + pointsForPlaces[i];
+
+                        // Add points history
+                        if (!allUsers[userIndex].pointsHistory) allUsers[userIndex].pointsHistory = [];
+                        allUsers[userIndex].pointsHistory.push({
+                            date: now.toISOString().split('T')[0],
+                            description: `Trash Challenge - Place #${i + 1}`,
+                            points: pointsForPlaces[i],
+                            type: 'bonus'
+                        });
+                    }
+                }
+            }
+
+            // Save
+            localStorage.setItem('sustainalearn_users', JSON.stringify(allUsers));
+        }
+
+
+
+
     </script>
     <script src="events.js"></script>
 </body>
