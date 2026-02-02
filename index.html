@@ -903,6 +903,65 @@
         font-style: italic;
     }
 
+    /* Search Bar Styles */
+    .events-search-container {
+        margin-bottom: 30px;
+    }
+
+    .search-bar {
+        position: relative;
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+
+    .search-input-group input:focus {
+        outline: none;
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+
+    .search-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+    }
+
+    .filter-btn {
+        background: var(--white);
+        border: 1px solid var(--light-green);
+        color: var(--dark-gray);
+        padding: 6px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+        background: var(--light-green);
+        color: var(--white);
+        border-color: var(--primary-green);
+    }
+
+    .filter-btn:hover {
+        background: var(--light-green);
+        color: var(--white);
+    }
+
+    .search-results-info {
+        text-align: center;
+        margin: 15px 0;
+        color: var(--dark-gray);
+        font-size: 0.9rem;
+        padding: 10px;
+        background: rgba(76, 175, 80, 0.05);
+        border-radius: 8px;
+    }
+
     </style>
 </head>
 <body>
@@ -1152,11 +1211,30 @@
     <!-- Events Section -->
     <section id="events">
         <div class="container">
-            <div class="section-title">
-                <h2>Upcoming Events</h2>
-                <p>Join our community events and make a difference. Participate in workshops, cleanups, and more.</p>
+            <!-- Add this in the Events section after the section-title div -->
+            <div class="events-search-container">
+                <div class="section-title" style="margin-bottom: 20px;">
+                    <h2>Upcoming Events</h2>
+                    <p>Join our community events and make a difference. Participate in workshops, cleanups, and more.</p>
+                </div>
+                
+                <div class="search-bar" style="max-width: 600px; margin: 0 auto 40px auto;">
+                    <div class="search-input-group">
+                        <input type="text" id="eventsSearchInput" placeholder="Search events by name, date, location, or description..." 
+                            style="width: 100%; padding: 12px 20px; border: 2px solid var(--light-green); border-radius: 30px; font-size: 1rem;">
+                        <div class="search-tips" style="margin-top: 10px; text-align: center; font-size: 0.9rem; color: var(--dark-gray);">
+                            <span>Tip: Try searching for "Aarhus", "March", or "workshop"</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <!-- Current Events -->
+            <div id="current-events-list" class="events-container"></div>
+            <div id="no-current-events-message" style="display:none; margin: 32px 0; text-align:center; color: var(--dark-gray); font-size: 1.1rem;"></div>
+            <div id="no-search-results" style="display:none; margin: 32px 0; text-align:center; color: var(--dark-gray); font-size: 1.1rem; padding: 20px; background: var(--white); border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <p>No events found matching your search. Try different keywords or browse all events.</p>
+            </div>
             <!-- Current Events -->
             <div id="current-events-list" class="events-container"></div>
             <div id="no-current-events-message" style="display:none; margin: 32px 0; text-align:center; color: var(--dark-gray); font-size: 1.1rem;"></div>
@@ -1548,7 +1626,7 @@
         }
     }
 
-    // Sustainable locations data for map
+    // Sustainable locations data for map ---------------------------------------------------------
     const sustainableLocations = [
         {
             id: 1,
@@ -1885,7 +1963,7 @@
     let map;
     let markers = {};
 
-    // Map functionality
+    // Map functionality 
     function initMap() {
         if (!document.getElementById('mapContainer')) return;
         
@@ -2058,6 +2136,286 @@
         });
     });
 
+    // Search functionality for events --------------------------------------------------------------------------
+    function initializeSearch() {
+        const searchInput = document.getElementById('eventsSearchInput');
+        const noResultsDiv = document.getElementById('no-search-results');
+        
+        if (!searchInput) return;
+        
+        // Add search icon to input (using CSS pseudo-element)
+        const style = document.createElement('style');
+        style.textContent = `
+            .search-input-group::before {
+                content: "🔍";
+                position: absolute;
+                left: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--light-green);
+                font-size: 1.1rem;
+                z-index: 1;
+            }
+            .search-input-group input {
+                padding-left: 45px !important;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Function to get month name from date string
+        function getMonthFromDate(dateStr) {
+            try {
+                // Extract the month number from date string like "16/3/2026 - 09:00–17:00"
+                const datePart = dateStr.split(' - ')[0];
+                const monthNum = parseInt(datePart.split('/')[1]);
+                
+                // Danish month names
+                const danishMonths = [
+                    'januar', 'februar', 'marts', 'april', 'maj', 'juni',
+                    'juli', 'august', 'september', 'oktober', 'november', 'december'
+                ];
+                
+                // English month names for fallback
+                const englishMonths = [
+                    'january', 'february', 'march', 'april', 'may', 'june',
+                    'july', 'august', 'september', 'october', 'november', 'december'
+                ];
+                
+                // English abbreviations
+                const englishAbbr = [
+                    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+                    'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+                ];
+                
+                if (monthNum >= 1 && monthNum <= 12) {
+                    return {
+                        danish: danishMonths[monthNum - 1],
+                        english: englishMonths[monthNum - 1],
+                        englishAbbr: englishAbbr[monthNum - 1],
+                        monthNumber: monthNum
+                    };
+                }
+            } catch (e) {
+                console.error('Error parsing month from date:', dateStr, e);
+            }
+            
+            return {
+                danish: '',
+                english: '',
+                englishAbbr: '',
+                monthNumber: 0
+            };
+        }
+        
+        // Function to perform search
+        function performSearch(searchTerm) {
+            const searchTermLower = searchTerm.toLowerCase().trim();
+            
+            // Get current and old events containers
+            const currentEventsContainer = document.getElementById('current-events-list');
+            const oldEventsContainer = document.getElementById('old-events-list');
+            const noCurrentMsg = document.getElementById('no-current-events-message');
+            const noResultsMsg = document.getElementById('no-search-results');
+            const searchTips = document.querySelector('.search-tips');
+            
+            // Hide no current events message during search
+            if (noCurrentMsg) noCurrentMsg.style.display = 'none';
+            
+            // If search is empty, show all events
+            if (!searchTermLower) {
+                noResultsMsg.style.display = 'none';
+                if (searchTips) searchTips.style.display = 'block';
+                initializeEvents(); // Reset to original view
+                return;
+            }
+            
+            // Show minimum search length warning
+            if (searchTermLower.length < 2) {
+                currentEventsContainer.innerHTML = '';
+                if (oldEventsContainer) oldEventsContainer.innerHTML = '';
+                noResultsMsg.style.display = 'block';
+                noResultsMsg.innerHTML = '<p>Please enter at least 2 characters to search.</p>';
+                document.getElementById('toggle-old-events').style.display = 'none';
+                if (searchTips) searchTips.style.display = 'block';
+                return;
+            }
+            
+            // Remove any previous search info
+            const existingInfo = document.querySelector('.search-results-info');
+            if (existingInfo) existingInfo.remove();
+            
+            // Filter events based on search term - now including month names
+            const filteredEvents = eventData.filter(event => {
+                // Get month information
+                const monthInfo = getMonthFromDate(event.date);
+                
+                // Check if search term is a month name (danish, english, or abbreviation)
+                const isMonthSearch = 
+                    monthInfo.danish.includes(searchTermLower) ||
+                    monthInfo.english.includes(searchTermLower) ||
+                    monthInfo.englishAbbr.includes(searchTermLower);
+                
+                // Check if search term is a month number (e.g., "3" for March)
+                const isMonthNumberSearch = monthInfo.monthNumber.toString() === searchTermLower;
+                
+                // Check other fields
+                const isInOtherFields = 
+                    event.name.toLowerCase().includes(searchTermLower) ||
+                    event.date.toLowerCase().includes(searchTermLower) ||
+                    event.location.toLowerCase().includes(searchTermLower) ||
+                    event.description.toLowerCase().includes(searchTermLower);
+                
+                return isMonthSearch || isMonthNumberSearch || isInOtherFields;
+            });
+            
+            // Separate filtered events into current and old
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const currentEvents = [];
+            const oldEvents = [];
+            
+            filteredEvents.forEach(event => {
+                const eventDate = parseDanishDate(event.date);
+                eventDate.setHours(0, 0, 0, 0);
+                
+                if (eventDate >= today) {
+                    currentEvents.push(event);
+                } else {
+                    oldEvents.push(event);
+                }
+            });
+            
+            // Display search results
+            if (filteredEvents.length === 0) {
+                // No results found
+                currentEventsContainer.innerHTML = '';
+                if (oldEventsContainer) oldEventsContainer.innerHTML = '';
+                noResultsMsg.style.display = 'block';
+                noResultsMsg.innerHTML = '<p>No events found matching your search. Try different keywords or browse all events.</p>';
+                document.getElementById('toggle-old-events').style.display = 'none';
+                if (searchTips) searchTips.style.display = 'block';
+            } else {
+                noResultsMsg.style.display = 'none';
+                if (searchTips) searchTips.style.display = 'none';
+                
+                // Render current events
+                currentEventsContainer.innerHTML = currentEvents
+                    .map(event => renderEventCard(event, false))
+                    .join('');
+                
+                // Render old events if there are any
+                if (oldEventsContainer) {
+                    oldEventsContainer.innerHTML = oldEvents
+                        .map(event => renderEventCard(event, true))
+                        .join('');
+                    
+                    // Show/hide old events toggle
+                    const toggleBtn = document.getElementById('toggle-old-events');
+                    const oldSection = document.getElementById('old-events-section');
+                    
+                    if (oldEvents.length > 0) {
+                        toggleBtn.style.display = 'block';
+                        toggleBtn.textContent = `Show Old Events (${oldEvents.length})`;
+                        
+                        // Reset old events section to hidden
+                        oldSection.style.display = 'none';
+                    } else {
+                        toggleBtn.style.display = 'none';
+                    }
+                }
+                
+                // Show search results info
+                showSearchResultsInfo(filteredEvents.length, searchTerm);
+            }
+        }
+        
+        // Function to show search results info
+        function showSearchResultsInfo(count, searchTerm) {
+            // Remove existing info if any
+            const existingInfo = document.querySelector('.search-results-info');
+            if (existingInfo) existingInfo.remove();
+            
+            if (searchTerm.trim() && count > 0) {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'search-results-info';
+                infoDiv.innerHTML = `Found ${count} event${count === 1 ? '' : 's'} matching "${searchTerm}"`;
+                document.querySelector('.search-bar').appendChild(infoDiv);
+            }
+        }
+        
+        // Add event listener for search input with debounce
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch(this.value);
+            }, 300); // 300ms debounce delay
+        });
+        
+        // Add event listener for Enter key
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                performSearch(this.value);
+            }
+        });
+        
+        // Add clear button functionality
+        const clearButton = document.createElement('button');
+        clearButton.innerHTML = '&times;';
+        clearButton.style.cssText = `
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark-gray);
+            cursor: pointer;
+            display: none;
+            z-index: 2;
+        `;
+        searchInput.parentNode.appendChild(clearButton);
+        
+        // Show/hide clear button based on input
+        searchInput.addEventListener('input', function() {
+            clearButton.style.display = this.value ? 'block' : 'none';
+        });
+        
+        // Clear search when clear button is clicked
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            clearTimeout(searchTimeout);
+            performSearch('');
+            clearButton.style.display = 'none';
+            searchInput.focus();
+        });
+        
+        // Update the search tips to include month examples
+        const searchTips = document.querySelector('.search-tips span');
+        if (searchTips) {
+            searchTips.textContent = 'Tip: Try searching for "Aarhus", "March", "februar" or "workshop"';
+        }
+    }
+
+    // Update the DOMContentLoaded event listener to also initialize search
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize events
+        initializeEvents();
+        
+        // Initialize search functionality
+        initializeSearch();
+        
+        // Initialize map if the element exists
+        initMap();
+        
+        // Initialize auth buttons
+        if (typeof updateAuthButtons === 'function') {
+            updateAuthButtons();
+        }
+    });
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="events.js"></script>
