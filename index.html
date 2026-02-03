@@ -986,52 +986,13 @@
                     <li><a href="index.html#events">Events</a></li>
                     <li><a href="index.html#news">News</a></li>
                     <li><a href="index.html#map">Sustainable Aarhus</a></li>
-                    <li><a href="game.html">Games</a></li>
+                    <li><a href="game-overview.html">Games</a></li>
                     <li><a href="community.html">Community</a></li>
                 </ul>
             </nav>
             <div class="auth-buttons" id="authButtons">
                 <!-- Buttons will be dynamically inserted here -->
             </div>
-
-            <script>
-                // Update auth buttons based on login status
-                function updateAuthButtons() {
-                    const authButtons = document.getElementById('authButtons');
-                    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-                    
-                    if (currentUser) {
-                        // User is logged in
-                        authButtons.innerHTML = `
-                            <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
-                            <a href="points.html" class="btn btn-login">My Points</a>
-                            <button class="btn btn-register" id="logoutBtn">Logout</button>
-                        `;
-                        
-                        document.getElementById('logoutBtn').addEventListener('click', function() {
-                            localStorage.removeItem('sustainalearn_currentUser');
-                            window.location.reload();
-                        });
-                    } else {
-                        // User is not logged in
-                        authButtons.innerHTML = `
-                            <button class="btn btn-login" id="loginBtn">Login</button>
-                            <button class="btn btn-register" id="registerBtn">Register</button>
-                        `;
-                        
-                        document.getElementById('loginBtn').addEventListener('click', function() {
-                            window.location.href = 'login.html';
-                        });
-                        
-                        document.getElementById('registerBtn').addEventListener('click', function() {
-                            window.location.href = 'register.html';
-                        });
-                    }
-                }
-                
-                // Initialize auth buttons on page load
-                document.addEventListener('DOMContentLoaded', updateAuthButtons);
-            </script>
         </div>
     </header>
 
@@ -1390,6 +1351,65 @@
     <button id="scrollToTop" aria-label="Scroll to top"></button>
 
 <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
+        authDomain: "social-green-4d772.firebaseapp.com",
+        projectId: "social-green-4d772",
+        storageBucket: "social-green-4d772.firebasestorage.app",
+        messagingSenderId: "81847906637",
+        appId: "1:81847906637:web:9eaf5e8cd1cd5d659d05bb"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Update auth buttons based on Firebase auth status
+    function updateAuthButtons(user) {
+        const authButtons = document.getElementById('authButtons');
+        
+        if (user) {
+            // User is logged in - get user data from Firestore
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                const userData = doc.data();
+                const firstName = userData?.firstName || user.displayName?.split(' ')[0] || 'User';
+                
+                authButtons.innerHTML = `
+                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${firstName}</span>
+                    <a href="points.html" class="btn btn-login">My Points</a>
+                    <button class="btn btn-register" id="logoutBtn">Sign Out</button>
+                `;
+                
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    auth.signOut().then(() => {
+                        window.location.reload();
+                    });
+                });
+            });
+        } else {
+            // User is not logged in
+            authButtons.innerHTML = `
+                <button class="btn btn-login" id="loginBtn">Login</button>
+                <button class="btn btn-register" id="registerBtn">Register</button>
+            `;
+            
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                window.location.href = 'login.html';
+            });
+            
+            document.getElementById('registerBtn').addEventListener('click', function() {
+                window.location.href = 'register.html';
+            });
+        }
+    }
+
+    // Listen for auth state changes
+    auth.onAuthStateChanged((user) => {
+        updateAuthButtons(user);
+    });
+
     // Replace the parseDanishDate function with this corrected version:
     function parseDanishDate(dateStr) {
         // Extract date part (e.g., "6/12/2025 - 10:00-11:30" -> "6/12/2025")

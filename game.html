@@ -1403,7 +1403,7 @@ const itemTypes = [
 let gameActive = false;
 let score = 0;
 let highScore = localStorage.getItem('sustainalearn_trashHighScore') || 0;
-let lives = 5; // Changed from 3 to 5
+let lives = 5;
 let items = [];
 let itemInterval;
 let gameSpeed = 2500;
@@ -1417,7 +1417,17 @@ const maxItemsOnScreen = 3;
 let binDropZones = [];
 let musicEnabled = true;
 let audioContext;
-let backgroundMusic;
+let musicTimer = null;  // For background music interval
+
+// ======================
+// 🎵 NOTE FREQUENCIES
+// ======================
+const NOTES = {
+    C3: 130.81, E3: 164.81, F3: 174.61, G3: 196.00,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23,
+    G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99
+};
 
 // DOM Elements
 const startScreen = document.getElementById('startScreen');
@@ -1470,64 +1480,106 @@ function init() {
     initAudio();
 }
 
-// Initialize audio system
+// ======================
+// 🔊 INIT AUDIO
+// ======================
 function initAudio() {
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Create simple background music (a repeating soft tone)
-        backgroundMusic = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        backgroundMusic.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        backgroundMusic.frequency.value = 220; // A low frequency
-        backgroundMusic.type = 'sine';
-        gainNode.gain.value = 0.02; // Very low volume
-        
-        // Start the oscillator but we'll control it with the music toggle
-        backgroundMusic.start();
-        backgroundMusic.stop(audioContext.currentTime + 0.1); // Stop immediately, we'll restart when needed
     } catch (e) {
         console.log("Audio not supported:", e);
     }
 }
 
-// Play background music
+// ======================
+// 🎶 PLAY SINGLE CHIPTUNE NOTE
+// ======================
+function playNote(freq, startTime, duration, volume = 0.1, type = "square") {
+    if (!audioContext) return;
+    
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    osc.type = type;
+    osc.frequency.value = freq;
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    // Envelope (removes clicks)
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+    gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+}
+
+// ======================
+// 🎼 START MUSIC
+// ======================
 function playBackgroundMusic() {
     if (!musicEnabled || !audioContext) return;
-    
-    try {
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-        
-        // Create a new oscillator for background music
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 220;
-        oscillator.type = 'sine';
-        gainNode.gain.value = 0.02;
-        
-        oscillator.start();
-        
-        // Stop after 2 seconds and restart to create a loop
-        setTimeout(() => {
-            oscillator.stop();
-            if (musicEnabled && gameActive) {
-                playBackgroundMusic();
-            }
-        }, 2000);
-    } catch (e) {
-        console.log("Error playing music:", e);
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume();
+    }
+
+    const tempo = 150;
+    const beat = 60 / tempo;
+    let step = 0;
+
+    const melody = [
+        NOTES.E5, NOTES.D5, NOTES.C5, NOTES.D5,
+        NOTES.E5, NOTES.E5, NOTES.E5, 0,
+        NOTES.D5, NOTES.D5, NOTES.D5, 0,
+        NOTES.E5, NOTES.G5, NOTES.G5, 0
+    ];
+
+    const bass = [
+        NOTES.C3, 0, NOTES.C3, 0,
+        NOTES.F3, 0, NOTES.G3, 0
+    ];
+
+    stopBackgroundMusic(); // prevent stacking loops
+
+    musicTimer = setInterval(() => {
+        if (!musicEnabled || !gameActive) return;
+
+        const now = audioContext.currentTime;
+
+        const melNote = melody[step % melody.length];
+        const bassNote = bass[step % bass.length];
+
+        // Melody
+        if (melNote)
+            playNote(melNote, now, beat * 0.9, 0.08, "square");
+
+        // Bass
+        if (bassNote)
+            playNote(bassNote, now, beat * 0.9, 0.05, "square");
+
+        // Kick drum (triangle thump)
+        if (step % 4 === 0)
+            playNote(90, now, 0.08, 0.18, "triangle");
+
+        step++;
+    }, beat * 1000);
+}
+
+// ======================
+// ⛔ STOP MUSIC
+// ======================
+function stopBackgroundMusic() {
+    if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
     }
 }
 
-// Play sound effect
+// ======================
+// 🔊 PLAY SOUND EFFECTS
+// ======================
 function playSound(type) {
     if (!musicEnabled || !audioContext) return;
     
@@ -1565,6 +1617,149 @@ function playSound(type) {
         console.log("Error playing sound:", e);
     }
 }
+
+// Function to update hearts display
+function updateHeartsDisplay() {
+    heartsContainer.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const heart = document.createElement('i');
+        heart.className = i < lives ? 'fas fa-heart heart' : 'fas fa-heart heart lost';
+        heartsContainer.appendChild(heart);
+    }
+}
+
+// --- Settings Functions ---
+function toggleMusic() {
+    musicEnabled = musicToggle.checked;
+    localStorage.setItem('sustainalearn_musicEnabled', musicEnabled);
+    
+    if (musicEnabled && gameActive) {
+        playBackgroundMusic();
+    } else {
+        stopBackgroundMusic();
+    }
+}
+
+// --- Start Game ---
+function startGame() {
+    if (gameActive) return;
+
+    gameActive = true;
+    score = 0;
+    lives = 5;
+    level = 1;
+    gameSpeed = 2500;
+    speedIncreaseCounter = 0;
+    itemsOnScreen = 0;
+
+    currentScoreEl.textContent = score;
+    currentLevelEl.textContent = level;
+    currentHighScoreEl.textContent = highScore;
+    updateHeartsDisplay();
+    
+    startScreen.style.display = 'none';
+    gameContainer.style.display = 'flex';
+    endScreen.classList.remove('show');
+    tutorialModal.classList.remove('show');
+    settingsModal.classList.remove('show');
+
+    currentBins = selectRandomBins();
+    updateCurrentItems();
+    updateBinsDisplay();
+
+    clearAllItems();
+
+    clearInterval(itemInterval);
+    
+    itemInterval = setInterval(createItem, gameSpeed);
+    
+    // Start background music if enabled
+    if (musicEnabled) {
+        playBackgroundMusic();
+    }
+}
+
+// --- END GAME ---
+function endGame() {
+    gameActive = false;
+    clearInterval(itemInterval);
+    stopBackgroundMusic(); // Stop music when game ends
+
+    document.querySelectorAll('.falling-item').forEach(item => {
+        clearInterval(item.fallInterval);
+        item.remove();
+    });
+
+    // Save points to user account if logged in
+    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+    if (currentUser) {
+        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        const i = users.findIndex(u => u.username === currentUser.username);
+
+        if (i !== -1) {
+            users[i].gamePoints = (users[i].gamePoints || 0) + score;
+            
+            if (!users[i].pointsHistory) users[i].pointsHistory = [];
+            users[i].pointsHistory.push({
+                date: new Date().toISOString().split('T')[0],
+                description: 'Trash Sorting Game - Level ' + level,
+                points: score,
+                type: 'earned'
+            });
+
+            localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[i]));
+        }
+    }
+
+    finalScoreEl.textContent = score;
+    highScoreEndEl.textContent = highScore;
+    
+    if (score > highScore) {
+        newHighScoreMessage.innerHTML = '<div class="new-highscore">🎉 New High Score! 🎉</div>';
+        playSound('correct');
+    } else {
+        newHighScoreMessage.innerHTML = '';
+    }
+    
+    // Show end screen after a short delay
+    setTimeout(() => {
+        endScreen.classList.add('show');
+    }, 500);
+}
+
+// --- Show start screen ---
+function showStartScreen() {
+    gameActive = false;
+    clearInterval(itemInterval);
+    stopBackgroundMusic(); // Stop music when returning to start
+    clearAllItems();
+    
+    startScreen.style.display = 'flex';
+    gameContainer.style.display = 'none';
+    endScreen.classList.remove('show');
+    tutorialModal.classList.remove('show');
+    settingsModal.classList.remove('show');
+    
+    // Update high score display
+    highScore = localStorage.getItem('sustainalearn_trashHighScore') || 0;
+    highScoreStartEl.textContent = highScore;
+}
+
+// Initialize on load
+window.addEventListener('load', () => {
+    init();
+    showStartScreen();
+    
+    // Show tutorial on first visit
+    const hasSeenTutorial = localStorage.getItem('sustainalearn_gameTutorialSeen');
+    if (!hasSeenTutorial) {
+        setTimeout(() => {
+            tutorialModal.classList.add('show');
+            localStorage.setItem('sustainalearn_gameTutorialSeen', 'true');
+        }, 500);
+    }
+});
 
 // Function to update hearts display
 function updateHeartsDisplay() {
