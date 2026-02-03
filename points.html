@@ -4,12 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Points - SustainaLearn</title>
+    <link rel="icon" type="image/jpeg" href="images/logodgi.jpg">
     
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script type="module">
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
+    import { getAuth, onAuthStateChanged } from "firebase/auth";
+    import { getFirestore, collection, addDoc, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
+    authDomain: "social-green-4d772.firebaseapp.com",
+    projectId: "social-green-4d772",
+    storageBucket: "social-green-4d772.firebasestorage.app",
+    messagingSenderId: "81847906637",
+    appId: "1:81847906637:web:d1f76632b8516e0c230704",
+    measurementId: "G-KQ0K9S913X"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    
+    // Make available globally
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+    window.storage = storage;
+    </script>
+
     <style>
         /* Combined CSS with enhanced features */
         :root {
@@ -1295,7 +1322,7 @@
                     <ul>
                         <li>123 Green Street, Eco City</li>
                         <li>+1 (123) 456-7890</li>
-                        <li>info@sustainalearn.com</li>
+                        <li>socialandgreen@gmail.com</li>
                     </ul>
                 </div>
             </div>
@@ -1306,21 +1333,75 @@
     </footer>
 
     <script>
-        // Combined JavaScript functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            const allUsers = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-            
-            if (!currentUser) {
+        let currentUserData = null;
+        let currentUserId = null;
+
+        // Auth state listener - Load everything once user is authenticated
+        window.auth.onAuthStateChanged(async (user) => {
+            if (!user) {
                 // Redirect to login if not logged in
                 alert('Please log in to view your points dashboard');
                 window.location.href = 'login.html';
                 return;
             }
+
+            currentUserId = user.uid;
+
+            // Get user data from Firestore
+            const userRef = window.db.collection('users').doc(user.uid);
+            const userSnap = await userRef.get();
+
+            if (!userSnap.exists) {
+                // Create user document if it doesn't exist
+                await userRef.set({
+                    email: user.email,
+                    name: user.displayName || 'User',
+                    points: 0,
+                    totalUploads: 0,
+                    streak: 0,
+                    level: 1,
+                    achievements: [],
+                    dailyCheckins: [],
+                    eventsAttended: [],
+                    events: [],
+                    pointsHistory: [],
+                    monthlyPoints: {},
+                    gamePoints: 0,
+                    articlesRead: [],
+                    articlesQuizPassed: [],
+                    trashCollected: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                currentUserData = (await userRef.get()).data();
+            } else {
+                currentUserData = userSnap.data();
+            }
             
-            // Initialize user data
-            const user = initializeUserData(currentUser);
+            // Load dashboard with Firestore data
+            await loadDashboardFromFirebase(user.uid);
+            updateAuthButtons(user);
+            initCheckInFirebase(user.uid);
+            initTrashCompetition(user);
+        });
+        
+        // DOM ready handler for history filters
+        document.addEventListener('DOMContentLoaded', function() {
+            initHistoryFilters();
+        });
+        
+        function updateAuthButtons(user) {
+            const authButtons = document.getElementById('authButtons');
+            
+            authButtons.innerHTML = `
+                <button class="btn btn-login" id="pointsBtn">My Points</button>
+                <button class="btn btn-register" id="logoutBtn">Logout</button>
+            `;
+            
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                await window.auth.signOut();
+                window.location.href = 'index.html';
+            });
+        }
             
             // Update auth buttons
             updateAuthButtons();
@@ -1405,14 +1486,18 @@
             }
         }
         
-        function loadDashboardData(user) {
-            // Update points in both locations
-            document.getElementById('totalPointsDashboard').textContent = user.points || 0;
-            document.getElementById('totalPoints').textContent = user.points || 0;
+        async function loadDashboardFromFirebase(uid) {
+            const userRef = window.db.collection('users').doc(uid);
+            const userSnap = await userRef.get();
+            const userData = userSnap.data();
+
+            // Update points displays
+            document.getElementById("totalPoints").textContent = userData.points || 0;
+            document.getElementById("totalPointsDashboard").textContent = userData.points || 0;
             
             // Calculate level (every 100 points = 1 level)
-            const level = Math.floor((user.points || 0) / 100) + 1;
-            const pointsInCurrentLevel = (user.points || 0) % 100;
+            const level = Math.floor((userData.points || 0) / 100) + 1;
+            const pointsInCurrentLevel = (userData.points || 0) % 100;
             const pointsToNextLevel = 100 - pointsInCurrentLevel;
             
             // Update level info
@@ -1428,16 +1513,190 @@
             document.getElementById('levelProgress').style.width = `${progressPercent}%`;
             
             // Update streak
-            document.getElementById('currentStreak').textContent = user.streak || 0;
+            document.getElementById('currentStreak').textContent = userData.streak || 0;
             
             // Update monthly points
             const now = new Date();
             const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
-            const monthlyPoints = user.monthlyPoints?.[monthKey] || 0;
+            const monthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
             document.getElementById('monthlyPoints').textContent = monthlyPoints;
             
             // Generate streak calendar
-            generateStreakCalendar(user.dailyCheckins || []);
+            generateStreakCalendar(userData.dailyCheckins || []);
+            
+            // Load other data
+            loadPointsBreakdownFirebase(userData);
+            loadEventsListFirebase(userData);
+            loadPointsHistoryFirebase(userData);
+            loadAchievementsFirebase(userData);
+            calculateImpactStatsFirebase(userData);
+        }
+        
+        function loadPointsBreakdownFirebase(userData) {
+            // Calculate points from different sources
+            const eventsPoints = (userData.eventsAttended?.length || 0) * 10;
+            const gamesPoints = userData.gamePoints || 0;
+            const articlesPoints = (userData.articlesRead?.length || 0) * 50;
+            const quizzesPoints = (userData.articlesQuizPassed?.length || 0) * 100;
+            const dailyPoints = calculateDailyPoints(userData);
+            const trashPoints = (userData.trashCollected?.length || 0);
+
+            document.getElementById('trashPoints').textContent = `${trashPoints} item(s)`;
+            document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
+            document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
+            document.getElementById('articlesPoints').textContent = `${articlesPoints} points`;
+            document.getElementById('quizzesPoints').textContent = `${quizzesPoints} points`;
+            document.getElementById('dailyPoints').textContent = `${dailyPoints} points`;
+        }
+        
+        function loadEventsListFirebase(userData) {
+            const container = document.getElementById('eventsList');
+            const userEvents = userData.events || [];
+            
+            // Helper function to parse Danish date format
+            function parseDanishDate(dateStr) {
+                const datePart = dateStr.split(' - ')[0];
+                const [day, month, year] = datePart.split('/').map(num => parseInt(num, 10));
+                return new Date(year, month - 1, day, 23, 59, 59);
+            }
+            
+            // Filter out past events
+            const today = new Date();
+            const upcomingEventIds = userEvents.filter(eventId => {
+                const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
+                if (!event || !event.date) return false;
+                return parseDanishDate(event.date) >= today;
+            });
+            
+            if (upcomingEventIds.length === 0) {
+                container.innerHTML = `
+                    <div class="no-events">You haven't signed up for any upcoming events.</div>
+                `;
+                return;
+            }
+            
+            // Load actual events data from events.js
+            container.innerHTML = '';
+            
+            upcomingEventIds.forEach(eventId => {
+                const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
+                
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                eventItem.innerHTML = `
+                    <span class="event-name">${event ? event.title : 'Event'}</span>
+                    <span class="event-points">+10 pts (signup)</span>
+                `;
+                container.appendChild(eventItem);
+            });
+        }
+        
+        function loadPointsHistoryFirebase(userData) {
+            const tbody = document.getElementById('historyTableBody');
+            const history = userData.pointsHistory || [];
+            
+            if (history.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="4" style="text-align: center; color: #999;">No history yet. Start earning points!</td></tr>
+                `;
+                return;
+            }
+            
+            // Sort by date (newest first)
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tbody.innerHTML = '';
+            
+            history.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(item.date)}</td>
+                    <td>${item.description}</td>
+                    <td class="${item.type === 'earned' ? 'points-positive' : 'points-negative'}">${item.type === 'earned' ? '+' : '-'}${item.points}</td>
+                    <td><span style="color: ${getTypeColor(item.type)}">${item.type}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function loadAchievementsFirebase(userData) {
+            const container = document.getElementById('achievementsContainer');
+            const userAchievements = userData.achievements || [];
+            
+            document.getElementById('achievementsCount').textContent = userAchievements.length;
+            document.getElementById('totalAchievements').textContent = achievementsData.length;
+            
+            container.innerHTML = '';
+            
+            achievementsData.forEach(achievement => {
+                const hasAchievement = userAchievements.includes(achievement.id);
+                
+                const card = document.createElement('div');
+                card.className = `achievement-card ${hasAchievement ? '' : 'locked'}`;
+                card.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-title">${achievement.name}</div>
+                    <div class="achievement-desc">${achievement.description}</div>
+                    <div class="achievement-points">+${achievement.points} pts</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function calculateImpactStatsFirebase(userData) {
+            // Calculate based on points and activities
+            const points = userData.points || 0;
+            
+            const co2Saved = (points / 10) * 1; // kg
+            const waterSaved = (points / 10) * 50; // liters
+            const wasteDiverted = (points / 10) * 0.5; // kg
+            const equivalentTrees = Math.floor(co2Saved / 100);
+            
+            document.getElementById('co2Saved').textContent = `${co2Saved.toFixed(1)} kg`;
+            document.getElementById('waterSaved').textContent = `${waterSaved.toFixed(0)} L`;
+            document.getElementById('wasteDiverted').textContent = `${wasteDiverted.toFixed(1)} kg`;
+            document.getElementById('equivalentTrees').textContent = equivalentTrees;
+        }
+        
+        function initCheckInFirebase(uid) {
+            const checkinBtn = document.getElementById('checkinBtn');
+            
+            // Will be implemented with Firestore
+            // For now, keeping original initCheckIn logic
+        }
+            const pointsInCurrentLevel = (userData.points || 0) % 100;
+            const pointsToNextLevel = 100 - pointsInCurrentLevel;
+            
+            // Update level info
+            document.getElementById('currentLevel').textContent = level;
+            document.getElementById('levelBadge').textContent = level;
+            document.getElementById('nextLevel').textContent = level + 1;
+            document.getElementById('currentProgress').textContent = pointsInCurrentLevel;
+            document.getElementById('pointsToNext').textContent = pointsToNextLevel;
+            document.getElementById('levelRequirement').textContent = 100;
+            
+            // Update progress bar
+            const progressPercent = (pointsInCurrentLevel / 100) * 100;
+            document.getElementById('levelProgress').style.width = `${progressPercent}%`;
+            
+            // Update streak
+            document.getElementById('currentStreak').textContent = userData.streak || 0;
+            
+            // Update monthly points
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+            const monthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+            document.getElementById('monthlyPoints').textContent = monthlyPoints;
+            
+            // Generate streak calendar
+            generateStreakCalendar(userData.dailyCheckins || []);
+            
+            // Load other data
+            loadPointsBreakdownFirebase(userData);
+            loadEventsListFirebase(userData);
+            loadPointsHistoryFirebase(userData);
         }
         
         function loadPointsBreakdown(user) {
@@ -1904,87 +2163,52 @@
                 }
             });
 
-            submitBtn.addEventListener('click', function() {
+            submitBtn.addEventListener('click', async function() {
+                const currentUser = window.auth.currentUser;
+                if (!currentUser) {
+                    trashStatus.textContent = '⚠️ Please log in first!';
+                    trashStatus.className = 'trash-status error';
+                    return;
+                }
+
                 if (!trashInput.files || trashInput.files.length === 0) {
-                    trashStatus.textContent = '⚠️ Please select a photo of the trash you collected.';
+                    trashStatus.textContent = '⚠️ Select a photo first!';
                     trashStatus.className = 'trash-status error';
                     return;
                 }
 
                 const file = trashInput.files[0];
-
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    trashStatus.textContent = '⚠️ File size too large. Please choose a photo under 5MB.';
-                    trashStatus.className = 'trash-status error';
-                    return;
-                }
-
-                // Show loading state
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span>Uploading... ⏳</span>';
+                submitBtn.textContent = 'Uploading...';
 
-                // Convert to base64 for localStorage (simplified storage)
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageData = e.target.result;
+                try {
+                    // 1️⃣ Upload to Firebase Storage
+                    const storageRef = ref(window.storage, `trashUploads/${currentUser.uid}/${Date.now()}_${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    const imageUrl = await getDownloadURL(storageRef);
 
-                    const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                    const userIndex = users.findIndex(u => u.username === user.username);
-                    if (userIndex === -1) return;
-
-                    if (!users[userIndex].trashCollected) users[userIndex].trashCollected = [];
-                    
-                    const today = new Date().toISOString().split('T')[0];
-                    users[userIndex].trashCollected.push({
-                        date: today,
-                        image: imageData
+                    // 2️⃣ Save submission record
+                    await addDoc(collection(window.db, "uploads"), {
+                        userId: currentUser.uid,
+                        imageUrl: imageUrl,
+                        status: "pending",
+                        timestamp: serverTimestamp()
                     });
 
-                    // Update points history (1 point per submission for record keeping)
-                    if (!users[userIndex].pointsHistory) users[userIndex].pointsHistory = [];
-                    users[userIndex].pointsHistory.push({
-                        date: today,
-                        description: 'Trash submission',
-                        points: 1,
-                        type: 'earned'
-                    });
-
-                    // Save
-                    localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-
-                    // Show success message
-                    trashStatus.textContent = '✅ Submission successful! Thank you for helping the environment!';
+                    trashStatus.textContent = '✅ Uploaded! Awaiting approval.';
                     trashStatus.className = 'trash-status success';
-
+                    
                     // Reset form
                     trashInput.value = '';
-                    fileLabel.textContent = 'Choose a photo or drag & drop';
                     selectedFile.style.display = 'none';
-                    
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>Submit Your Contribution</span>';
-
-                    // Update dashboard
-                    loadPointsBreakdown(users[userIndex]);
-                    loadPointsHistory(users[userIndex]);
-                    updateTrashStats(users[userIndex]);
-
-                    // Hide success message after 5 seconds
-                    setTimeout(() => {
-                        trashStatus.className = 'trash-status';
-                    }, 5000);
-                };
-                
-                reader.onerror = function() {
-                    trashStatus.textContent = '⚠️ Error reading file. Please try again.';
+                    fileLabel.textContent = 'Choose a photo or drag & drop';
+                } catch (err) {
+                    trashStatus.textContent = 'Error: ' + err.message;
                     trashStatus.className = 'trash-status error';
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>Submit Your Contribution</span>';
-                };
-                
-                reader.readAsDataURL(file);
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Your Contribution';
             });
 
             // Load initial trash stats
