@@ -529,19 +529,13 @@
     </footer>
 
     <script>
-        // Firebase is already initialized in firebase-config.js
-        // Remove duplicate initialization:
-        // const firebaseConfig = { ... };
-        // firebase.initializeApp(firebaseConfig);
-        
-        // Use the globally available Firebase instances
-        const auth = window.firebaseAuth || firebase.auth();
-        const db = window.firebaseDb || firebase.firestore();
+        // Use the globally available Firebase instances from firebase-config.js
+        const auth = window.firebaseAuth;
+        const db = window.firebaseDb;
 
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is already logged in, redirect to home
                 window.location.href = 'index.html';
             }
         });
@@ -549,7 +543,7 @@
         // Registration form handling
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            e.stopPropagation(); // Prevent any default behavior
+            e.stopPropagation();
             
             const username = document.getElementById('username').value.trim();
             const firstName = document.getElementById('first_name').value.trim();
@@ -581,28 +575,31 @@
                 return;
             }
             
-            // Disable submit button to prevent double submission
+            // Disable submit button
             const submitBtn = this.querySelector('input[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.value = 'Registering...';
             
             try {
-                console.log('Attempting to create user with email:', email);
+                console.log('Creating user account...');
                 
                 // Create user with Firebase Authentication
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password1);
                 const user = userCredential.user;
                 
-                console.log('User created successfully:', user.uid);
+                console.log('User created:', user.uid);
                 
-                // Update user profile
+                // Update user profile with display name
                 await user.updateProfile({
                     displayName: `${firstName} ${lastName}`
                 });
                 
                 console.log('Creating Firestore document...');
                 
-                // Create user document in Firestore
+                // Create user document in Firestore with all required fields
+                const now = new Date();
+                const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                
                 await db.collection('users').doc(user.uid).set({
                     email: email,
                     username: username,
@@ -618,7 +615,7 @@
                     eventsAttended: [],
                     events: [],
                     pointsHistory: [],
-                    monthlyPoints: {},
+                    monthlyPoints: { [monthKey]: 0 },
                     gamePoints: 0,
                     articlesRead: [],
                     articlesQuizPassed: [],
@@ -626,12 +623,11 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                console.log('Firestore document created successfully');
+                console.log('User document created successfully');
                 
-                // Success message
                 showMessage('Registration successful! Redirecting...', 'success');
                 
-                // Redirect to home page after a short delay
+                // Redirect after delay
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 1500);
@@ -648,14 +644,11 @@
                 } else if (error.code === 'auth/invalid-email') {
                     errorMessage = 'Invalid email format.';
                 } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Password is too weak.';
+                    errorMessage = 'Password is too weak. Must be at least 6 characters.';
                 } else if (error.code === 'auth/operation-not-allowed') {
-                    errorMessage = 'Email/password accounts are not enabled. Please contact support.';
+                    errorMessage = 'Registration is currently disabled. Please contact support.';
                 } else if (error.code === 'auth/network-request-failed') {
                     errorMessage = 'Network error. Please check your internet connection.';
-                } else if (error.message) {
-                    // Show the actual error message for debugging
-                    errorMessage = `Error: ${error.message}`;
                 }
                 
                 showMessage(errorMessage, 'error');
@@ -669,7 +662,6 @@
             messageDiv.textContent = message;
             flashMessages.appendChild(messageDiv);
             
-            // Auto-remove error messages after 5 seconds
             if (type === 'error') {
                 setTimeout(() => {
                     messageDiv.remove();

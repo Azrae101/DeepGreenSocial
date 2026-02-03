@@ -1368,68 +1368,70 @@
             }
             
             currentUserId = user.uid;
+            console.log('User authenticated:', currentUserId);
             
-            // Get user data from Firestore
-            const userRef = db.collection('users').doc(user.uid);
-            const userSnap = await userRef.get();
-            
-            if (!userSnap.exists) {
-                // Create user document if it doesn't exist
-                await userRef.set({
-                    email: user.email,
-                    name: user.displayName || 'User',
-                    points: 0,
-                    totalUploads: 0,
-                    streak: 0,
-                    level: 1,
-                    achievements: [],
-                    dailyCheckins: [],
-                    eventsAttended: [],
-                    events: [],
-                    pointsHistory: [],
-                    monthlyPoints: {},
-                    gamePoints: 0,
-                    articlesRead: [],
-                    articlesQuizPassed: [],
-                    trashCollected: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            try {
+                // Get user data from Firestore
+                const userRef = db.collection('users').doc(user.uid);
+                const userSnap = await userRef.get();
                 
-                currentUserData = (await userRef.get()).data();
-            } else {
-                currentUserData = userSnap.data();
+                if (!userSnap.exists) {
+                    console.log('Creating new user document...');
+                    // Create user document with default values
+                    const now = new Date();
+                    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                    
+                    await userRef.set({
+                        email: user.email,
+                        name: user.displayName || 'User',
+                        points: 0,
+                        totalUploads: 0,
+                        streak: 0,
+                        level: 1,
+                        achievements: [],
+                        dailyCheckins: [],
+                        eventsAttended: [],
+                        events: [],
+                        pointsHistory: [],
+                        monthlyPoints: { [monthKey]: 0 },
+                        gamePoints: 0,
+                        articlesRead: [],
+                        articlesQuizPassed: [],
+                        trashCollected: [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    const newSnap = await userRef.get();
+                    currentUserData = newSnap.data();
+                } else {
+                    currentUserData = userSnap.data();
+                }
+                
+                console.log('User data loaded:', currentUserData);
+                
+                // Load dashboard data
+                loadDashboardFromFirebase();
+                updateAuthButtons(user);
+                initCheckInFirebase();
+                initTrashCompetition(user);
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                alert('Error loading your data. Please refresh the page.');
             }
-            
-            // Store user data in localStorage for easy access
-            localStorage.setItem('firebaseUser', JSON.stringify({
-                uid: user.uid,
-                email: user.email,
-                name: user.displayName,
-                ...currentUserData
-            }));
-            
-            // Load dashboard data
-            loadDashboardFromFirebase();
-            updateAuthButtons(user);
-            initCheckInFirebase();
-            initTrashCompetition(user);
-        });
-        
-        // DOM ready handler for history filters
-        document.addEventListener('DOMContentLoaded', function() {
-            initHistoryFilters();
         });
         
         function updateAuthButtons(user) {
             const authButtons = document.getElementById('authButtons');
             
             authButtons.innerHTML = `
-                <button class="btn btn-login" id="pointsBtn">My Points</button>
+                <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${user.displayName || 'User'}</span>
+                <button class="btn btn-login" onclick="window.location.href='points.html'">My Points</button>
                 <button class="btn btn-register" id="logoutBtn">Logout</button>
             `;
             
             document.getElementById('logoutBtn').addEventListener('click', async function() {
-                await window.auth.signOut();
+                await auth.signOut();
                 window.location.href = 'index.html';
             });
         }
@@ -1634,7 +1636,11 @@
             
             if (history.length === 0) {
                 tbody.innerHTML = `
-                    <tr><td colspan="4" style="text-align: center; color: #999;">No history yet. Start earning points!</td></tr>
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 30px; color: var(--dark-gray);">
+                            No points history yet. Start earning points by checking in daily and attending events!
+                        </td>
+                    </tr>
                 `;
                 return;
             }
@@ -1649,8 +1655,15 @@
                 row.innerHTML = `
                     <td>${formatDate(item.date)}</td>
                     <td>${item.description}</td>
-                    <td class="${item.type === 'earned' ? 'points-positive' : 'points-negative'}">${item.type === 'earned' ? '+' : '-'}${item.points}</td>
-                    <td><span style="color: ${getTypeColor(item.type)}">${item.type}</span></td>
+                    <td class="${item.type === 'earned' || item.type === 'bonus' ? 'points-positive' : 'points-negative'}">
+                        ${item.type === 'earned' || item.type === 'bonus' ? '+' : '-'}${item.points}
+                    </td>
+                    <td>
+                        <span style="display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; 
+                               background-color: ${getTypeColor(item.type)}; color: white;">
+                            ${item.type}
+                        </span>
+                    </td>
                 `;
                 
                 tbody.appendChild(row);
@@ -1693,6 +1706,12 @@
             
             // Calculate based on points and activities
             const points = currentUserData.points || 0;
+            
+            // Rough estimates:
+            // - 10 points = 1 kg CO2 saved
+            // - 10 points = 50 L water saved  
+            // - 10 points = 0.5 kg waste diverted
+            // - 100 kg CO2 = 1 tree equivalent
             
             const co2Saved = (points / 10) * 1; // kg
             const waterSaved = (points / 10) * 50; // liters

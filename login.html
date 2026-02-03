@@ -490,33 +490,40 @@
     </footer>
 
 <script>
-    // Current user data
-    let currentUserData = null;
+    // Remove duplicate currentUserData declarations
     let currentUserId = null;
 
     // Login form handling
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const username = document.getElementById('username').value;
+        const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const flashMessages = document.getElementById('flashMessages');
         
         // Clear previous messages
         flashMessages.innerHTML = '';
         
+        // Disable submit button
+        const submitBtn = this.querySelector('.login-submit');
+        submitBtn.disabled = true;
+        submitBtn.value = 'Logging in...';
+        
         try {
-            // Sign in with Firebase Authentication
+            // Sign in with Firebase Authentication (username is actually email)
             const userCredential = await auth.signInWithEmailAndPassword(username, password);
             const user = userCredential.user;
             
+            console.log('User logged in:', user.uid);
+            
             showMessage('Login successful! Redirecting...', 'success');
             
-            // Create user document if it doesn't exist
+            // Verify/Create user document in Firestore
             const userRef = db.collection("users").doc(user.uid);
             const userSnap = await userRef.get();
             
             if (!userSnap.exists) {
+                // Create user document if it doesn't exist
                 await userRef.set({
                     email: user.email,
                     name: user.displayName || "User",
@@ -527,6 +534,7 @@
                     achievements: [],
                     dailyCheckins: [],
                     eventsAttended: [],
+                    events: [],
                     pointsHistory: [],
                     monthlyPoints: {},
                     gamePoints: 0,
@@ -537,23 +545,17 @@
                 });
             }
             
-            // Store user data in localStorage for immediate access
-            const userData = (await userRef.get()).data();
-            localStorage.setItem('firebaseUser', JSON.stringify({
-                uid: user.uid,
-                email: user.email,
-                name: user.displayName,
-                ...userData
-            }));
-            
             // Redirect after a short delay
             setTimeout(() => {
                 window.location.href = 'index.html';
-            }, 1500);
+            }, 1000);
             
         } catch (error) {
             console.error('Login error:', error);
-            let errorMessage = 'Invalid username or password';
+            submitBtn.disabled = false;
+            submitBtn.value = 'Log in';
+            
+            let errorMessage = 'Invalid email or password';
             
             if (error.code === 'auth/user-not-found') {
                 errorMessage = 'No account found with this email';

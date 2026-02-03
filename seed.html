@@ -820,29 +820,53 @@
                 let dx = 0, dy = 0;
                 const speed = this.speed * (this.isRunning ? this.runMultiplier : 1);
 
+                // Normalize key checking - convert to lowercase for consistency
+                const isKeyPressed = (key) => {
+                    return gameState.keys[key] || gameState.keys[key.toLowerCase()] || gameState.keys[key.toUpperCase()];
+                };
+
                 // Handle movement keys
-                if (gameState.keys['ArrowLeft'] || gameState.keys['a'] || gameState.keys['A']) {
+                if (isKeyPressed('ArrowLeft') || isKeyPressed('a')) {
                     dx = -speed;
                     this.walking = true;
                     this.direction = 'left';
                 }
-                if (gameState.keys['ArrowRight'] || gameState.keys['d'] || gameState.keys['D']) {
+                if (isKeyPressed('ArrowRight') || isKeyPressed('d')) {
                     dx = speed;
                     this.walking = true;
                     this.direction = 'right';
                 }
-                if (gameState.keys['ArrowUp'] || gameState.keys['w'] || gameState.keys['W']) {
+                if (isKeyPressed('ArrowUp') || isKeyPressed('w')) {
                     dy = -speed;
                     this.walking = true;
                 }
-                if (gameState.keys['ArrowDown'] || gameState.keys['s'] || gameState.keys['S']) {
+                if (isKeyPressed('ArrowDown') || isKeyPressed('s')) {
                     dy = speed;
                     this.walking = true;
                 }
 
+                // Normalize diagonal movement
+                if (dx !== 0 && dy !== 0) {
+                    dx *= 0.707; // Approximately 1/sqrt(2)
+                    dy *= 0.707;
+                }
+
+                // Store previous position for validation
+                const prevX = this.x;
+                const prevY = this.y;
+
                 // Update position
                 this.x += dx;
                 this.y += dy;
+
+                // Validate new position - prevent teleportation
+                const maxMoveDistance = speed * 2; // Allow some tolerance
+                if (Math.abs(this.x - prevX) > maxMoveDistance || Math.abs(this.y - prevY) > maxMoveDistance) {
+                    // Revert to previous position if movement is too large
+                    this.x = prevX;
+                    this.y = prevY;
+                    return;
+                }
 
                 // Keep in bounds based on location
                 this.enforceBounds();
@@ -866,19 +890,25 @@
                 const onRoad = ROAD_Y <= this.y + this.height / 2 && this.y + this.height / 2 <= ROAD_Y + ROAD_HEIGHT;
                 
                 if (this.currentLocation === "garden") {
-                    // Allow going off screen on road
+                    // Allow going off screen on road for transitions
                     if (!onRoad) {
                         this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
                         this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
+                    } else {
+                        // On road, allow wider movement for transitions
+                        this.y = Math.max(ROAD_Y - this.height / 2, Math.min(this.y, ROAD_Y + ROAD_HEIGHT - this.height / 2));
                     }
                 } else if (this.currentLocation === "house") {
                     this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
                     this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
                 } else if (this.currentLocation === "neighborhood") {
-                    // Allow going off screen on road
+                    // Allow going off screen on road for transitions
                     if (!onRoad) {
                         this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
                         this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
+                    } else {
+                        // On road, allow wider movement for transitions
+                        this.y = Math.max(ROAD_Y - this.height / 2, Math.min(this.y, ROAD_Y + ROAD_HEIGHT - this.height / 2));
                     }
                 }
             }
@@ -1859,6 +1889,23 @@
                 ctx.strokeRect(house.x + 20, house.y + 30, 25, 25);
                 ctx.fillRect(house.x + 105, house.y + 30, 25, 25);
                 ctx.strokeRect(house.x + 105, house.y + 30, 25, 25);
+            
+                // Window cross
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x + 35, y + 20);
+                ctx.lineTo(x + 35, y + 50);
+                ctx.moveTo(x + 20, y + 35);
+                ctx.lineTo(x + 50, y + 35);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x + width - 35, y + 20);
+                ctx.lineTo(x + width - 35, y + 50);
+                ctx.moveTo(x + width - 50, y + 35);
+                ctx.lineTo(x + width - 20, y + 35);
+                ctx.stroke();
             });
 
             // Draw trash pieces
@@ -2429,7 +2476,9 @@
         // EVENT HANDLERS
         // ============================================
         function handleKeyDown(e) {
-            gameState.keys[e.key] = true;
+            // Normalize the key for consistent tracking
+            const key = e.key;
+            gameState.keys[key] = true;
             
             if (e.key === 'Escape') {
                 if (compostModal.style.display === 'flex') {
@@ -2453,7 +2502,15 @@
         }
 
         function handleKeyUp(e) {
-            gameState.keys[e.key] = false;
+            // Clear both the actual key and its lowercase/uppercase variants
+            const key = e.key;
+            gameState.keys[key] = false;
+            if (key.toLowerCase() !== key) {
+                gameState.keys[key.toLowerCase()] = false;
+            }
+            if (key.toUpperCase() !== key) {
+                gameState.keys[key.toUpperCase()] = false;
+            }
         }
 
         function handleMouseMove(e) {
