@@ -243,7 +243,7 @@
 
     #gameArea {
         position: relative;
-        height: 500px;
+        height: 700px; /* Increased from 500px */
         background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
         border: 4px solid var(--primary-green);
         border-radius: 12px;
@@ -251,13 +251,13 @@
         box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
     }
 
-    /* Falling items styling */
+    /* Falling items styling - UPDATED: Lighter background */
     .falling-item {
         position: absolute;
-        width: 80px;
-        height: 80px;
-        border-radius: 12px;
-        color: white;
+        width: 90px;
+        height: 90px;
+        border-radius: 15px;
+        color: var(--dark-gray); /* Darker text for contrast */
         font-weight: bold;
         display: flex;
         flex-direction: column;
@@ -269,11 +269,15 @@
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         border: 3px solid rgba(255,255,255,0.3);
         z-index: 10;
+        /* Lighter background as requested */
+        background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+        border: 3px solid #cccccc;
     }
 
     .falling-item:hover {
         transform: scale(1.05);
         box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        border-color: var(--primary-green);
     }
 
     .falling-item.dragging {
@@ -281,6 +285,7 @@
         z-index: 100;
         box-shadow: 0 8px 16px rgba(0,0,0,0.4);
         cursor: grabbing;
+        border-color: var(--accent-color);
     }
 
     .item-icon {
@@ -293,7 +298,8 @@
         font-size: 11px;
         text-align: center;
         padding: 0 5px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        font-weight: 600;
+        color: var(--dark-gray);
     }
 
     .bins {
@@ -309,65 +315,63 @@
     }
 
     .bin {
-        width: 160px;
-        height: 180px;
+        width: 200px; /* Increased from 180px for bigger hitbox */
+        height: 220px; /* Increased from 200px for bigger hitbox */
         border-radius: 12px 12px 0 0;
         text-align: center;
         font-weight: bold;
-        color: white;
+        color: var(--dark-gray);
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         align-items: center;
-        padding-bottom: 20px;
-        font-size: 16px;
+        padding-bottom: 15px;
+        font-size: 14px;
         transition: all 0.3s ease;
         cursor: pointer;
         border: 3px solid transparent;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         position: relative;
         overflow: hidden;
+        background: white;
     }
 
-    .bin::before {
+    /* Bigger drop zone area */
+    .bin::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 30px;
-        background: rgba(255, 255, 255, 0.2);
+        top: -30px;
+        left: -30px;
+        right: -30px;
+        bottom: -30px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
     }
 
-    .bin:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    .bin:hover::after {
+        opacity: 0.1;
     }
 
     .bin.highlight {
         transform: scale(1.08);
-        border-color: var(--white);
-        box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+        border-color: var(--primary-green);
+        box-shadow: 0 0 25px rgba(76, 175, 80, 0.6);
+        animation: pulse-border 1.5s infinite;
     }
 
-    /* Danish waste sorting colors */
-    .bin-recycle { 
-        background: linear-gradient(180deg, #0072bc 0%, #005a96 100%); /* Blue – papir/pap */
-    }
-    .bin-food { 
-        background: linear-gradient(180deg, #7a5901 0%, #634702 100%); /* Brown – madaffald */
-    }
-    .bin-rest { 
-        background: linear-gradient(180deg, #1b1b1b 0%, #111 100%); /* Black – restaffald */
-    }
-    .bin-plastic { 
-        background: linear-gradient(180deg, #e53935 0%, #c62828 100%); /* Red – plast */
+    @keyframes pulse-border {
+        0% { border-color: var(--primary-green); }
+        50% { border-color: var(--accent-color); }
+        100% { border-color: var(--primary-green); }
     }
 
     .bin-icon {
-        font-size: 40px;
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
         margin-bottom: 10px;
-        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
     }
 
     /* Game Over Modal */
@@ -530,6 +534,29 @@
         color: #f44336;
     }
 
+    /* Warning when item hits ground */
+    .ground-warning {
+        position: absolute;
+        bottom: 300px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+        padding: 10px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        animation: warningFlash 0.5s 3;
+        z-index: 20;
+        border-top: 3px solid #d32f2f;
+        border-bottom: 3px solid #d32f2f;
+    }
+
+    @keyframes warningFlash {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
     /* Tutorial Modal */
     #tutorialModal {
         display: none;
@@ -603,32 +630,48 @@
         margin: 20px auto 0;
     }
 
-    /* Difficulty indicator */
-    .difficulty-indicator {
+    /* Level and difficulty indicator */
+    .level-info {
+        display: flex;
+        justify-content: space-between;
         margin-top: 20px;
+        padding: 10px;
+        background: var(--light-gray);
+        border-radius: 8px;
+    }
+
+    .level-display {
+        text-align: center;
+        font-weight: 600;
+        color: var(--primary-green);
+        font-size: 1.2rem;
+    }
+
+    .current-bins {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+        padding: 10px;
+        background: rgba(255,255,255,0.8);
+        border-radius: 8px;
+        border: 2px solid var(--light-green);
+    }
+
+    .bin-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80px;
+        font-size: 11px;
         text-align: center;
     }
 
-    .difficulty-label {
-        font-size: 1rem;
-        color: var(--dark-gray);
-        margin-bottom: 5px;
-    }
-
-    .difficulty-bar {
-        height: 8px;
-        background: #e0e0e0;
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 0 auto;
-        max-width: 300px;
-    }
-
-    .difficulty-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #4CAF50, #FF9800, #F44336);
-        border-radius: 4px;
-        transition: width 0.5s ease;
+    .bin-preview img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
     }
 
     /* Footer */
@@ -747,12 +790,17 @@
         }
 
         .bin {
-            width: 140px;
-            height: 160px;
+            width: 180px;
+            height: 200px;
+        }
+
+        .bin-icon {
+            width: 80px;
+            height: 80px;
         }
 
         #gameArea {
-            height: 600px;
+            height: 750px;
         }
 
         .modal-buttons {
@@ -812,6 +860,10 @@
                         <div class="stat-label">High Score</div>
                         <div class="stat-value" id="highScore">0</div>
                     </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Level</div>
+                        <div class="stat-value" id="level">1</div>
+                    </div>
                 </div>
                 
                 <div class="game-controls">
@@ -827,34 +879,26 @@
                 </div>
             </div>
 
-            <!-- To-do: replace these trash-bin icons (data-types) with my actual pictures. There are these options: glas.png (glass-trash), mad.png (food), farlig.png (dangerous), metal.png (metal), pap.png (cardboard), papir.png (paper), plast.png (plastic) -->
-            <!-- To-do: Refrain from using emojis. Do not match the colors of the items to the colors of the trash-bins, that makes the game too easy-->
+            <!-- Current Level Bins Preview -->
+            <div class="current-bins" id="currentBinsPreview">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
             <div class="game-container">
                 <div id="gameArea">
-                    <div class="bins">
-                        <div class="bin bin-recycle" data-type="recycling">
-                            <div class="bin-icon">♻️</div>
-                            Genbrug<br>(Recycling)
-                        </div>
-                        <div class="bin bin-food" data-type="compost">
-                            <div class="bin-icon">🍎</div>
-                            Madaffald<br>(Food Waste)
-                        </div>
-                        <div class="bin bin-plastic" data-type="plastic">
-                            <div class="bin-icon">🫙</div>
-                            Plast<br>(Plastic)
-                        </div>
-                        <div class="bin bin-rest" data-type="trash">
-                            <div class="bin-icon">🗑️</div>
-                            Restaffald<br>(General Waste)
-                        </div>
+                    <!-- Ground warning message will appear here -->
+                    <!-- Bins will be dynamically inserted here -->
+                    <div class="bins" id="binsContainer">
+                        <!-- 4 bins will be dynamically inserted here -->
                     </div>
                 </div>
 
-                <div class="difficulty-indicator">
-                    <div class="difficulty-label">Difficulty Level: <span id="difficultyText">Easy</span></div>
-                    <div class="difficulty-bar">
-                        <div class="difficulty-fill" id="difficultyFill" style="width: 0%"></div>
+                <div class="level-info">
+                    <div class="level-display">
+                        Level: <span id="levelDisplay">1</span> | Bins change every 10 points
+                    </div>
+                    <div class="level-display">
+                        Items in this level: <span id="itemsInLevel">0</span>
                     </div>
                 </div>
             </div>
@@ -867,6 +911,7 @@
             <h2>Game Over!</h2>
             <p>Your final score:</p>
             <div class="score-display" id="finalScore">0</div>
+            <p>You reached Level: <span id="finalLevel">1</span></p>
             <div class="points-earned">Points earned: <span id="pointsEarned">0</span></div>
             <div id="highScoreMessage"></div>
             <div class="modal-buttons">
@@ -893,10 +938,14 @@
                 <div class="step-text">
                     <strong>Sort correctly:</strong>
                     <ul style="margin-top: 10px; margin-left: 20px;">
-                        <li><strong style="color: #0072bc;">Blue bin</strong>: Paper, cardboard, glass, metal</li>
-                        <li><strong style="color: #7a5901;">Brown bin</strong>: Food waste, compostable items</li>
-                        <li><strong style="color: #e53935;">Red bin</strong>: Plastic packaging, bottles</li>
-                        <li><strong style="color: #1b1b1b;">Black bin</strong>: Everything else, non-recyclables</li>
+                        <li><strong>Glass</strong>: Glass bottles, jars, glass shards</li>
+                        <li><strong>Hazardous waste</strong>: Batteries, light bulbs, paint</li>
+                        <li><strong>Food waste</strong>: Food scraps, coffee filters, eggshells</li>
+                        <li><strong>Metal</strong>: Cans, metal lids, screws</li>
+                        <li><strong>Cardboard</strong>: Cardboard boxes, egg cartons</li>
+                        <li><strong>Paper</strong>: Newspapers, office paper, envelopes</li>
+                        <li><strong>Plastic</strong>: Plastic bottles, trays, bags</li>
+                        <li><strong>General waste</strong>: Dirty packaging, diapers, cigarette butts</li>
                     </ul>
                 </div>
             </div>
@@ -905,14 +954,15 @@
                 <div class="step-number">3</div>
                 <div class="step-text">
                     <strong>Earn points:</strong> +1 point for each correct sort.<br>
-                    <strong>Avoid mistakes:</strong> Lose 1 life for each wrong sort.
+                    <strong>Avoid mistakes:</strong> Lose 1 life for each wrong sort.<br>
+                    <strong>⚠️ Important:</strong> You also lose 1 life if an item hits the ground without being placed in any bin!
                 </div>
             </div>
             
             <div class="tutorial-step">
                 <div class="step-number">4</div>
                 <div class="step-text">
-                    <strong>Game gets faster:</strong> As your score increases, items fall faster!
+                    <strong>Levels:</strong> Every 10 points, you advance to next level with 4 new random bins! All current items will be cleared.
                 </div>
             </div>
             
@@ -991,6 +1041,251 @@ function updateAuthButtons() {
     }
 }
 
+// All available trash bins with their information (removed "tøj")
+const allBins = [
+    { 
+        key: 'glas',
+        name: 'Glass',
+        image: 'images/glas.png',
+        description: 'Glass bottles, jars, glass shards'
+    },
+    { 
+        key: 'farlig',
+        name: 'Hazardous waste',
+        image: 'images/farlig.png',
+        description: 'Batteries, light bulbs, paint'
+    },
+    { 
+        key: 'mad',
+        name: 'Food waste',
+        image: 'images/mad.png',
+        description: 'Food scraps, coffee filters, eggshells'
+    },
+    { 
+        key: 'metal',
+        name: 'Metal',
+        image: 'images/metal.png',
+        description: 'Cans, metal lids, screws'
+    },
+    { 
+        key: 'pap',
+        name: 'Cardboard',
+        image: 'images/pap.png',
+        description: 'Cardboard boxes, egg cartons'
+    },
+    { 
+        key: 'papir',
+        name: 'Paper',
+        image: 'images/papir.png',
+        description: 'Newspapers, office paper, envelopes'
+    },
+    { 
+        key: 'plast',
+        name: 'Plastic',
+        image: 'images/plast.png',
+        description: 'Plastic bottles, trays, bags'
+    },
+    { 
+        key: 'rest',
+        name: 'General waste',
+        image: 'images/rest.png',
+        description: 'Dirty packaging, diapers, cigarette butts'
+    }
+];
+
+// Item Definitions with English names and correct bins (removed clothing items)
+const itemTypes = [
+    // Glass items
+    { 
+        type: 'glass_bottle', 
+        name: 'Glass Bottle',
+        correctBin: 'glas', 
+        icon: '🍾'
+    },
+    { 
+        type: 'jar', 
+        name: 'Glass Jar',
+        correctBin: 'glas', 
+        icon: '🥫'
+    },
+    { 
+        type: 'glass_shards', 
+        name: 'Glass Shards',
+        correctBin: 'glas', 
+        icon: '⚠️'
+    },
+    
+    // Hazardous waste items
+    { 
+        type: 'battery', 
+        name: 'Battery',
+        correctBin: 'farlig', 
+        icon: '🔋'
+    },
+    { 
+        type: 'light_bulb', 
+        name: 'Light Bulb',
+        correctBin: 'farlig', 
+        icon: '💡'
+    },
+    { 
+        type: 'paint_can', 
+        name: 'Paint Can',
+        correctBin: 'farlig', 
+        icon: '🎨'
+    },
+    
+    // Food waste items
+    { 
+        type: 'apple_core', 
+        name: 'Apple Core',
+        correctBin: 'mad', 
+        icon: '🍎'
+    },
+    { 
+        type: 'potato_peel', 
+        name: 'Potato Peel',
+        correctBin: 'mad', 
+        icon: '🥔'
+    },
+    { 
+        type: 'banana_peel', 
+        name: 'Banana Peel',
+        correctBin: 'mad', 
+        icon: '🍌'
+    },
+    { 
+        type: 'coffee_grounds', 
+        name: 'Coffee Grounds',
+        correctBin: 'mad', 
+        icon: '☕'
+    },
+    { 
+        type: 'eggshell', 
+        name: 'Eggshell',
+        correctBin: 'mad', 
+        icon: '🥚'
+    },
+    
+    // Metal items
+    { 
+        type: 'metal_can', 
+        name: 'Metal Can',
+        correctBin: 'metal', 
+        icon: '🥫'
+    },
+    { 
+        type: 'soda_can', 
+        name: 'Soda Can',
+        correctBin: 'metal', 
+        icon: '🥤'
+    },
+    { 
+        type: 'pot', 
+        name: 'Pot',
+        correctBin: 'metal', 
+        icon: '🍳'
+    },
+    { 
+        type: 'screw', 
+        name: 'Screw',
+        correctBin: 'metal', 
+        icon: '🔩'
+    },
+    
+    // Cardboard items
+    { 
+        type: 'egg_carton', 
+        name: 'Egg Carton',
+        correctBin: 'pap', 
+        icon: '🥚'
+    },
+    { 
+        type: 'cardboard_box', 
+        name: 'Cardboard Box',
+        correctBin: 'pap', 
+        icon: '📦'
+    },
+    
+    // Paper items
+    { 
+        type: 'newspaper', 
+        name: 'Newspaper',
+        correctBin: 'papir', 
+        icon: '📰'
+    },
+    { 
+        type: 'magazine', 
+        name: 'Magazine',
+        correctBin: 'papir', 
+        icon: '📖'
+    },
+    { 
+        type: 'envelope', 
+        name: 'Envelope',
+        correctBin: 'papir', 
+        icon: '✉️'
+    },
+    
+    // Plastic items
+    { 
+        type: 'plastic_bottle', 
+        name: 'Plastic Bottle',
+        correctBin: 'plast', 
+        icon: '🫙'
+    },
+    { 
+        type: 'plastic_bag', 
+        name: 'Plastic Bag',
+        correctBin: 'plast', 
+        icon: '🛍️'
+    },
+    { 
+        type: 'yogurt_cup', 
+        name: 'Yogurt Cup',
+        correctBin: 'plast', 
+        icon: '🥛'
+    },
+    { 
+        type: 'chip_bag', 
+        name: 'Chip Bag',
+        correctBin: 'plast', 
+        icon: '🥔'
+    },
+    
+    // General waste items
+    { 
+        type: 'pizza_box', 
+        name: 'Pizza Box',
+        correctBin: 'rest', 
+        icon: '🍕'
+    },
+    { 
+        type: 'chocolate_wrapper', 
+        name: 'Chocolate Wrapper',
+        correctBin: 'rest', 
+        icon: '🍫'
+    },
+    { 
+        type: 'diaper', 
+        name: 'Diaper',
+        correctBin: 'rest', 
+        icon: '👶'
+    },
+    { 
+        type: 'cigarette_butt', 
+        name: 'Cigarette Butt',
+        correctBin: 'rest', 
+        icon: '🚬'
+    },
+    { 
+        type: 'dirty_paper', 
+        name: 'Dirty Paper',
+        correctBin: 'rest', 
+        icon: '🗞️'
+    }
+];
+
 // Game Variables
 let gameActive = false;
 let score = 0;
@@ -998,136 +1293,141 @@ let highScore = localStorage.getItem('sustainalearn_trashHighScore') || 0;
 let lives = 5;
 let items = [];
 let itemInterval;
-let gameSpeed = 2000; // Initial speed (ms between items)
-const minSpeed = 600; // Minimum speed
+let gameSpeed = 2500; // Slower initial speed for fewer items
+const minSpeed = 800; // Minimum speed
 let speedIncreaseCounter = 0;
-let difficulty = 0;
+let level = 1;
+let currentBins = []; // Array of 4 current bins
+let currentItems = []; // Items that belong to current bins
+let itemsOnScreen = 0;
+const maxItemsOnScreen = 3; // Maximum items at a time
 
 // DOM Elements
 const gameArea = document.getElementById('gameArea');
 const currentScoreEl = document.getElementById('score');
 const livesEl = document.getElementById('lives');
 const highScoreEl = document.getElementById('highScore');
+const levelEl = document.getElementById('level');
+const levelDisplay = document.getElementById('levelDisplay');
+const itemsInLevelEl = document.getElementById('itemsInLevel');
 const startBtn = document.getElementById('startBtn');
 const homeBtn = document.getElementById('homeBtn');
 const tutorialBtn = document.getElementById('tutorialBtn');
 const gameOverModal = document.getElementById('gameOverModal');
 const finalScoreEl = document.getElementById('finalScore');
+const finalLevelEl = document.getElementById('finalLevel');
 const pointsEarnedEl = document.getElementById('pointsEarned');
 const highScoreMessageEl = document.getElementById('highScoreMessage');
 const modalRestartBtn = document.getElementById('modalRestartBtn');
 const modalHomeBtn = document.getElementById('modalHomeBtn');
 const tutorialModal = document.getElementById('tutorialModal');
 const closeTutorialBtn = document.getElementById('closeTutorialBtn');
-const bins = document.querySelectorAll('.bin');
-const difficultyText = document.getElementById('difficultyText');
-const difficultyFill = document.getElementById('difficultyFill');
+const binsContainer = document.getElementById('binsContainer');
+const currentBinsPreview = document.getElementById('currentBinsPreview');
 
 // Initialize
 highScoreEl.textContent = highScore;
 updateAuthButtons();
 
-// Item Definitions with Danish translations and icons
-const itemTypes = [
-    { 
-        type: 'avispapir', 
-        name: 'Avis/Papir',
-        correctBin: 'recycling', 
-        color: '#2196f3',
-        icon: '📰'
-    },
-    { 
-        type: 'æblekerne', 
-        name: 'Æblekerne',
-        correctBin: 'compost', 
-        color: '#795548',
-        icon: '🍎'
-    },
-    { 
-        type: 'plastflaske', 
-        name: 'Plastflaske',
-        correctBin: 'plastic', 
-        color: '#e53935',
-        icon: '🫙'
-    },
-    { 
-        type: 'chokoladepapir', 
-        name: 'Chokoladepapir',
-        correctBin: 'trash', 
-        color: '#424242',
-        icon: '🍫'
-    },
-    { 
-        type: 'kartoffelskal', 
-        name: 'Kartoffelskal',
-        correctBin: 'compost', 
-        color: '#795548',
-        icon: '🥔'
-    },
-    { 
-        type: 'metal dåse', 
-        name: 'Metaldåse',
-        correctBin: 'recycling', 
-        color: '#2196f3',
-        icon: '🥫'
-    },
-    { 
-        type: 'glasflaske', 
-        name: 'Glasflaske',
-        correctBin: 'recycling', 
-        color: '#2196f3',
-        icon: '🍾'
-    },
-    { 
-        type: 'plastpose', 
-        name: 'Plastpose',
-        correctBin: 'plastic', 
-        color: '#e53935',
-        icon: '🛍️'
-    },
-    { 
-        type: 'bananskal', 
-        name: 'Bananskal',
-        correctBin: 'compost', 
-        color: '#795548',
-        icon: '🍌'
-    },
-    { 
-        type: 'batteri', 
-        name: 'Batteri',
-        correctBin: 'trash', 
-        color: '#424242',
-        icon: '🔋'
-    },
-    { 
-        type: 'pizzæske', 
-        name: 'Pizzæske',
-        correctBin: 'recycling', 
-        color: '#2196f3',
-        icon: '🍕'
-    },
-    { 
-        type: 'koppespån', 
-        name: 'Koppespån',
-        correctBin: 'compost', 
-        color: '#795548',
-        icon: '☕'
-    },
-    { 
-        type: 'chipspose', 
-        name: 'Chipspose',
-        correctBin: 'plastic', 
-        color: '#e53935',
-        icon: '🥔'
-    },
-    { 
-        type: 'ble', 
-        name: 'Ble',
-        correctBin: 'trash', 
-        color: '#424242',
-        icon: '👶'
+// Function to select 4 random bins
+function selectRandomBins() {
+    // Shuffle all bins
+    const shuffled = [...allBins].sort(() => 0.5 - Math.random());
+    // Take first 4
+    return shuffled.slice(0, 4);
+}
+
+// Function to update current items based on selected bins
+function updateCurrentItems() {
+    const binKeys = currentBins.map(bin => bin.key);
+    currentItems = itemTypes.filter(item => binKeys.includes(item.correctBin));
+    itemsInLevelEl.textContent = currentItems.length;
+}
+
+// Function to update bins display
+function updateBinsDisplay() {
+    binsContainer.innerHTML = '';
+    currentBins.forEach(bin => {
+        const binEl = document.createElement('div');
+        binEl.className = `bin`;
+        binEl.dataset.type = bin.key;
+        binEl.innerHTML = `
+            <img src="${bin.image}" alt="${bin.name}" class="bin-icon">
+            <div>${bin.name}</div>
+            <div style="font-size: 11px; margin-top: 5px;">${bin.description}</div>
+        `;
+        binsContainer.appendChild(binEl);
+    });
+    
+    // Update preview
+    updateBinsPreview();
+}
+
+// Function to update bins preview
+function updateBinsPreview() {
+    currentBinsPreview.innerHTML = '<strong>Current Bins:</strong>';
+    currentBins.forEach(bin => {
+        const preview = document.createElement('div');
+        preview.className = 'bin-preview';
+        preview.innerHTML = `
+            <img src="${bin.image}" alt="${bin.name}">
+            <div>${bin.name}</div>
+        `;
+        currentBinsPreview.appendChild(preview);
+    });
+}
+
+// Function to clear all falling items
+function clearAllItems() {
+    document.querySelectorAll('.falling-item').forEach(item => {
+        clearInterval(item.fallInterval);
+        item.remove();
+    });
+    itemsOnScreen = 0;
+}
+
+// Function to check if level should increase
+function checkLevelUp() {
+    const newLevel = Math.floor(score / 10) + 1;
+    if (newLevel > level) {
+        level = newLevel;
+        levelEl.textContent = level;
+        levelDisplay.textContent = level;
+        
+        // Clear all existing items
+        clearAllItems();
+        
+        // Select new random bins
+        currentBins = selectRandomBins();
+        updateCurrentItems();
+        updateBinsDisplay();
+        
+        // Increase speed slightly
+        gameSpeed = Math.max(minSpeed, 2500 - (level * 100));
+        clearInterval(itemInterval);
+        itemInterval = setInterval(createItem, gameSpeed);
+        
+        // Show level up message
+        showFeedback('📈 Level Up!', gameArea.offsetWidth/2, gameArea.offsetHeight/2, '#FF9800');
     }
-];
+}
+
+// Function to show warning when item hits ground
+function showGroundWarning() {
+    const warning = document.createElement('div');
+    warning.className = 'ground-warning';
+    warning.textContent = '⚠️ Item hit the ground! -1 Life';
+    warning.style.position = 'absolute';
+    warning.style.bottom = '300px';
+    warning.style.left = '0';
+    warning.style.right = '0';
+    
+    gameArea.appendChild(warning);
+    
+    setTimeout(() => {
+        warning.remove();
+    }, 1500);
+}
 
 // --- Start Game ---
 function startGame() {
@@ -1136,40 +1436,44 @@ function startGame() {
     gameActive = true;
     score = 0;
     lives = 5;
-    gameSpeed = 2000;
+    level = 1;
+    gameSpeed = 2500; // Slower initial speed
     speedIncreaseCounter = 0;
-    difficulty = 0;
+    itemsOnScreen = 0;
 
     currentScoreEl.textContent = score;
     livesEl.textContent = lives;
+    levelEl.textContent = level;
+    levelDisplay.textContent = level;
     startBtn.innerHTML = '<span>🔄</span> Restart Game';
     gameOverModal.style.display = 'none';
     tutorialModal.style.display = 'none';
 
+    // Select initial random bins
+    currentBins = selectRandomBins();
+    updateCurrentItems();
+    updateBinsDisplay();
+
     // Clear any existing items
-    document.querySelectorAll('.falling-item').forEach(i => i.remove());
+    clearAllItems();
 
     // Clear any existing intervals
     clearInterval(itemInterval);
     
-    // Start creating items
+    // Start creating items (slower for fewer items)
     itemInterval = setInterval(createItem, gameSpeed);
-    
-    // Update difficulty display
-    updateDifficulty();
 }
 
 // --- Create Falling Item ---
 function createItem() {
-    if (!gameActive) return;
+    if (!gameActive || currentItems.length === 0 || itemsOnScreen >= maxItemsOnScreen) return;
 
-    const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+    const type = currentItems[Math.floor(Math.random() * currentItems.length)];
     const item = document.createElement('div');
 
     item.className = 'falling-item';
     item.dataset.type = type.type;
     item.dataset.correctBin = type.correctBin;
-    item.style.backgroundColor = type.color;
 
     // Create item content with icon and name
     item.innerHTML = `
@@ -1177,8 +1481,8 @@ function createItem() {
         <div class="item-name">${type.name}</div>
     `;
 
-    // Position
-    const left = Math.random() * (gameArea.offsetWidth - 100);
+    // Position - less skewed distribution
+    const left = 50 + Math.random() * (gameArea.offsetWidth - 200);
     item.style.left = `${left}px`;
     item.style.top = `-100px`;
 
@@ -1192,7 +1496,7 @@ function createItem() {
         if (!gameActive) return;
         e.dataTransfer.setData('itemId', uniqueId);
         item.classList.add('dragging');
-        e.dataTransfer.setDragImage(item, 40, 40);
+        e.dataTransfer.setDragImage(item, 45, 45);
     });
     
     item.addEventListener('dragend', e => {
@@ -1200,9 +1504,10 @@ function createItem() {
     });
 
     gameArea.appendChild(item);
+    itemsOnScreen++;
 
     // FALLING ANIMATION
-    let fallSpeed = 1 + (difficulty * 0.3); // Increase speed with difficulty
+    let fallSpeed = 1 + ((level - 1) * 0.2);
     let rotation = 0;
     
     item.fallInterval = setInterval(() => {
@@ -1217,28 +1522,51 @@ function createItem() {
         item.style.transform = `rotate(${rotation}deg)`;
 
         // Hit ground
-        if (top >= gameArea.offsetHeight - 200) {
+        if (top >= gameArea.offsetHeight - 250) {
             clearInterval(item.fallInterval);
             item.remove();
+            itemsOnScreen--;
+            
+            // Show warning and lose life
+            showGroundWarning();
             loseLife();
         }
     }, 30);
 }
 
-// --- DROP SYSTEM ---
-bins.forEach(bin => {
-    bin.addEventListener('dragover', e => {
-        e.preventDefault();
-        bin.classList.add('highlight');
-    });
+// --- Show Feedback ---
+function showFeedback(text, x, y, color) {
+    const feedback = document.createElement('div');
+    feedback.className = 'feedback';
+    feedback.textContent = text;
+    feedback.style.color = color;
+    feedback.style.left = `${x}px`;
+    feedback.style.top = `${y}px`;
+    gameArea.appendChild(feedback);
     
-    bin.addEventListener('dragleave', e => {
-        bin.classList.remove('highlight');
-    });
+    setTimeout(() => {
+        feedback.remove();
+    }, 1200);
+}
 
-    bin.addEventListener('drop', e => {
+// --- DROP SYSTEM ---
+binsContainer.addEventListener('dragover', e => {
+    if (e.target.classList.contains('bin')) {
         e.preventDefault();
-        bin.classList.remove('highlight');
+        e.target.classList.add('highlight');
+    }
+});
+
+binsContainer.addEventListener('dragleave', e => {
+    if (e.target.classList.contains('bin')) {
+        e.target.classList.remove('highlight');
+    }
+});
+
+binsContainer.addEventListener('drop', e => {
+    if (e.target.classList.contains('bin')) {
+        e.preventDefault();
+        e.target.classList.remove('highlight');
         
         const id = e.dataTransfer.getData('itemId');
         const item = document.getElementById(id);
@@ -1246,33 +1574,30 @@ bins.forEach(bin => {
         if (!item) return;
 
         const correct = item.dataset.correctBin;
-        const dropped = bin.dataset.type;
+        const dropped = e.target.dataset.type;
 
         // Create feedback element
-        const feedback = document.createElement('div');
-        feedback.className = 'feedback';
-        
-        // Position feedback near the bin
-        const binRect = bin.getBoundingClientRect();
-        feedback.style.left = (binRect.left + binRect.width/2 - gameArea.getBoundingClientRect().left - 30) + 'px';
-        feedback.style.top = (binRect.top - gameArea.getBoundingClientRect().top - 40) + 'px';
+        const binRect = e.target.getBoundingClientRect();
+        const gameAreaRect = gameArea.getBoundingClientRect();
+        const x = (binRect.left + binRect.width/2 - gameAreaRect.left - 30);
+        const y = (binRect.top - gameAreaRect.top - 40);
         
         if (correct === dropped) {
             // Correct
             score += 1;
             currentScoreEl.textContent = score;
             
-            feedback.textContent = '+1';
-            feedback.classList.add('correct');
+            showFeedback('✓ +1', x, y, '#4CAF50');
             
-            // Gradually increase difficulty
+            // Check for level up
+            checkLevelUp();
+            
+            // Gradually increase speed within level
             speedIncreaseCounter++;
             if (speedIncreaseCounter % 3 === 0 && gameSpeed > minSpeed) {
-                gameSpeed -= 80;
-                difficulty = Math.min(1, difficulty + 0.1);
+                gameSpeed -= 50;
                 clearInterval(itemInterval);
                 itemInterval = setInterval(createItem, gameSpeed);
-                updateDifficulty();
             }
 
             if (score > highScore) {
@@ -1282,22 +1607,15 @@ bins.forEach(bin => {
             }
         } else {
             // Wrong
+            showFeedback('✗ -1 Life', x, y, '#f44336');
             loseLife();
-            feedback.textContent = '❌ -1 Life';
-            feedback.classList.add('incorrect');
         }
-        
-        gameArea.appendChild(feedback);
-        
-        // Remove feedback after animation
-        setTimeout(() => {
-            feedback.remove();
-        }, 1200);
 
         // Remove the dragged item
         clearInterval(item.fallInterval);
         item.remove();
-    });
+        itemsOnScreen--;
+    }
 });
 
 // --- LOSE LIFE ---
@@ -1305,18 +1623,15 @@ function loseLife() {
     lives--;
     livesEl.textContent = lives;
 
+    // Flash lives counter red when life is lost
+    livesEl.style.color = '#f44336';
+    setTimeout(() => {
+        livesEl.style.color = 'var(--primary-green)';
+    }, 500);
+
     if (lives <= 0) {
         endGame();
     }
-}
-
-// --- UPDATE DIFFICULTY DISPLAY ---
-function updateDifficulty() {
-    const difficultyLevels = ['Easy', 'Medium', 'Hard', 'Expert'];
-    const levelIndex = Math.min(Math.floor(difficulty * 3), 3);
-    
-    difficultyText.textContent = difficultyLevels[levelIndex];
-    difficultyFill.style.width = `${difficulty * 100}%`;
 }
 
 // --- END GAME ---
@@ -1329,7 +1644,7 @@ function endGame() {
         item.remove();
     });
 
-    // SAVE USER GAME POINTS (1 point = 1 game point)
+    // SAVE USER GAME POINTS
     const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
     if (currentUser) {
         const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
@@ -1342,7 +1657,7 @@ function endGame() {
             if (!users[i].pointsHistory) users[i].pointsHistory = [];
             users[i].pointsHistory.push({
                 date: new Date().toISOString().split('T')[0],
-                description: 'Trash Sorting Game',
+                description: 'Trash Sorting Game - Level ' + level,
                 points: score,
                 type: 'earned'
             });
@@ -1354,6 +1669,7 @@ function endGame() {
 
     // Show game over modal
     finalScoreEl.textContent = score;
+    finalLevelEl.textContent = level;
     pointsEarnedEl.textContent = score;
     
     if (score > highScore) {
