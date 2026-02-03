@@ -6,11 +6,12 @@
     <title>Register - Social & Green</title>
     <link rel="icon" type="image/jpeg" href="images/logodgi.jpg">
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         :root {
             --primary-green: #2e7d32;
@@ -528,20 +529,14 @@
     </footer>
 
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
-            authDomain: "social-green-4d772.firebaseapp.com",
-            projectId: "social-green-4d772",
-            storageBucket: "social-green-4d772.firebasestorage.app",
-            messagingSenderId: "81847906637",
-            appId: "1:81847906637:web:9eaf5e8cd1cd5d659d05bb"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Firebase is already initialized in firebase-config.js
+        // Remove duplicate initialization:
+        // const firebaseConfig = { ... };
+        // firebase.initializeApp(firebaseConfig);
+        
+        // Use the globally available Firebase instances
+        const auth = window.firebaseAuth || firebase.auth();
+        const db = window.firebaseDb || firebase.firestore();
 
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
@@ -554,17 +549,24 @@
         // Registration form handling
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            e.stopPropagation(); // Prevent any default behavior
             
-            const username = document.getElementById('username').value;
-            const firstName = document.getElementById('first_name').value;
-            const lastName = document.getElementById('last_name').value;
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value.trim();
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password1 = document.getElementById('password1').value;
             const password2 = document.getElementById('password2').value;
             const flashMessages = document.getElementById('flashMessages');
             
             // Clear previous messages
             flashMessages.innerHTML = '';
+            
+            // Validate all fields are filled
+            if (!username || !firstName || !lastName || !email || !password1 || !password2) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
             
             // Validate passwords match
             if (password1 !== password2) {
@@ -575,19 +577,30 @@
             // Validate password strength
             const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
             if (!passwordRegex.test(password1)) {
-                showMessage('Password does not meet requirements', 'error');
+                showMessage('Password must be at least 8 characters and include uppercase, lowercase, number, and special character', 'error');
                 return;
             }
             
+            // Disable submit button to prevent double submission
+            const submitBtn = this.querySelector('input[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.value = 'Registering...';
+            
             try {
+                console.log('Attempting to create user with email:', email);
+                
                 // Create user with Firebase Authentication
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password1);
                 const user = userCredential.user;
+                
+                console.log('User created successfully:', user.uid);
                 
                 // Update user profile
                 await user.updateProfile({
                     displayName: `${firstName} ${lastName}`
                 });
+                
+                console.log('Creating Firestore document...');
                 
                 // Create user document in Firestore
                 await db.collection('users').doc(user.uid).set({
@@ -603,6 +616,7 @@
                     achievements: [],
                     dailyCheckins: [],
                     eventsAttended: [],
+                    events: [],
                     pointsHistory: [],
                     monthlyPoints: {},
                     gamePoints: 0,
@@ -611,6 +625,8 @@
                     trashCollected: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                console.log('Firestore document created successfully');
                 
                 // Success message
                 showMessage('Registration successful! Redirecting...', 'success');
@@ -622,6 +638,9 @@
                 
             } catch (error) {
                 console.error('Registration error:', error);
+                submitBtn.disabled = false;
+                submitBtn.value = 'Register';
+                
                 let errorMessage = 'Registration failed. Please try again.';
                 
                 if (error.code === 'auth/email-already-in-use') {
@@ -649,6 +668,13 @@
             messageDiv.className = `flash-message flash-${type}`;
             messageDiv.textContent = message;
             flashMessages.appendChild(messageDiv);
+            
+            // Auto-remove error messages after 5 seconds
+            if (type === 'error') {
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 5000);
+            }
         }
     </script>
 </body>

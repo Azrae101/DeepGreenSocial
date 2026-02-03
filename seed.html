@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed Circuit - Solarpunk Sustainability Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a2f1c 0%, #1a472a 100%);
+            color: #e0f7e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        #game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        #game-wrapper {
+            position: relative;
+            flex: 1;
+        }
+        
+        #game-title {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 800px;
+            text-align: center;
+            font-size: 2.5rem;
+            color: #93c572;
+            text-shadow: 3px 3px 0 #2d5019;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        canvas {
+            display: block;
+            background: #7ec850;
+            border: 4px solid #5a9c36;
+            border-radius: 2px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            image-rendering: pixelated;
+        }
+        
+        #ui-panel {
+            width: 380px;
+            background: linear-gradient(145deg, #1c3b2a 0%, #2d5c3f 100%);
+            border: 4px solid #5a9c36;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            max-height: 900px;
+        }
+        
+        .ui-title {
+            font-size: 2rem;
+            color: #c2f0c2;
+            text-align: center;
+            text-shadow: 2px 2px 0 #2d5019;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #5a9c36;
+            padding-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            border: 2px solid #4a7c2f;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #a8d4a8;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .challenge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .challenge-item {
+            background: linear-gradient(145deg, #2d5c3f 0%, #1e4a30 100%);
+            border: 2px solid #5a9c36;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .challenge-item:hover {
+            transform: translateY(-2px);
+            border-color: #c2f0c2;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .challenge-item.completed {
+            border-color: #93c572;
+            background: linear-gradient(145deg, #3d6c4f 0%, #2e5a40 100%);
+        }
+        
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .challenge-name {
+            font-size: 1.1rem;
+            color: #c2f0c2;
+            font-weight: bold;
+        }
+        
+        .challenge-cost {
+            color: #d4a96c;
+            font-weight: bold;
+        }
+        
+        .challenge-desc {
+            font-size: 0.9rem;
+            color: #a8d4a8;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5a9c36 0%, #93c572 100%);
+            border-radius: 6px;
+            transition: width 0.5s;
+        }
+        
+        .challenge-reward {
+            text-align: right;
+            color: #d4a96c;
+            font-size: 0.9rem;
+        }
+        
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            border: 2px solid #4a7c2f;
+        }
+        
+        .inventory-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            background: rgba(46, 139, 87, 0.2);
+            border: 2px solid #4a7c2f;
+            border-radius: 4px;
+        }
+        
+        .inventory-item.owned {
+            background: rgba(46, 139, 87, 0.4);
+            border-color: #93c572;
+        }
+        
+        .item-icon {
+            width: 32px;
+            height: 32px;
+            background: #5a9c36;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .item-name {
+            font-size: 0.8rem;
+            text-align: center;
+            color: #a8d4a8;
+        }
+        
+        #controls {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            border: 2px solid #4a7c2f;
+        }
+        
+        #controls h3 {
+            color: #c2f0c2;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .keys {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .key {
+            background: #2d5c3f;
+            border: 2px solid #5a9c36;
+            border-radius: 4px;
+            padding: 8px;
+            font-weight: bold;
+            color: #c2f0c2;
+        }
+        
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            z-index: 100;
+        }
+        
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(46, 139, 87, 0.8);
+            border: 3px solid #5a9c36;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(46, 139, 87, 1);
+            transform: scale(0.95);
+        }
+        
+        #interact-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(147, 112, 219, 0.8);
+            border-color: #9370db;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal {
+            background: linear-gradient(145deg, #1c3b2a 0%, #2d5c3f 100%);
+            border: 4px solid #5a9c36;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            background: #dc3c3c;
+            border: 2px solid #a02828;
+            border-radius: 6px;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .modal-title {
+            color: #c2f0c2;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 0 #2d5019;
+        }
+        
+        .modal-content {
+            color: #a8d4a8;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(145deg, #5a9c36 0%, #4a7c2f 100%);
+            border: 2px solid #93c572;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 1200px) {
+            #game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #ui-panel {
+                width: 800px;
+                max-height: 400px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            #game-wrapper {
+                transform: scale(0.8);
+                transform-origin: top center;
+            }
+            
+            #ui-panel {
+                width: 640px;
+            }
+            
+            #mobile-controls {
+                display: flex;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            #game-title {
+                font-size: 2rem;
+                top: 5px;
+            }
+            
+            #game-wrapper {
+                transform: scale(0.7);
+            }
+            
+            #ui-panel {
+                width: 560px;
+                max-height: 300px;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(145deg, #2d5c3f 0%, #1e4a30 100%);
+            border: 2px solid #93c572;
+            border-radius: 6px;
+            padding: 15px;
+            color: #c2f0c2;
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            min-width: 250px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-wrapper">
+            <h1 id="game-title">Seed Circuit</h1>
+            <canvas id="game-canvas" width="800" height="900"></canvas>
+            
+            <div id="mobile-controls">
+                <div class="mobile-row">
+                    <button class="mobile-btn" id="up-btn">↑</button>
+                </div>
+                <div class="mobile-row">
+                    <button class="mobile-btn" id="left-btn">←</button>
+                    <button class="mobile-btn" id="interact-btn">E</button>
+                    <button class="mobile-btn" id="right-btn">→</button>
+                </div>
+                <div class="mobile-row">
+                    <button class="mobile-btn" id="down-btn">↓</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="ui-panel">
+            <div class="ui-title">Sustainability Dashboard</div>
+            
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-label">Coins</div>
+                    <div class="stat-value" id="coins-display">50</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Sustainability</div>
+                    <div class="stat-value" id="score-display">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Day</div>
+                    <div class="stat-value" id="day-display">1</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Location</div>
+                    <div class="stat-value" id="location-display">Garden</div>
+                </div>
+            </div>
+            
+            <div class="ui-section">
+                <h3 class="ui-title" style="font-size: 1.4rem;">Eco Challenges</h3>
+                <div class="challenge-list" id="challenges-container">
+                    <!-- Challenges will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="ui-section">
+                <h3 class="ui-title" style="font-size: 1.4rem;">Inventory</h3>
+                <div class="inventory-grid" id="inventory-display">
+                    <!-- Inventory will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div id="controls">
+                <h3>Controls</h3>
+                <div class="keys">
+                    <div class="key">W/↑</div>
+                    <div class="key">E</div>
+                    <div class="key">ESC</div>
+                    <div class="key">A/←</div>
+                    <div class="key">S/↓</div>
+                    <div class="key">Click</div>
+                    <div class="key">D/→</div>
+                    <div class="key">Enter</div>
+                    <div class="key">Shift</div>
+                </div>
+                <p style="text-align: center; margin-top: 10px; color: #a8d4a8; font-size: 0.9rem;">
+                    Move: WASD/Arrows<br>
+                    Interact: E or Click<br>
+                    Run: Hold Shift
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Compost Tutorial Modal -->
+    <div id="compost-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-close" id="compost-close">✕</div>
+            <h2 class="modal-title" id="compost-title">Compost System Tutorial</h2>
+            <div class="modal-content" id="compost-content">
+                <p>Welcome to the compost tutorial!</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" id="compost-continue">Continue (Enter)</button>
+                <button class="btn" id="compost-skip">Skip Tutorial</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Guide Modal -->
+    <div id="guide-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-close" id="guide-close">✕</div>
+            <h2 class="modal-title" id="guide-title">Eco Challenge Guide</h2>
+            <div class="modal-content" id="guide-content">
+                <p>Guide content will appear here.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trash Game Modal -->
+    <div id="trash-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-close" id="trash-close">✕</div>
+            <h2 class="modal-title">Trash Sorting Challenge</h2>
+            <div class="modal-content">
+                <div id="trash-game-area" style="position: relative; height: 400px; background: #1c3b2a; border-radius: 6px; border: 2px solid #5a9c36;">
+                    <!-- Trash game will be rendered here -->
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="color: #c2f0c2; margin-bottom: 10px;">Drag trash items to the correct bins!</p>
+                    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                        <div style="text-align: center;">
+                            <div style="width: 50px; height: 50px; background: #2E8B57; margin: 0 auto 5px; border: 2px solid #fff; border-radius: 4px;"></div>
+                            <span style="color: #a8d4a8;">Compost</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="width: 50px; height: 50px; background: #1E90FF; margin: 0 auto 5px; border: 2px solid #fff; border-radius: 4px;"></div>
+                            <span style="color: #a8d4a8;">Recycle</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="width: 50px; height: 50px; background: #A9A9A9; margin: 0 auto 5px; border: 2px solid #fff; border-radius: 4px;"></div>
+                            <span style="color: #a8d4a8;">Landfill</span>
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #c2f0c2;">Score: <span id="trash-score">0</span></span>
+                            <span style="color: #dc3c3c;">Mistakes: <span id="trash-mistakes">0</span></span>
+                        </div>
+                        <div id="trash-timer" style="color: #d4a96c; font-size: 1.2rem;">Time: 60s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-title" id="notif-title">Item Collected!</div>
+        <div class="notification-message" id="notif-message">You collected a Bucket</div>
+    </div>
+
+    <script>
+        // ============================================
+        // GAME CONSTANTS AND CONFIGURATION
+        // ============================================
+        const SCREEN_WIDTH = 800;
+        const SCREEN_HEIGHT = 900;
+        const GAME_WIDTH = 800;
+        const UI_WIDTH = 380;
+        const FPS = 60;
+        const ROAD_Y = 470;
+        const ROAD_HEIGHT = 60;
+
+        // Colors
+        const COLORS = {
+            WHITE: '#FFFFFF',
+            BLACK: '#000000',
+            GREEN: '#2E8B57',
+            LIGHT_GREEN: '#90EE90',
+            DARK_GREEN: '#006400',
+            BROWN: '#8B4513',
+            LIGHT_BROWN: '#CD853F',
+            BLUE: '#1E90FF',
+            SKY_BLUE: '#87CEEB',
+            YELLOW: '#FFD700',
+            GRAY: '#A9A9A9',
+            LIGHT_GRAY: '#D3D3D3',
+            SOLARPUNK_PURPLE: '#9370DB',
+            SOLARPUNK_TEAL: '#008080',
+            RED: '#DC3C3C',
+            ORANGE: '#FFA500',
+            PURPLE: '#800080',
+            SKIN_TONE: '#FFDCB1',
+            HAIR_COLOR: '#55372A',
+            SHIRT_COLOR: '#329646',
+            PANTS_COLOR: '#3C506E',
+            ROAD_GRAY: '#787878',
+            GRASS_GREEN: '#7EC850',
+            DARK_GRASS: '#5A9C36'
+        };
+
+        // ============================================
+        // GAME STATE
+        // ============================================
+        let gameState = {
+            player: null,
+            day: 1,
+            dayNightCycle: 0,
+            sunMoonPos: { x: 100, y: 100 },
+            currentMinigame: null,
+            showingGuide: false,
+            guideContent: "",
+            activeChallenge: null,
+            compostTutorialStep: 0,
+            compostCreated: false,
+            beekeepingStarted: false,
+            beehivePressed: false,
+            honeyLevel: 0,
+            sortingScore: 0,
+            sortingMistakes: 0,
+            cleanupScore: 0,
+            trashPieces: [],
+            worldItems: [],
+            challenges: [],
+            flowers: [],
+            bees: [],
+            boundaries: [],
+            draggedTrash: null,
+            dragOffset: { x: 0, y: 0 },
+            lastLocation: null,
+            trashSpawnedThisDay: false,
+            currentLocation: "garden",
+            mouseX: 0,
+            mouseY: 0,
+            mouseDown: false,
+            keys: {},
+            particles: [],
+            installations: {},
+            trashItems: [],
+            trashSpawnTimer: 0,
+            bins: {
+                compost: { x: 150, y: 700, width: 80, height: 100 },
+                recycle: { x: 350, y: 700, width: 80, height: 100 },
+                landfill: { x: 550, y: 700, width: 80, height: 100 }
+            },
+            hive: { x: 650, y: 680, width: 80, height: 60 },
+            neighborhoodTrashTotal: 12,
+            tasks: [],
+            lastTime: 0,
+            deltaTime: 0,
+            gameTime: 0,
+            collectedItems: new Set(),
+            inventory: {}
+        };
+
+        // ============================================
+        // CANVAS SETUP
+        // ============================================
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        // ============================================
+        // UI ELEMENTS
+        // ============================================
+        const coinsDisplay = document.getElementById('coins-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const dayDisplay = document.getElementById('day-display');
+        const locationDisplay = document.getElementById('location-display');
+        const challengesContainer = document.getElementById('challenges-container');
+        const inventoryDisplay = document.getElementById('inventory-display');
+
+        // Modals
+        const compostModal = document.getElementById('compost-modal');
+        const guideModal = document.getElementById('guide-modal');
+        const trashModal = document.getElementById('trash-modal');
+        const notification = document.getElementById('notification');
+
+        // ============================================
+        // PARTICLE SYSTEM
+        // ============================================
+        class Particle {
+            constructor(x, y, color, size = 3, speed = 1, life = 60) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = size;
+                this.speed = speed;
+                this.life = life;
+                this.maxLife = life;
+                this.vx = (Math.random() * 2 - 1) * speed;
+                this.vy = (Math.random() * 2 - 1) * speed;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                this.vy += 0.05;
+            }
+
+            draw() {
+                const alpha = (this.life / this.maxLife) * 255;
+                ctx.fillStyle = this.color.replace(')', `, ${alpha/255})`).replace('rgb', 'rgba');
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                gameState.particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // ============================================
+        // PLAYER CLASS
+        // ============================================
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 24;
+                this.height = 36;
+                this.speed = 4;
+                this.coins = 50;
+                this.sustainabilityScore = 0;
+                this.inventory = {
+                    "Compost Bin": false,
+                    "Rainwater Collector": false,
+                    "Solar Panel": false,
+                    "Garden Bed": false,
+                    "Vermicompost": false,
+                    "Shovel": false,
+                    "Bucket": false,
+                    "Knife": false,
+                    "Paper": false,
+                    "Water": false,
+                    "Fruit": false,
+                    "Soil": false
+                };
+                this.compostMaterials = {
+                    "Bucket": false,
+                    "Knife": false,
+                    "Soil": false,
+                    "Paper": false,
+                    "Water": false,
+                    "Fruit": false
+                };
+                this.currentLocation = "garden";
+                this.animationTimer = 0;
+                this.walking = false;
+                this.direction = 'right';
+                this.frame = 0;
+                this.runMultiplier = 1.5;
+                this.isRunning = false;
+            }
+
+            getRect() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+
+            getInteractionRect() {
+                const rect = this.getRect();
+                const padding = 40;
+                return {
+                    x: rect.x - padding,
+                    y: rect.y - padding,
+                    width: rect.width + padding * 2,
+                    height: rect.height + padding * 2
+                };
+            }
+
+            move() {
+                this.walking = false;
+                let dx = 0, dy = 0;
+                const speed = this.speed * (this.isRunning ? this.runMultiplier : 1);
+
+                // Handle movement keys
+                if (gameState.keys['ArrowLeft'] || gameState.keys['a'] || gameState.keys['A']) {
+                    dx = -speed;
+                    this.walking = true;
+                    this.direction = 'left';
+                }
+                if (gameState.keys['ArrowRight'] || gameState.keys['d'] || gameState.keys['D']) {
+                    dx = speed;
+                    this.walking = true;
+                    this.direction = 'right';
+                }
+                if (gameState.keys['ArrowUp'] || gameState.keys['w'] || gameState.keys['W']) {
+                    dy = -speed;
+                    this.walking = true;
+                }
+                if (gameState.keys['ArrowDown'] || gameState.keys['s'] || gameState.keys['S']) {
+                    dy = speed;
+                    this.walking = true;
+                }
+
+                // Update position
+                this.x += dx;
+                this.y += dy;
+
+                // Keep in bounds based on location
+                this.enforceBounds();
+
+                // Update animation
+                if (this.walking) {
+                    this.animationTimer++;
+                    this.frame = Math.floor(this.animationTimer / 6) % 4;
+                    
+                    // Create footprint particles occasionally
+                    if (Math.random() < 0.2) {
+                        createParticles(this.x + this.width / 2, this.y + this.height, '#3C2828', 1);
+                    }
+                } else {
+                    this.animationTimer = 0;
+                    this.frame = 0;
+                }
+            }
+
+            enforceBounds() {
+                const onRoad = ROAD_Y <= this.y + this.height / 2 && this.y + this.height / 2 <= ROAD_Y + ROAD_HEIGHT;
+                
+                if (this.currentLocation === "garden") {
+                    // Allow going off screen on road
+                    if (!onRoad) {
+                        this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
+                        this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
+                    }
+                } else if (this.currentLocation === "house") {
+                    this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
+                    this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
+                } else if (this.currentLocation === "neighborhood") {
+                    // Allow going off screen on road
+                    if (!onRoad) {
+                        this.x = Math.max(0, Math.min(this.x, GAME_WIDTH - this.width));
+                        this.y = Math.max(0, Math.min(this.y, SCREEN_HEIGHT - this.height));
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                
+                if (this.direction === 'left') {
+                    ctx.translate(this.x + this.width, this.y);
+                    ctx.scale(-1, 1);
+                }
+
+                const drawX = this.direction === 'left' ? -this.width : this.x;
+                const drawY = this.y;
+
+                // Head
+                ctx.fillStyle = COLORS.SKIN_TONE;
+                ctx.fillRect(drawX + 4, drawY, 16, 16);
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(drawX + 4, drawY, 16, 16);
+
+                // Hair
+                ctx.fillStyle = COLORS.HAIR_COLOR;
+                ctx.fillRect(drawX + 4, drawY, 16, 6);
+                ctx.strokeRect(drawX + 4, drawY, 16, 6);
+
+                // Body
+                ctx.fillStyle = COLORS.SHIRT_COLOR;
+                ctx.fillRect(drawX, drawY + 16, 24, 12);
+                ctx.strokeRect(drawX, drawY + 16, 24, 12);
+
+                // Collar
+                ctx.fillStyle = COLORS.WHITE;
+                ctx.beginPath();
+                ctx.moveTo(drawX + 8, drawY + 16);
+                ctx.lineTo(drawX + 12, drawY + 12);
+                ctx.lineTo(drawX + 16, drawY + 16);
+                ctx.fill();
+
+                // Legs with animation
+                const legWidth = 8;
+                const legHeight = 10;
+                const legYBase = 28;
+                
+                let legYOffset1 = 0;
+                let legYOffset2 = 0;
+                
+                if (this.walking) {
+                    if (this.frame % 2 === 1) {
+                        legYOffset1 = -1;
+                        legYOffset2 = 1;
+                    } else {
+                        legYOffset1 = 1;
+                        legYOffset2 = -1;
+                    }
+                }
+
+                ctx.fillStyle = COLORS.PANTS_COLOR;
+                ctx.fillRect(drawX + 2, drawY + legYBase + legYOffset1, legWidth, legHeight);
+                ctx.strokeRect(drawX + 2, drawY + legYBase + legYOffset1, legWidth, legHeight);
+                
+                ctx.fillRect(drawX + 14, drawY + legYBase + legYOffset2, legWidth, legHeight);
+                ctx.strokeRect(drawX + 14, drawY + legYBase + legYOffset2, legWidth, legHeight);
+
+                // Feet
+                ctx.fillStyle = '#3C3C3C';
+                ctx.fillRect(drawX + 2, drawY + legYBase + legHeight - 2 + legYOffset1, legWidth, 6);
+                ctx.strokeRect(drawX + 2, drawY + legYBase + legHeight - 2 + legYOffset1, legWidth, 6);
+                
+                ctx.fillRect(drawX + 14, drawY + legYBase + legHeight - 2 + legYOffset2, legWidth, 6);
+                ctx.strokeRect(drawX + 14, drawY + legYBase + legHeight - 2 + legYOffset2, legWidth, 6);
+
+                ctx.restore();
+            }
+        }
+
+        // ============================================
+        // WORLD ITEM CLASS
+        // ============================================
+        class WorldItem {
+            constructor(name, x, y, width, height, color, location) {
+                this.name = name;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.location = location;
+                this.collected = false;
+                this.bounce = Math.random() * 5;
+                this.bounceDir = 1;
+                this.highlight = false;
+            }
+
+            update() {
+                this.bounce += 0.05 * this.bounceDir;
+                if (this.bounce > 5 || this.bounce < 0) {
+                    this.bounceDir *= -1;
+                }
+            }
+
+            draw() {
+                if (this.collected) return;
+
+                const drawY = this.y - Math.floor(this.bounce);
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, this.y + this.height + 3, 
+                           this.width/2, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Item with bounce
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, drawY, this.width, this.height);
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, drawY, this.width, this.height);
+
+                // Highlight if player is near
+                if (this.highlight) {
+                    ctx.strokeStyle = COLORS.YELLOW;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(this.x - 2, drawY - 2, this.width + 4, this.height + 4);
+                }
+
+                // Item name
+                ctx.fillStyle = COLORS.WHITE;
+                ctx.font = '12px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, this.x + this.width/2, drawY - 10);
+            }
+
+            getRect() {
+                return {
+                    x: this.x,
+                    y: this.y - Math.floor(this.bounce),
+                    width: this.width,
+                    height: this.height
+                };
+            }
+
+            collect() {
+                if (!this.collected) {
+                    this.collected = true;
+                    gameState.player.inventory[this.name] = true;
+                    
+                    // Update compost materials
+                    if (gameState.player.compostMaterials.hasOwnProperty(this.name)) {
+                        gameState.player.compostMaterials[this.name] = true;
+                    }
+                    
+                    createParticles(this.x + this.width/2, this.y + this.height/2, COLORS.YELLOW, 15);
+                    showNotification('Item Collected!', `You collected ${this.name}`);
+                    updateUI();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // ============================================
+        // FLOWER CLASS
+        // ============================================
+        class Flower {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 15;
+                this.color = `rgb(${200 + Math.random() * 55}, ${Math.random() * 150}, ${100 + Math.random() * 100})`;
+                this.pollination = 0;
+                this.maxPollination = 100;
+                this.pulse = 0;
+                this.pulseDir = 1;
+            }
+
+            update() {
+                if (this.pulse > 0) {
+                    this.pulse += 0.3 * this.pulseDir;
+                    if (this.pulse > 10) this.pulseDir = -1;
+                    if (this.pulse < 0) this.pulse = 0;
+                }
+            }
+
+            draw() {
+                // Stem
+                ctx.strokeStyle = COLORS.DARK_GREEN;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + 30);
+                ctx.stroke();
+
+                // Flower with pulse effect
+                const pulseOffset = this.pulse > 0 ? Math.sin(this.pulse) * 2 : 0;
+                const flowerSize = this.size + pulseOffset;
+
+                // Petals
+                ctx.fillStyle = this.color;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const petalX = this.x + Math.cos(angle) * flowerSize;
+                    const petalY = this.y + Math.sin(angle) * flowerSize;
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(petalX, petalY, flowerSize/3, flowerSize/4, angle, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Center
+                ctx.fillStyle = COLORS.YELLOW;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, flowerSize * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pollination progress
+                if (this.pollination < this.maxPollination) {
+                    ctx.fillStyle = COLORS.GRAY;
+                    ctx.fillRect(this.x - 20, this.y + 35, 40, 6);
+                    ctx.fillStyle = COLORS.GREEN;
+                    ctx.fillRect(this.x - 20, this.y + 35, 40 * (this.pollination / this.maxPollination), 6);
+                }
+            }
+        }
+
+        // ============================================
+        // BEE CLASS
+        // ============================================
+        class Bee {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 15;
+                this.speed = 1.5 + Math.random() * 1.5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.timer = 0;
+                this.maxTimer = 30 + Math.random() * 70;
+                this.targetFlower = null;
+                this.wingFlap = 0;
+                this.wingDir = 1;
+                this.hasPollen = false;
+            }
+
+            update(flowers, hive) {
+                this.timer++;
+                this.wingFlap += 0.2 * this.wingDir;
+                if (this.wingFlap > 5 || this.wingFlap < -5) this.wingDir *= -1;
+
+                // If not released, stay near hive
+                if (!gameState.beehivePressed) {
+                    const dx = hive.x - this.x;
+                    const dy = hive.y - this.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 10) {
+                        this.x += (dx / dist) * this.speed * 0.5;
+                        this.y += (dy / dist) * this.speed * 0.5;
+                    }
+                    return;
+                }
+
+                // Bee logic when released
+                if (!this.hasPollen) {
+                    if (!this.targetFlower || this.timer >= this.maxTimer) {
+                        if (flowers.length > 0) {
+                            this.targetFlower = flowers[Math.floor(Math.random() * flowers.length)];
+                        }
+                        this.timer = 0;
+                        this.maxTimer = 30 + Math.random() * 70;
+                    }
+
+                    if (this.targetFlower) {
+                        const dx = this.targetFlower.x - this.x;
+                        const dy = this.targetFlower.y - this.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 5) {
+                            this.targetFlower.pollination = Math.min(100, this.targetFlower.pollination + 20);
+                            this.targetFlower.pulse = 5;
+                            this.targetFlower.pulseDir = 1;
+                            this.hasPollen = true;
+                            this.targetFlower = null;
+                            createParticles(this.x, this.y, COLORS.YELLOW, 5);
+                        } else {
+                            this.x += dx/dist * this.speed;
+                            this.y += dy/dist * this.speed;
+                        }
+                    }
+                } else {
+                    // Return to hive
+                    const dx = hive.x + hive.width/2 - this.x;
+                    const dy = hive.y + hive.height/2 - this.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < this.size + 5) {
+                        gameState.honeyLevel = Math.min(100, gameState.honeyLevel + 1);
+                        this.hasPollen = false;
+                        this.timer = 0;
+                        this.maxTimer = 30 + Math.random() * 70;
+                    } else {
+                        this.x += dx/dist * this.speed;
+                        this.y += dy/dist * this.speed;
+                    }
+                }
+
+                // Keep in garden area
+                this.x = Math.max(this.size, Math.min(this.x, GAME_WIDTH - this.size));
+                this.y = Math.max(SCREEN_HEIGHT - 250 + this.size, Math.min(this.y, SCREEN_HEIGHT - 100 - this.size));
+            }
+
+            draw() {
+                // Body
+                ctx.fillStyle = COLORS.YELLOW;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Stripes
+                ctx.fillStyle = COLORS.BLACK;
+                for (let i = -1; i <= 1; i++) {
+                    ctx.fillRect(this.x - this.size, this.y - 4 + i*5, this.size*2, 8);
+                }
+
+                // Wings
+                ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+                ctx.beginPath();
+                ctx.ellipse(this.x - 10, this.y - 15 - this.wingFlap, 8, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(this.x + 2, this.y - 15 + this.wingFlap, 8, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ============================================
+        // TRASH ITEM CLASS
+        // ============================================
+        class TrashItem {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = 2 + Math.random() * 2;
+                this.type = type; // compost, recycle, landfill
+                this.collected = false;
+                
+                if (type === "compost") this.color = COLORS.GREEN;
+                else if (type === "recycle") this.color = COLORS.BLUE;
+                else this.color = COLORS.GRAY;
+            }
+
+            update() {
+                if (!this.collected) {
+                    this.y += this.speed;
+                }
+            }
+
+            draw() {
+                if (this.collected) return;
+                
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+                
+                // Type indicator
+                ctx.fillStyle = COLORS.WHITE;
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.type.charAt(0).toUpperCase(), this.x + this.width/2, this.y + this.height/2 + 5);
+            }
+
+            getRect() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+        }
+
+        // ============================================
+        // ECO CHALLENGE CLASS
+        // ============================================
+        class EcoChallenge {
+            constructor(name, description, cost, reward, guide) {
+                this.name = name;
+                this.description = description;
+                this.cost = cost;
+                this.reward = reward;
+                this.guide = guide;
+                this.completed = false;
+                this.progress = 0;
+                this.requiredProgress = 100;
+            }
+
+            updateProgress(amount) {
+                this.progress = Math.min(this.requiredProgress, this.progress + amount);
+                if (this.progress >= this.requiredProgress && !this.completed) {
+                    this.complete();
+                }
+            }
+
+            complete() {
+                this.completed = true;
+                this.progress = this.requiredProgress;
+                gameState.player.coins += this.reward;
+                gameState.player.sustainabilityScore += this.reward * 2;
+                createParticles(400, 100, COLORS.YELLOW, 30);
+                showNotification('Challenge Complete!', `You earned ${this.reward} coins!`);
+                updateUI();
+            }
+        }
+
+        // ============================================
+        // GAME INITIALIZATION
+        // ============================================
+        function initGame() {
+            // Create player
+            gameState.player = new Player(400, 500);
+
+            // Create challenges
+            gameState.challenges = [
+                new EcoChallenge(
+                    "Compost System",
+                    "Turn food scraps into nutrient-rich soil",
+                    30, 
+                    50,
+                    "REAL GUIDE:\n\n1. Find a bucket with a lid\n2. Poke holes in sides and base\n3. Add soil, paper, and water\n4. Add fruit/veggie scraps\n5. Place in shady area\n6. Turn pile every 4-5 days"
+                ),
+                new EcoChallenge(
+                    "Rainwater Collector",
+                    "Collect rainwater for your garden",
+                    50,
+                    75,
+                    "REAL GUIDE:\n\n1. Place barrel under downspout\n2. Cover to prevent mosquitoes\n3. Use collected water for plants\n4. Clean barrel seasonally"
+                ),
+                new EcoChallenge(
+                    "Balcony Garden",
+                    "Grow your own food in small spaces",
+                    40,
+                    60,
+                    "REAL GUIDE:\n\n1. Use containers with drainage\n2. Start with herbs and lettuce\n3. Water regularly\n4. Use compost for nutrients"
+                ),
+                new EcoChallenge(
+                    "Neighborhood Cleanup",
+                    "Pick up trash in your community",
+                    0,
+                    100,
+                    "REAL GUIDE:\n\n1. Bring gloves and a bag\n2. Focus on public spaces\n3. Separate recyclables\n4. Dispose properly\n5. Recruit neighbors to help"
+                )
+            ];
+
+            // Create world items
+            gameState.worldItems = [
+                new WorldItem("Bucket", 250, 410, 40, 40, COLORS.GRAY, "garden"),
+                new WorldItem("Shovel", 290, 410, 30, 40, COLORS.BROWN, "garden"),
+                new WorldItem("Knife", 450, 280, 30, 20, COLORS.LIGHT_GRAY, "house"),
+                new WorldItem("Paper", 150, 250, 40, 30, COLORS.WHITE, "house"),
+                new WorldItem("Water", 500, 220, 30, 30, COLORS.BLUE, "house"),
+                new WorldItem("Fruit", 540, 220, 30, 30, COLORS.ORANGE, "house"),
+                new WorldItem("Soil", 420, 390, 40, 25, "#8B7355", "garden")
+            ];
+
+            // Create flowers
+            for (let i = 0; i < 8; i++) {
+                gameState.flowers.push(new Flower(
+                    100 + i * 75,
+                    600 + Math.sin(i) * 20
+                ));
+            }
+
+            // Create bees
+            for (let i = 0; i < 5; i++) {
+                gameState.bees.push(new Bee(
+                    gameState.hive.x + gameState.hive.width/2,
+                    gameState.hive.y + gameState.hive.height/2
+                ));
+            }
+
+            // Initialize trash pieces for neighborhood
+            spawnNeighborhoodTrash();
+
+            // Set up tasks
+            gameState.tasks = [
+                { name: "Compost", completed: false, position: { x: 500, y: 550 } }
+            ];
+
+            updateUI();
+            gameLoop(0);
+        }
+
+        // ============================================
+        // GAME FUNCTIONS
+        // ============================================
+        function spawnNeighborhoodTrash() {
+            gameState.trashPieces = [];
+            for (let i = 0; i < gameState.neighborhoodTrashTotal; i++) {
+                let x, y;
+                let valid = false;
+                let attempts = 0;
+                
+                while (!valid && attempts < 100) {
+                    x = 50 + Math.random() * 700;
+                    y = 150 + Math.random() * 400;
+                    
+                    // Avoid road
+                    if (y < ROAD_Y || y > ROAD_Y + ROAD_HEIGHT) {
+                        // Avoid houses
+                        const inHouse = [100, 320, 540].some(houseX => 
+                            x > houseX - 20 && x < houseX + 150 + 20 &&
+                            y > 300 - 20 && y < 300 + 120 + 20
+                        );
+                        
+                        if (!inHouse) {
+                            valid = true;
+                        }
+                    }
+                    attempts++;
+                }
+                
+                if (valid) {
+                    gameState.trashPieces.push({ x, y, collected: false });
+                }
+            }
+        }
+
+        function updateTrashGame() {
+            // Spawn new trash
+            gameState.trashSpawnTimer++;
+            if (gameState.trashSpawnTimer >= 60) {
+                const types = ["compost", "recycle", "landfill"];
+                const type = types[Math.floor(Math.random() * types.length)];
+                gameState.trashItems.push(new TrashItem(
+                    50 + Math.random() * 700,
+                    0,
+                    type
+                ));
+                gameState.trashSpawnTimer = 0;
+            }
+
+            // Update trash items
+            for (let i = gameState.trashItems.length - 1; i >= 0; i--) {
+                const item = gameState.trashItems[i];
+                item.update();
+                
+                // Remove if off screen
+                if (item.y > SCREEN_HEIGHT) {
+                    gameState.trashItems.splice(i, 1);
+                    gameState.sortingMistakes++;
+                }
+            }
+        }
+
+        function drawTrashGame() {
+            const area = document.getElementById('trash-game-area');
+            area.innerHTML = '';
+            
+            // Draw bins
+            const bins = gameState.bins;
+            const ctx2 = area.getContext('2d');
+            area.width = 700;
+            area.height = 400;
+            
+            for (const [type, bin] of Object.entries(bins)) {
+                let color;
+                switch(type) {
+                    case 'compost': color = COLORS.GREEN; break;
+                    case 'recycle': color = COLORS.BLUE; break;
+                    case 'landfill': color = COLORS.GRAY; break;
+                }
+                
+                ctx2.fillStyle = color;
+                ctx2.fillRect(bin.x - 100, bin.y - 650, bin.width, bin.height);
+                ctx2.strokeStyle = COLORS.BLACK;
+                ctx2.lineWidth = 2;
+                ctx2.strokeRect(bin.x - 100, bin.y - 650, bin.width, bin.height);
+                
+                // Label
+                ctx2.fillStyle = COLORS.WHITE;
+                ctx2.font = 'bold 16px monospace';
+                ctx2.textAlign = 'center';
+                ctx2.fillText(type.charAt(0).toUpperCase() + type.slice(1), 
+                            bin.x - 100 + bin.width/2, bin.y - 660);
+            }
+            
+            // Draw trash items
+            gameState.trashItems.forEach(item => {
+                if (!item.collected) {
+                    ctx2.fillStyle = item.color;
+                    ctx2.fillRect(item.x - 100, item.y - 650, item.width, item.height);
+                    ctx2.strokeStyle = COLORS.BLACK;
+                    ctx2.lineWidth = 2;
+                    ctx2.strokeRect(item.x - 100, item.y - 650, item.width, item.height);
+                }
+            });
+            
+            // Update UI
+            document.getElementById('trash-score').textContent = gameState.sortingScore;
+            document.getElementById('trash-mistakes').textContent = gameState.sortingMistakes;
+        }
+
+        function handleTrashDrag(e) {
+            const rect = document.getElementById('trash-game-area').getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (!gameState.draggedTrash) {
+                // Check if clicked on trash item
+                for (let i = gameState.trashItems.length - 1; i >= 0; i--) {
+                    const item = gameState.trashItems[i];
+                    if (!item.collected && 
+                        x >= item.x - 100 && x <= item.x - 100 + item.width &&
+                        y >= item.y - 650 && y <= item.y - 650 + item.height) {
+                        
+                        gameState.draggedTrash = item;
+                        gameState.dragOffset = { x: item.x - 100 - x, y: item.y - 650 - y };
+                        break;
+                    }
+                }
+            } else {
+                // Update dragged item position
+                gameState.draggedTrash.x = x + 100 + gameState.dragOffset.x;
+                gameState.draggedTrash.y = y + 650 + gameState.dragOffset.y;
+                
+                // Check for bin drop
+                for (const [type, bin] of Object.entries(gameState.bins)) {
+                    if (x >= bin.x - 100 && x <= bin.x - 100 + bin.width &&
+                        y >= bin.y - 650 && y <= bin.y - 650 + bin.height) {
+                        
+                        if (type === gameState.draggedTrash.type) {
+                            gameState.sortingScore += 10;
+                            createParticles(gameState.draggedTrash.x, gameState.draggedTrash.y, COLORS.YELLOW, 10);
+                        } else {
+                            gameState.sortingScore -= 5;
+                            gameState.sortingMistakes++;
+                            createParticles(gameState.draggedTrash.x, gameState.draggedTrash.y, COLORS.RED, 10);
+                        }
+                        
+                        gameState.draggedTrash.collected = true;
+                        gameState.draggedTrash = null;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function advanceCompostTutorial() {
+            const steps = [
+                "Step 1: Gather Materials\nFind the bucket in the garage.",
+                "Step 2: Get Tools\nFind the shovel in the garage.",
+                "Step 3: Kitchen Items\nFind the knife in the kitchen.",
+                "Step 4: Brown Material\nFind paper in the living room.",
+                "Step 5: Base Material\nCollect soil from the garden.",
+                "Step 6: Moisture\nGet water from the kitchen.",
+                "Step 7: Green Material\nFind fruit scraps in the kitchen.",
+                "Step 8: Assembly\nYou have all materials! Let's build.",
+                "Step 9: Construction\nBuilding your compost bin...",
+                "Step 10: Complete!\nYour compost bin is ready!"
+            ];
+
+            if (gameState.compostTutorialStep < 10) {
+                gameState.compostTutorialStep++;
+                updateCompostTutorial();
+                
+                if (gameState.compostTutorialStep === 10) {
+                    // Complete compost system
+                    gameState.player.inventory["Compost Bin"] = true;
+                    gameState.compostCreated = true;
+                    gameState.challenges[0].complete();
+                    gameState.player.sustainabilityScore += 50;
+                    
+                    // Update task
+                    gameState.tasks[0].completed = true;
+                    
+                    updateUI();
+                }
+            }
+        }
+
+        function updateCompostTutorial() {
+            const title = document.getElementById('compost-title');
+            const content = document.getElementById('compost-content');
+            
+            const steps = [
+                "Welcome to the Compost System Tutorial!",
+                "Step 1: Find a Bucket\nLook in the garage for a bucket.",
+                "Step 2: Get a Shovel\nYou'll also need a shovel from the garage.",
+                "Step 3: Find a Knife\nCheck the kitchen for a knife.",
+                "Step 4: Collect Paper\nLook for paper in the living room.",
+                "Step 5: Gather Soil\nCollect soil from the garden area.",
+                "Step 6: Get Water\nFind water in the kitchen.",
+                "Step 7: Fruit Scraps\nCollect fruit scraps from the kitchen.",
+                "Step 8: Assembly Time\nYou have all materials! Ready to build?",
+                "Step 9: Building...\nConstructing your compost bin.",
+                "Congratulations!\nYour compost bin is complete!"
+            ];
+            
+            title.textContent = `Compost Tutorial - Step ${gameState.compostTutorialStep}/10`;
+            content.innerHTML = `<p style="font-size: 1.2rem; margin-bottom: 20px;">${steps[gameState.compostTutorialStep]}</p>`;
+            
+            // Show collected materials
+            const materials = ["Bucket", "Shovel", "Knife", "Paper", "Soil", "Water", "Fruit"];
+            let materialsHTML = '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px;">';
+            materials.forEach(material => {
+                const collected = gameState.player.inventory[material];
+                materialsHTML += `
+                    <div style="text-align: center; padding: 10px; background: ${collected ? '#2E8B57' : '#3C3C3C'}; border-radius: 4px;">
+                        <div style="font-weight: bold; color: ${collected ? '#90EE90' : '#A9A9A9'}">${material}</div>
+                        <div style="font-size: 1.5rem;">${collected ? '✓' : '✗'}</div>
+                    </div>
+                `;
+            });
+            materialsHTML += '</div>';
+            content.innerHTML += materialsHTML;
+        }
+
+        // ============================================
+        // DRAWING FUNCTIONS
+        // ============================================
+        function drawGarden() {
+            // Sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(0.6, '#98D8F0');
+            gradient.addColorStop(1, '#A9E2F5');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, 450);
+
+            // Sun/Moon
+            gameState.dayNightCycle = (gameState.dayNightCycle + 0.0005) % 1;
+            const sunX = 100 + 500 * gameState.dayNightCycle;
+            const sunY = 100 + 300 * Math.sin(gameState.dayNightCycle * Math.PI);
+            
+            ctx.fillStyle = gameState.dayNightCycle < 0.5 ? '#FFD700' : '#F0F0F0';
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Grass
+            ctx.fillStyle = COLORS.GRASS_GREEN;
+            ctx.fillRect(0, 450, GAME_WIDTH, 450);
+
+            // Darker grass for flower bed
+            ctx.fillStyle = COLORS.DARK_GREEN;
+            ctx.fillRect(0, 650, GAME_WIDTH, 250);
+
+            // House
+            drawPixelHouse(50, 300, 160, 150);
+
+            // Garage
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.fillRect(220, 350, 100, 100);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(220, 350, 100, 100);
+            
+            // Garage door
+            ctx.fillStyle = '#3C3C3C';
+            ctx.fillRect(225, 360, 90, 80);
+            for (let i = 1; i <= 4; i++) {
+                ctx.strokeStyle = '#2C2C2C';
+                ctx.beginPath();
+                ctx.moveTo(225, 360 + i * 20);
+                ctx.lineTo(315, 360 + i * 20);
+                ctx.stroke();
+            }
+
+            // Road
+            ctx.fillStyle = COLORS.ROAD_GRAY;
+            ctx.fillRect(0, ROAD_Y, GAME_WIDTH, ROAD_HEIGHT);
+            
+            // Road markings
+            ctx.fillStyle = '#B4B4B4';
+            ctx.fillRect(0, ROAD_Y, GAME_WIDTH, 12);
+            ctx.fillRect(0, ROAD_Y + ROAD_HEIGHT - 12, GAME_WIDTH, 12);
+            
+            for (let x = 0; x < GAME_WIDTH; x += 40) {
+                ctx.fillRect(x + 10, ROAD_Y + ROAD_HEIGHT/2 - 2, 20, 4);
+            }
+
+            // Garden bed
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(400, 350, 150, 100);
+            ctx.strokeStyle = COLORS.BROWN;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(400, 350, 150, 100);
+
+            // Compost area
+            if (!gameState.compostCreated) {
+                ctx.fillStyle = '#A0522D';
+                ctx.fillRect(500, 550, 100, 80);
+                ctx.strokeStyle = COLORS.BROWN;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(500, 550, 100, 80);
+                
+                ctx.fillStyle = COLORS.WHITE;
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('Start Compost', 550, 590);
+            } else {
+                drawCompostBin(500, 550);
+            }
+
+            // Beehive
+            drawBeehive(gameState.hive.x, gameState.hive.y);
+
+            // Honey level indicator
+            const barX = gameState.hive.x + gameState.hive.width + 10;
+            const barY = gameState.hive.y;
+            const barWidth = 20;
+            const barHeight = gameState.hive.height;
+            
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            
+            const honeyHeight = barHeight * (gameState.honeyLevel / 100);
+            ctx.fillStyle = '#D4AF37';
+            ctx.fillRect(barX, barY + barHeight - honeyHeight, barWidth, honeyHeight);
+            
+            ctx.fillStyle = COLORS.WHITE;
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(`Honey: ${Math.floor(gameState.honeyLevel)}%`, barX - 10, barY - 10);
+
+            if (gameState.honeyLevel >= 100) {
+                ctx.fillStyle = COLORS.YELLOW;
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('CLICK HIVE TO COLLECT!', gameState.hive.x + gameState.hive.width/2, gameState.hive.y + gameState.hive.height + 20);
+            }
+        }
+
+        function drawHouse() {
+            // Floor
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(0, 0, GAME_WIDTH, SCREEN_HEIGHT);
+
+            // Walls
+            ctx.fillStyle = '#F5DEB3';
+            ctx.fillRect(20, 20, GAME_WIDTH - 40, SCREEN_HEIGHT - 40);
+            ctx.strokeStyle = COLORS.BROWN;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(20, 20, GAME_WIDTH - 40, SCREEN_HEIGHT - 40);
+
+            // Rug
+            ctx.fillStyle = '#DEB887';
+            ctx.fillRect(50, 50, GAME_WIDTH - 100, SCREEN_HEIGHT - 100);
+            ctx.strokeRect(50, 50, GAME_WIDTH - 100, SCREEN_HEIGHT - 100);
+
+            // Furniture
+            // Sofa
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(100, 400, 120, 60);
+            ctx.strokeRect(100, 400, 120, 60);
+            
+            // Counter
+            ctx.fillStyle = '#D3D3D3';
+            ctx.fillRect(450, 350, 180, 80);
+            ctx.strokeRect(450, 350, 180, 80);
+            
+            // Fridge
+            ctx.fillStyle = '#F0F0F0';
+            ctx.fillRect(650, 320, 80, 120);
+            ctx.strokeRect(650, 320, 80, 120);
+
+            // Trash can
+            ctx.fillStyle = COLORS.DARK_GREEN;
+            ctx.fillRect(650, 450, 50, 60);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(650, 450, 50, 60);
+            
+            ctx.fillStyle = COLORS.WHITE;
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText('Trash', 660, 440);
+
+            // Door to garden
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(GAME_WIDTH/2 - 20, SCREEN_HEIGHT - 60, 40, 40);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(GAME_WIDTH/2 - 20, SCREEN_HEIGHT - 60, 40, 40);
+            
+            // Door knob
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(GAME_WIDTH/2 + 10, SCREEN_HEIGHT - 40, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Staircase
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(600, 500, 80, 180);
+            ctx.strokeRect(600, 500, 80, 180);
+            
+            // Steps
+            ctx.fillStyle = '#A0522D';
+            for (let i = 0; i < 6; i++) {
+                const stepWidth = 80 - i * 10;
+                const stepY = 500 + i * 30;
+                ctx.fillRect(600, stepY, stepWidth, 30);
+                ctx.strokeRect(600, stepY, stepWidth, 30);
+            }
+            
+            ctx.fillStyle = COLORS.YELLOW;
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText('Press E to go upstairs', 640, 490);
+        }
+
+        function drawNeighborhood() {
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT);
+            gradient.addColorStop(0, '#98D898');
+            gradient.addColorStop(1, '#7EC850');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, SCREEN_HEIGHT);
+
+            // Road with bike lanes
+            ctx.fillStyle = COLORS.ROAD_GRAY;
+            ctx.fillRect(0, ROAD_Y, GAME_WIDTH, ROAD_HEIGHT);
+            
+            // Bike lanes
+            ctx.fillStyle = '#6495ED';
+            ctx.fillRect(0, ROAD_Y, 30, ROAD_HEIGHT);
+            ctx.fillRect(GAME_WIDTH - 30, ROAD_Y, 30, ROAD_HEIGHT);
+            
+            // Road markings
+            ctx.fillStyle = '#B4B4B4';
+            ctx.fillRect(0, ROAD_Y, GAME_WIDTH, 12);
+            ctx.fillRect(0, ROAD_Y + ROAD_HEIGHT - 12, GAME_WIDTH, 12);
+            
+            for (let x = 0; x < GAME_WIDTH; x += 40) {
+                ctx.fillRect(x + 10, ROAD_Y + ROAD_HEIGHT/2 - 2, 20, 4);
+            }
+
+            // Houses
+            const houses = [
+                { x: 100, y: 300, color: '#CD853F', roof: '#8B4513' },
+                { x: 320, y: 300, color: '#DEB887', roof: '#A0522D' },
+                { x: 540, y: 300, color: '#D2B48C', roof: '#8B7355' }
+            ];
+
+            houses.forEach(house => {
+                // House body
+                ctx.fillStyle = house.color;
+                ctx.fillRect(house.x, house.y, 150, 120);
+                ctx.strokeStyle = COLORS.BLACK;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(house.x, house.y, 150, 120);
+
+                // Roof
+                ctx.fillStyle = house.roof;
+                ctx.beginPath();
+                ctx.moveTo(house.x - 10, house.y);
+                ctx.lineTo(house.x + 160, house.y);
+                ctx.lineTo(house.x + 75, house.y - 40);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Door
+                ctx.fillStyle = '#A0522D';
+                ctx.fillRect(house.x + 60, house.y + 80, 30, 40);
+                ctx.strokeRect(house.x + 60, house.y + 80, 30, 40);
+
+                // Windows
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(house.x + 20, house.y + 30, 25, 25);
+                ctx.strokeRect(house.x + 20, house.y + 30, 25, 25);
+                ctx.fillRect(house.x + 105, house.y + 30, 25, 25);
+                ctx.strokeRect(house.x + 105, house.y + 30, 25, 25);
+            });
+
+            // Draw trash pieces
+            gameState.trashPieces.forEach(trash => {
+                if (!trash.collected) {
+                    ctx.fillStyle = '#A9A9A9';
+                    ctx.fillRect(trash.x, trash.y, 14, 14);
+                    ctx.strokeStyle = COLORS.BLACK;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(trash.x, trash.y, 14, 14);
+                    
+                    // Texture
+                    ctx.fillStyle = '#787878';
+                    ctx.fillRect(trash.x + 3, trash.y + 3, 2, 2);
+                    ctx.fillRect(trash.x + 9, trash.y + 8, 2, 2);
+                }
+            });
+
+            // Trash count
+            const remaining = gameState.trashPieces.filter(t => !t.collected).length;
+            ctx.fillStyle = COLORS.WHITE;
+            ctx.font = 'bold 20px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Trash to collect: ${remaining}`, GAME_WIDTH/2, 50);
+            
+            // Update neighborhood cleanup challenge
+            if (remaining === 0 && gameState.trashPieces.length > 0) {
+                gameState.challenges[3].complete();
+                gameState.trashPieces = [];
+            } else {
+                const collected = gameState.neighborhoodTrashTotal - remaining;
+                gameState.challenges[3].progress = (collected / gameState.neighborhoodTrashTotal) * 100;
+            }
+        }
+
+        function drawPixelHouse(x, y, width, height) {
+            // House body
+            ctx.fillStyle = COLORS.LIGHT_BROWN;
+            ctx.fillRect(x, y, width, height);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, width, height);
+
+            // Roof
+            ctx.fillStyle = '#654321';
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y);
+            ctx.lineTo(x + width + 10, y);
+            ctx.lineTo(x + width/2, y - 40);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Door
+            ctx.fillStyle = COLORS.BROWN;
+            ctx.fillRect(x + width/2 - 15, y + height - 40, 30, 40);
+            ctx.strokeRect(x + width/2 - 15, y + height - 40, 30, 40);
+            
+            // Door knob
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(x + width/2 + 8, y + height - 20, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Windows
+            ctx.fillStyle = COLORS.SKY_BLUE;
+            ctx.fillRect(x + 20, y + 20, 30, 30);
+            ctx.strokeRect(x + 20, y + 20, 30, 30);
+            ctx.fillRect(x + width - 50, y + 20, 30, 30);
+            ctx.strokeRect(x + width - 50, y + 20, 30, 30);
+            
+            // Window cross
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + 35, y + 20);
+            ctx.lineTo(x + 35, y + 50);
+            ctx.moveTo(x + 20, y + 35);
+            ctx.lineTo(x + 50, y + 35);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + width - 35, y + 20);
+            ctx.lineTo(x + width - 35, y + 50);
+            ctx.moveTo(x + width - 50, y + 35);
+            ctx.lineTo(x + width - 20, y + 35);
+            ctx.stroke();
+        }
+
+        function drawBeehive(x, y) {
+            // Hive body
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(x, y, 80, 60);
+            ctx.strokeStyle = COLORS.BROWN;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, 80, 60);
+            
+            // Entrance
+            ctx.fillStyle = COLORS.BLACK;
+            ctx.beginPath();
+            ctx.arc(x + 30, y + 45, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#3C3C3C';
+            ctx.beginPath();
+            ctx.arc(x + 30, y + 45, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Roof
+            ctx.fillStyle = '#BC8F8F';
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y);
+            ctx.lineTo(x + 90, y);
+            ctx.lineTo(x + 40, y - 30);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Label
+            ctx.fillStyle = COLORS.WHITE;
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText('Beehive', x + 40, y - 40);
+        }
+
+        function drawCompostBin(x, y) {
+            // Bin body
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x, y, 100, 80);
+            ctx.strokeStyle = COLORS.BLACK;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, 100, 80);
+            
+            // Lid
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(x - 5, y - 10, 110, 15);
+            ctx.strokeRect(x - 5, y - 10, 110, 15);
+            
+            // Handle
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x + 40, y - 15, 20, 8);
+            
+            // Compost material
+            ctx.fillStyle = '#556B2F';
+            ctx.fillRect(x + 10, y + 10, 80, 60);
+            
+            // Label
+            ctx.fillStyle = COLORS.WHITE;
+            ctx.font = 'bold 16px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('COMPOST', x + 50, y + 40);
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+        function updateGame() {
+            // Update player
+            gameState.player.isRunning = gameState.keys['Shift'];
+            gameState.player.move();
+            
+            // Check for location transitions
+            checkLocationTransitions();
+            
+            // Update items
+            gameState.worldItems.forEach(item => {
+                item.update();
+                item.highlight = false;
+                
+                // Check if player is near item for highlighting
+                if (!item.collected && item.location === gameState.currentLocation) {
+                    const itemRect = item.getRect();
+                    const playerRect = gameState.player.getInteractionRect();
+                    
+                    if (itemRect.x < playerRect.x + playerRect.width &&
+                        itemRect.x + itemRect.width > playerRect.x &&
+                        itemRect.y < playerRect.y + playerRect.height &&
+                        itemRect.y + itemRect.height > playerRect.y) {
+                        item.highlight = true;
+                    }
+                }
+            });
+            
+            // Update flowers
+            gameState.flowers.forEach(flower => flower.update());
+            
+            // Update bees
+            gameState.bees.forEach(bee => bee.update(gameState.flowers, gameState.hive));
+            
+            // Update particles
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const particle = gameState.particles[i];
+                particle.update();
+                if (particle.isDead()) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+            
+            // Update trash game if active
+            if (gameState.currentMinigame === "trash") {
+                updateTrashGame();
+            }
+            
+            // Update day/night cycle
+            gameState.gameTime += gameState.deltaTime;
+            if (gameState.gameTime > 60000) { // 1 minute game time = 1 day
+                gameState.gameTime = 0;
+                gameState.day++;
+                gameState.trashSpawnedThisDay = false;
+                updateUI();
+            }
+        }
+
+        function checkLocationTransitions() {
+            const player = gameState.player;
+            const onRoad = ROAD_Y <= player.y + player.height/2 && 
+                         player.y + player.height/2 <= ROAD_Y + ROAD_HEIGHT;
+            
+            // Garden transitions
+            if (gameState.currentLocation === "garden") {
+                // House door
+                if (player.x > 65 && player.x < 115 && player.y > 410 && player.y < 450) {
+                    gameState.currentLocation = "house";
+                    player.x = GAME_WIDTH/2 - player.width/2;
+                    player.y = SCREEN_HEIGHT - 100;
+                }
+                
+                // Road exit to neighborhood
+                if (onRoad) {
+                    if (player.x < -player.width) {
+                        gameState.currentLocation = "neighborhood";
+                        player.x = GAME_WIDTH - player.width - 10;
+                        player.y = ROAD_Y + ROAD_HEIGHT/2 - player.height/2;
+                    } else if (player.x > GAME_WIDTH) {
+                        gameState.currentLocation = "neighborhood";
+                        player.x = 10;
+                        player.y = ROAD_Y + ROAD_HEIGHT/2 - player.height/2;
+                    }
+                }
+            }
+            
+            // House transitions
+            else if (gameState.currentLocation === "house") {
+                // Door to garden
+                if (player.x > GAME_WIDTH/2 - 30 && player.x < GAME_WIDTH/2 + 10 &&
+                    player.y > SCREEN_HEIGHT - 100 && player.y < SCREEN_HEIGHT - 40) {
+                    gameState.currentLocation = "garden";
+                    player.x = 115;
+                    player.y = 410;
+                }
+                
+                // Stairs (placeholder for balcony)
+                if (player.x > 590 && player.x < 670 && player.y > 500 && player.y < 600) {
+                    // In actual game, this would go to balcony
+                    showNotification('Coming Soon', 'Balcony garden will be available soon!');
+                }
+            }
+            
+            // Neighborhood transitions
+            else if (gameState.currentLocation === "neighborhood") {
+                if (onRoad) {
+                    if (player.x < -player.width) {
+                        gameState.currentLocation = "garden";
+                        player.x = GAME_WIDTH - player.width - 10;
+                        player.y = ROAD_Y + ROAD_HEIGHT/2 - player.height/2;
+                    } else if (player.x > GAME_WIDTH) {
+                        gameState.currentLocation = "garden";
+                        player.x = 10;
+                        player.y = ROAD_Y + ROAD_HEIGHT/2 - player.height/2;
+                    }
+                }
+            }
+            
+            // Update location display
+            if (gameState.lastLocation !== gameState.currentLocation) {
+                gameState.lastLocation = gameState.currentLocation;
+                locationDisplay.textContent = gameState.currentLocation.charAt(0).toUpperCase() + 
+                                            gameState.currentLocation.slice(1);
+                
+                // Reset bee state when leaving garden
+                if (gameState.currentLocation !== "garden") {
+                    gameState.beehivePressed = false;
+                }
+            }
+        }
+
+        function handleInteraction() {
+            const player = gameState.player;
+            const interactionRect = player.getInteractionRect();
+            
+            // Check for item pickup
+            if (gameState.currentLocation === "garden" || gameState.currentLocation === "house") {
+                gameState.worldItems.forEach(item => {
+                    if (!item.collected && item.location === gameState.currentLocation) {
+                        const itemRect = item.getRect();
+                        
+                        if (itemRect.x < interactionRect.x + interactionRect.width &&
+                            itemRect.x + itemRect.width > interactionRect.x &&
+                            itemRect.y < interactionRect.y + interactionRect.height &&
+                            itemRect.y + itemRect.height > interactionRect.y) {
+                            
+                            item.collect();
+                        }
+                    }
+                });
+            }
+            
+            // Check for trash pickup in neighborhood
+            if (gameState.currentLocation === "neighborhood") {
+                for (let i = gameState.trashPieces.length - 1; i >= 0; i--) {
+                    const trash = gameState.trashPieces[i];
+                    if (!trash.collected) {
+                        if (trash.x > interactionRect.x && trash.x < interactionRect.x + interactionRect.width &&
+                            trash.y > interactionRect.y && trash.y < interactionRect.y + interactionRect.height) {
+                            
+                            trash.collected = true;
+                            player.sustainabilityScore += 1;
+                            gameState.cleanupScore += 5;
+                            createParticles(trash.x + 7, trash.y + 7, COLORS.WHITE, 10);
+                            updateUI();
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Check for compost area interaction
+            if (gameState.currentLocation === "garden") {
+                const compostRect = { x: 500, y: 550, width: 100, height: 80 };
+                if (player.x < compostRect.x + compostRect.width && player.x + player.width > compostRect.x &&
+                    player.y < compostRect.y + compostRect.height && player.y + player.height > compostRect.y) {
+                    
+                    if (!gameState.compostCreated && !gameState.player.inventory["Compost Bin"]) {
+                        gameState.currentMinigame = "compost";
+                        compostModal.style.display = 'flex';
+                        updateCompostTutorial();
+                    }
+                }
+            }
+            
+            // Check for beehive interaction
+            if (gameState.currentLocation === "garden") {
+                const hiveRect = gameState.hive;
+                if (player.x < hiveRect.x + hiveRect.width && player.x + player.width > hiveRect.x &&
+                    player.y < hiveRect.y + hiveRect.height && player.y + player.height > hiveRect.y) {
+                    
+                    if (gameState.honeyLevel >= 100) {
+                        player.coins += 20;
+                        gameState.honeyLevel = 0;
+                        showNotification('Honey Collected!', 'You earned 20 coins!');
+                        updateUI();
+                    } else if (!gameState.beehivePressed) {
+                        gameState.beehivePressed = true;
+                        showNotification('Bees Released!', 'The bees are now pollinating flowers.');
+                    }
+                }
+            }
+            
+            // Check for trash can interaction in house
+            if (gameState.currentLocation === "house") {
+                const trashRect = { x: 650, y: 450, width: 50, height: 60 };
+                if (player.x < trashRect.x + trashRect.width && player.x + player.width > trashRect.x &&
+                    player.y < trashRect.y + trashRect.height && player.y + player.height > trashRect.y) {
+                    
+                    gameState.currentMinigame = "trash";
+                    trashModal.style.display = 'flex';
+                    gameState.sortingScore = 0;
+                    gameState.sortingMistakes = 0;
+                    gameState.trashItems = [];
+                    drawTrashGame();
+                }
+            }
+        }
+
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        function updateUI() {
+            // Update stats
+            coinsDisplay.textContent = gameState.player.coins;
+            scoreDisplay.textContent = gameState.player.sustainabilityScore;
+            dayDisplay.textContent = gameState.day;
+            
+            // Update challenges
+            challengesContainer.innerHTML = '';
+            gameState.challenges.forEach((challenge, index) => {
+                const challengeEl = document.createElement('div');
+                challengeEl.className = `challenge-item ${challenge.completed ? 'completed' : ''}`;
+                challengeEl.innerHTML = `
+                    <div class="challenge-header">
+                        <div class="challenge-name">${challenge.name}</div>
+                        <div class="challenge-cost">${challenge.cost} coins</div>
+                    </div>
+                    <div class="challenge-desc">${challenge.description}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${challenge.progress}%"></div>
+                    </div>
+                    <div class="challenge-reward">Reward: ${challenge.reward} pts</div>
+                `;
+                challengeEl.addEventListener('click', () => showChallengeGuide(challenge));
+                challengesContainer.appendChild(challengeEl);
+            });
+            
+            // Update inventory
+            inventoryDisplay.innerHTML = '';
+            Object.entries(gameState.player.inventory).forEach(([item, hasItem]) => {
+                if (hasItem || item === "Compost Bin" || item === "Bucket" || item === "Shovel" || 
+                    item === "Knife" || item === "Paper" || item === "Water" || item === "Fruit" || item === "Soil") {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `inventory-item ${hasItem ? 'owned' : ''}`;
+                    itemEl.innerHTML = `
+                        <div class="item-icon">${item.charAt(0)}</div>
+                        <div class="item-name">${item}</div>
+                    `;
+                    inventoryDisplay.appendChild(itemEl);
+                }
+            });
+        }
+
+        function showChallengeGuide(challenge) {
+            document.getElementById('guide-title').textContent = challenge.name;
+            document.getElementById('guide-content').textContent = challenge.guide;
+            guideModal.style.display = 'flex';
+        }
+
+        function showNotification(title, message) {
+            document.getElementById('notif-title').textContent = title;
+            document.getElementById('notif-message').textContent = message;
+            
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // ============================================
+        // DRAWING LOOP
+        // ============================================
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, GAME_WIDTH, SCREEN_HEIGHT);
+            
+            // Draw current scene
+            switch(gameState.currentLocation) {
+                case "garden":
+                    drawGarden();
+                    break;
+                case "house":
+                    drawHouse();
+                    break;
+                case "neighborhood":
+                    drawNeighborhood();
+                    break;
+                default:
+                    drawGarden();
+            }
+            
+            // Draw world items for current location
+            gameState.worldItems.forEach(item => {
+                if (!item.collected && item.location === gameState.currentLocation) {
+                    item.draw();
+                }
+            });
+            
+            // Draw flowers (garden only)
+            if (gameState.currentLocation === "garden") {
+                gameState.flowers.forEach(flower => flower.draw());
+            }
+            
+            // Draw bees (garden only)
+            if (gameState.currentLocation === "garden") {
+                gameState.bees.forEach(bee => bee.draw());
+            }
+            
+            // Draw trash pieces (neighborhood only)
+            if (gameState.currentLocation === "neighborhood") {
+                // Already drawn in drawNeighborhood
+            }
+            
+            // Draw particles
+            gameState.particles.forEach(particle => particle.draw());
+            
+            // Draw player
+            gameState.player.draw();
+            
+            // Draw interaction prompt if near something
+            drawInteractionPrompt();
+        }
+
+        function drawInteractionPrompt() {
+            const player = gameState.player;
+            let showPrompt = false;
+            let promptText = "";
+            
+            // Check for nearby items
+            if (gameState.currentLocation === "garden" || gameState.currentLocation === "house") {
+                gameState.worldItems.forEach(item => {
+                    if (!item.collected && item.location === gameState.currentLocation) {
+                        const itemRect = item.getRect();
+                        const playerRect = player.getInteractionRect();
+                        
+                        if (itemRect.x < playerRect.x + playerRect.width &&
+                            itemRect.x + itemRect.width > playerRect.x &&
+                            itemRect.y < playerRect.y + playerRect.height &&
+                            itemRect.y + itemRect.height > playerRect.y) {
+                            
+                            showPrompt = true;
+                            promptText = `Press E to pick up ${item.name}`;
+                        }
+                    }
+                });
+            }
+            
+            // Check for compost area
+            if (gameState.currentLocation === "garden" && !gameState.compostCreated) {
+                const compostRect = { x: 500, y: 550, width: 100, height: 80 };
+                if (player.x < compostRect.x + compostRect.width && player.x + player.width > compostRect.x &&
+                    player.y < compostRect.y + compostRect.height && player.y + player.height > compostRect.y) {
+                    
+                    showPrompt = true;
+                    promptText = "Press E to start compost tutorial";
+                }
+            }
+            
+            // Check for beehive
+            if (gameState.currentLocation === "garden") {
+                const hiveRect = gameState.hive;
+                if (player.x < hiveRect.x + hiveRect.width && player.x + player.width > hiveRect.x &&
+                    player.y < hiveRect.y + hiveRect.height && player.y + player.height > hiveRect.y) {
+                    
+                    showPrompt = true;
+                    if (gameState.honeyLevel >= 100) {
+                        promptText = "Press E to collect honey (20 coins)";
+                    } else if (!gameState.beehivePressed) {
+                        promptText = "Press E to release bees";
+                    }
+                }
+            }
+            
+            // Draw prompt
+            if (showPrompt) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(player.x - 50, player.y - 40, 200, 30);
+                ctx.strokeStyle = COLORS.YELLOW;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(player.x - 50, player.y - 40, 200, 30);
+                
+                ctx.fillStyle = COLORS.YELLOW;
+                ctx.font = 'bold 14px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(promptText, player.x + 50, player.y - 20);
+            }
+        }
+
+        // ============================================
+        // GAME LOOP
+        // ============================================
+        function gameLoop(timestamp) {
+            if (!gameState.lastTime) gameState.lastTime = timestamp;
+            gameState.deltaTime = timestamp - gameState.lastTime;
+            gameState.lastTime = timestamp;
+            
+            updateGame();
+            draw();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        function handleKeyDown(e) {
+            gameState.keys[e.key] = true;
+            
+            if (e.key === 'Escape') {
+                if (compostModal.style.display === 'flex') {
+                    compostModal.style.display = 'none';
+                    gameState.currentMinigame = null;
+                } else if (guideModal.style.display === 'flex') {
+                    guideModal.style.display = 'none';
+                } else if (trashModal.style.display === 'flex') {
+                    trashModal.style.display = 'none';
+                    gameState.currentMinigame = null;
+                    // Add score to player
+                    const finalScore = Math.max(0, gameState.sortingScore - gameState.sortingMistakes);
+                    gameState.player.sustainabilityScore += finalScore;
+                    updateUI();
+                }
+            } else if (e.key === 'Enter' && compostModal.style.display === 'flex') {
+                advanceCompostTutorial();
+            } else if ((e.key === 'e' || e.key === 'E') && !e.repeat) {
+                handleInteraction();
+            }
+        }
+
+        function handleKeyUp(e) {
+            gameState.keys[e.key] = false;
+        }
+
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            gameState.mouseX = e.clientX - rect.left;
+            gameState.mouseY = e.clientY - rect.top;
+        }
+
+        function handleMouseDown(e) {
+            gameState.mouseDown = true;
+            
+            // Check for item pickup via click
+            if (gameState.currentLocation === "garden" || gameState.currentLocation === "house") {
+                gameState.worldItems.forEach(item => {
+                    if (!item.collected && item.location === gameState.currentLocation) {
+                        const itemRect = item.getRect();
+                        if (gameState.mouseX > itemRect.x && gameState.mouseX < itemRect.x + itemRect.width &&
+                            gameState.mouseY > itemRect.y && gameState.mouseY < itemRect.y + itemRect.height) {
+                            
+                            const playerRect = gameState.player.getInteractionRect();
+                            if (itemRect.x < playerRect.x + playerRect.width &&
+                                itemRect.x + itemRect.width > playerRect.x &&
+                                itemRect.y < playerRect.y + playerRect.height &&
+                                itemRect.y + itemRect.height > playerRect.y) {
+                                
+                                item.collect();
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Check for compost area click
+            if (gameState.currentLocation === "garden" && 
+                gameState.mouseX > 500 && gameState.mouseX < 600 &&
+                gameState.mouseY > 550 && gameState.mouseY < 630) {
+                
+                const playerRect = gameState.player.getInteractionRect();
+                if (500 < playerRect.x + playerRect.width && 600 > playerRect.x &&
+                    550 < playerRect.y + playerRect.height && 630 > playerRect.y) {
+                    
+                    if (!gameState.compostCreated && !gameState.player.inventory["Compost Bin"]) {
+                        gameState.currentMinigame = "compost";
+                        compostModal.style.display = 'flex';
+                        updateCompostTutorial();
+                    }
+                }
+            }
+            
+            // Check for beehive click
+            if (gameState.currentLocation === "garden" &&
+                gameState.mouseX > gameState.hive.x && gameState.mouseX < gameState.hive.x + gameState.hive.width &&
+                gameState.mouseY > gameState.hive.y && gameState.mouseY < gameState.hive.y + gameState.hive.height) {
+                
+                const playerRect = gameState.player.getInteractionRect();
+                if (gameState.hive.x < playerRect.x + playerRect.width &&
+                    gameState.hive.x + gameState.hive.width > playerRect.x &&
+                    gameState.hive.y < playerRect.y + playerRect.height &&
+                    gameState.hive.y + gameState.hive.height > playerRect.y) {
+                    
+                    if (gameState.honeyLevel >= 100) {
+                        gameState.player.coins += 20;
+                        gameState.honeyLevel = 0;
+                        showNotification('Honey Collected!', 'You earned 20 coins!');
+                        updateUI();
+                    } else if (!gameState.beehivePressed) {
+                        gameState.beehivePressed = true;
+                        showNotification('Bees Released!', 'The bees are now pollinating flowers.');
+                    }
+                }
+            }
+            
+            // Check for trash can click
+            if (gameState.currentLocation === "house" &&
+                gameState.mouseX > 650 && gameState.mouseX < 700 &&
+                gameState.mouseY > 450 && gameState.mouseY < 510) {
+                
+                const playerRect = gameState.player.getInteractionRect();
+                if (650 < playerRect.x + playerRect.width && 700 > playerRect.x &&
+                    450 < playerRect.y + playerRect.height && 510 > playerRect.y) {
+                    
+                    gameState.currentMinigame = "trash";
+                    trashModal.style.display = 'flex';
+                    gameState.sortingScore = 0;
+                    gameState.sortingMistakes = 0;
+                    gameState.trashItems = [];
+                    drawTrashGame();
+                }
+            }
+        }
+
+        function handleMouseUp(e) {
+            gameState.mouseDown = false;
+            gameState.draggedTrash = null;
+        }
+
+        // ============================================
+        // MOBILE CONTROLS
+        // ============================================
+        function setupMobileControls() {
+            const upBtn = document.getElementById('up-btn');
+            const downBtn = document.getElementById('down-btn');
+            const leftBtn = document.getElementById('left-btn');
+            const rightBtn = document.getElementById('right-btn');
+            const interactBtn = document.getElementById('interact-btn');
+            
+            const startMove = (key) => {
+                gameState.keys[key] = true;
+            };
+            
+            const stopMove = (key) => {
+                gameState.keys[key] = false;
+            };
+            
+            // Up button
+            upBtn.addEventListener('mousedown', () => startMove('ArrowUp'));
+            upBtn.addEventListener('mouseup', () => stopMove('ArrowUp'));
+            upBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startMove('ArrowUp');
+            });
+            upBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopMove('ArrowUp');
+            });
+            
+            // Down button
+            downBtn.addEventListener('mousedown', () => startMove('ArrowDown'));
+            downBtn.addEventListener('mouseup', () => stopMove('ArrowDown'));
+            downBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startMove('ArrowDown');
+            });
+            downBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopMove('ArrowDown');
+            });
+            
+            // Left button
+            leftBtn.addEventListener('mousedown', () => startMove('ArrowLeft'));
+            leftBtn.addEventListener('mouseup', () => stopMove('ArrowLeft'));
+            leftBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startMove('ArrowLeft');
+            });
+            leftBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopMove('ArrowLeft');
+            });
+            
+            // Right button
+            rightBtn.addEventListener('mousedown', () => startMove('ArrowRight'));
+            rightBtn.addEventListener('mouseup', () => stopMove('ArrowRight'));
+            rightBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startMove('ArrowRight');
+            });
+            rightBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopMove('ArrowRight');
+            });
+            
+            // Interact button
+            interactBtn.addEventListener('click', handleInteraction);
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.addEventListener('load', () => {
+            initGame();
+            setupMobileControls();
+            
+            // Event listeners
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleMouseDown(e.touches[0]);
+            });
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleMouseUp();
+            });
+            
+            // Modal close buttons
+            document.getElementById('compost-close').addEventListener('click', () => {
+                compostModal.style.display = 'none';
+                gameState.currentMinigame = null;
+            });
+            
+            document.getElementById('compost-continue').addEventListener('click', advanceCompostTutorial);
+            
+            document.getElementById('compost-skip').addEventListener('click', () => {
+                compostModal.style.display = 'none';
+                gameState.currentMinigame = null;
+            });
+            
+            document.getElementById('guide-close').addEventListener('click', () => {
+                guideModal.style.display = 'none';
+            });
+            
+            document.getElementById('trash-close').addEventListener('click', () => {
+                trashModal.style.display = 'none';
+                gameState.currentMinigame = null;
+                // Add score to player
+                const finalScore = Math.max(0, gameState.sortingScore - gameState.sortingMistakes);
+                gameState.player.sustainabilityScore += finalScore;
+                updateUI();
+            });
+            
+            // Trash game drag handling
+            const trashArea = document.getElementById('trash-game-area');
+            trashArea.addEventListener('mousedown', handleTrashDrag);
+            trashArea.addEventListener('mousemove', (e) => {
+                if (gameState.draggedTrash) {
+                    handleTrashDrag(e);
+                    drawTrashGame();
+                }
+            });
+            trashArea.addEventListener('mouseup', () => {
+                gameState.draggedTrash = null;
+            });
+            
+            // Prevent context menu
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            
+            // Prevent arrow key scrolling
+            window.addEventListener('keydown', (e) => {
+                if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.code)) {
+                    e.preventDefault();
+                }
+            }, false);
+        });
+    </script>
+</body>
+</html>

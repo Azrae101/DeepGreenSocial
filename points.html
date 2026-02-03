@@ -6,36 +6,12 @@
     <title>My Points - SustainaLearn</title>
     <link rel="icon" type="image/jpeg" href="images/logodgi.jpg">
     
-    <script type="module">
-    import { initializeApp } from "firebase/app";
-    import { getAnalytics } from "firebase/analytics";
-    import { getAuth, onAuthStateChanged } from "firebase/auth";
-    import { getFirestore, collection, addDoc, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-    const firebaseConfig = {
-    apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
-    authDomain: "social-green-4d772.firebaseapp.com",
-    projectId: "social-green-4d772",
-    storageBucket: "social-green-4d772.firebasestorage.app",
-    messagingSenderId: "81847906637",
-    appId: "1:81847906637:web:d1f76632b8516e0c230704",
-    measurementId: "G-KQ0K9S913X"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-    
-    // Make available globally
-    window.auth = auth;
-    window.db = db;
-    window.storage = storage;
-    window.storage = storage;
-    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
 
     <style>
         /* Combined CSS with enhanced features */
@@ -1384,20 +1360,19 @@
         let currentUserId = null;
 
         // Auth state listener - Load everything once user is authenticated
-        window.auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                // Redirect to login if not logged in
-                alert('Please log in to view your points dashboard');
+                // Redirect to login if not authenticated
                 window.location.href = 'login.html';
                 return;
             }
-
+            
             currentUserId = user.uid;
-
+            
             // Get user data from Firestore
-            const userRef = window.db.collection('users').doc(user.uid);
+            const userRef = db.collection('users').doc(user.uid);
             const userSnap = await userRef.get();
-
+            
             if (!userSnap.exists) {
                 // Create user document if it doesn't exist
                 await userRef.set({
@@ -1419,15 +1394,24 @@
                     trashCollected: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
                 currentUserData = (await userRef.get()).data();
             } else {
                 currentUserData = userSnap.data();
             }
             
-            // Load dashboard with Firestore data
-            await loadDashboardFromFirebase(user.uid);
+            // Store user data in localStorage for easy access
+            localStorage.setItem('firebaseUser', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                name: user.displayName,
+                ...currentUserData
+            }));
+            
+            // Load dashboard data
+            loadDashboardFromFirebase();
             updateAuthButtons(user);
-            initCheckInFirebase(user.uid);
+            initCheckInFirebase();
             initTrashCompetition(user);
         });
         
@@ -1533,10 +1517,10 @@
             }
         }
         
-        async function loadDashboardFromFirebase(uid) {
-            const userRef = window.db.collection('users').doc(uid);
-            const userSnap = await userRef.get();
-            const userData = userSnap.data();
+        function loadDashboardFromFirebase() {
+            if (!currentUserData) return;
+            
+            const userData = currentUserData;
 
             // Update points displays
             document.getElementById("totalPoints").textContent = userData.points || 0;
@@ -1572,21 +1556,23 @@
             generateStreakCalendar(userData.dailyCheckins || []);
             
             // Load other data
-            loadPointsBreakdownFirebase(userData);
-            loadEventsListFirebase(userData);
-            loadPointsHistoryFirebase(userData);
-            loadAchievementsFirebase(userData);
-            calculateImpactStatsFirebase(userData);
+            loadPointsBreakdownFirebase();
+            loadEventsListFirebase();
+            loadPointsHistoryFirebase();
+            loadAchievementsFirebase();
+            calculateImpactStatsFirebase();
         }
         
-        function loadPointsBreakdownFirebase(userData) {
+        function loadPointsBreakdownFirebase() {
+            if (!currentUserData) return;
+            
             // Calculate points from different sources
-            const eventsPoints = (userData.eventsAttended?.length || 0) * 10;
-            const gamesPoints = userData.gamePoints || 0;
-            const articlesPoints = (userData.articlesRead?.length || 0) * 50;
-            const quizzesPoints = (userData.articlesQuizPassed?.length || 0) * 100;
-            const dailyPoints = calculateDailyPoints(userData);
-            const trashPoints = (userData.trashCollected?.length || 0);
+            const eventsPoints = (currentUserData.eventsAttended?.length || 0) * 10;
+            const gamesPoints = currentUserData.gamePoints || 0;
+            const articlesPoints = (currentUserData.articlesRead?.length || 0) * 50;
+            const quizzesPoints = (currentUserData.articlesQuizPassed?.length || 0) * 100;
+            const dailyPoints = calculateDailyPoints(currentUserData);
+            const trashPoints = (currentUserData.trashCollected?.length || 0);
 
             document.getElementById('trashPoints').textContent = `${trashPoints} item(s)`;
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
@@ -1596,9 +1582,11 @@
             document.getElementById('dailyPoints').textContent = `${dailyPoints} points`;
         }
         
-        function loadEventsListFirebase(userData) {
+        function loadEventsListFirebase() {
+            if (!currentUserData) return;
+            
             const container = document.getElementById('eventsList');
-            const userEvents = userData.events || [];
+            const userEvents = currentUserData.events || [];
             
             // Helper function to parse Danish date format
             function parseDanishDate(dateStr) {
@@ -1631,16 +1619,18 @@
                 const eventItem = document.createElement('div');
                 eventItem.className = 'event-item';
                 eventItem.innerHTML = `
-                    <span class="event-name">${event ? event.title : 'Event'}</span>
+                    <span class="event-name">${event ? event.name : 'Event'}</span>
                     <span class="event-points">+10 pts (signup)</span>
                 `;
                 container.appendChild(eventItem);
             });
         }
         
-        function loadPointsHistoryFirebase(userData) {
+        function loadPointsHistoryFirebase() {
+            if (!currentUserData) return;
+            
             const tbody = document.getElementById('historyTableBody');
-            const history = userData.pointsHistory || [];
+            const history = currentUserData.pointsHistory || [];
             
             if (history.length === 0) {
                 tbody.innerHTML = `
@@ -1667,9 +1657,11 @@
             });
         }
         
-        function loadAchievementsFirebase(userData) {
+        function loadAchievementsFirebase() {
+            if (!currentUserData) return;
+            
             const container = document.getElementById('achievementsContainer');
-            const userAchievements = userData.achievements || [];
+            const userAchievements = currentUserData.achievements || [];
             
             document.getElementById('achievementsCount').textContent = userAchievements.length;
             document.getElementById('totalAchievements').textContent = achievementsData.length;
@@ -1688,13 +1680,19 @@
                     <div class="achievement-points">+${achievement.points} pts</div>
                 `;
                 
+                if (hasAchievement) {
+                    card.style.border = '2px solid var(--primary-green)';
+                }
+                
                 container.appendChild(card);
             });
         }
         
-        function calculateImpactStatsFirebase(userData) {
+        function calculateImpactStatsFirebase() {
+            if (!currentUserData) return;
+            
             // Calculate based on points and activities
-            const points = userData.points || 0;
+            const points = currentUserData.points || 0;
             
             const co2Saved = (points / 10) * 1; // kg
             const waterSaved = (points / 10) * 50; // liters
@@ -1707,197 +1705,33 @@
             document.getElementById('equivalentTrees').textContent = equivalentTrees;
         }
         
-        function initCheckInFirebase(uid) {
+        function initCheckInFirebase() {
+            if (!currentUserData || !currentUserId) return;
+            
             const checkinBtn = document.getElementById('checkinBtn');
-            
-            // Will be implemented with Firestore
-            // For now, keeping original initCheckIn logic
-        }
-            const pointsInCurrentLevel = (userData.points || 0) % 100;
-            const pointsToNextLevel = 100 - pointsInCurrentLevel;
-            
-            // Update level info
-            document.getElementById('currentLevel').textContent = level;
-            document.getElementById('levelBadge').textContent = level;
-            document.getElementById('nextLevel').textContent = level + 1;
-            document.getElementById('currentProgress').textContent = pointsInCurrentLevel;
-            document.getElementById('pointsToNext').textContent = pointsToNextLevel;
-            document.getElementById('levelRequirement').textContent = 100;
-            
-            // Update progress bar
-            const progressPercent = (pointsInCurrentLevel / 100) * 100;
-            document.getElementById('levelProgress').style.width = `${progressPercent}%`;
-            
-            // Update streak
-            document.getElementById('currentStreak').textContent = userData.streak || 0;
-            
-            // Update monthly points
-            const now = new Date();
-            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
-            const monthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
-            document.getElementById('monthlyPoints').textContent = monthlyPoints;
-            
-            // Generate streak calendar
-            generateStreakCalendar(userData.dailyCheckins || []);
-            
-            // Load other data
-            loadPointsBreakdownFirebase(userData);
-            loadEventsListFirebase(userData);
-            loadPointsHistoryFirebase(userData);
-        }
-        
-        function loadPointsBreakdown(user) {
-            // Calculate points from different sources
-            const eventsPoints = (user.eventsAttended?.length || 0) * 10; // 10 points for signup (200 upon completion - to be implemented)
-            const gamesPoints = user.gamePoints || 0;
-            const articlesPoints = (user.articlesRead?.length || 0) * 50; // 50 points per article
-            const quizzesPoints = (user.articlesQuizPassed?.length || 0) * 100; // 100 points per quiz
-            const dailyPoints = calculateDailyPoints(user);
-            const trashPoints = (user.trashCollected?.length || 0); // 1 point per submission for record
-
-            document.getElementById('trashPoints').textContent = `${trashPoints} item(s)`;
-            document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
-            document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
-            document.getElementById('articlesPoints').textContent = `${articlesPoints} points`;
-            document.getElementById('quizzesPoints').textContent = `${quizzesPoints} points`;
-            document.getElementById('dailyPoints').textContent = `${dailyPoints} points`;
-        }
-        
-        function calculateDailyPoints(user) {
-            // Calculate points from daily check-ins
-            const checkins = user.dailyCheckins || [];
-            let dailyPoints = checkins.length * 10; // 10 points per check-in
-            
-            // Add streak bonuses
-            const streak = user.streak || 0;
-            const streakBonuses = Math.floor(streak / 7) * 70; // 70 points per 7-day streak
-            
-            return dailyPoints + streakBonuses;
-        }
-        
-        function generateStreakCalendar(dailyCheckins) {
-            const calendar = document.getElementById('streakCalendar');
-            calendar.innerHTML = '';
-            
-            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-            const today = new Date();
-            
-            // Get last 7 days
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(today.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                const dayOfWeek = days[date.getDay()];
-                
-                const isToday = i === 0;
-                const hasCheckedIn = dailyCheckins.includes(dateStr);
-                
-                const dayElement = document.createElement('div');
-                dayElement.className = `streak-day ${hasCheckedIn ? 'active' : 'inactive'} ${isToday ? 'today' : ''}`;
-                dayElement.innerHTML = `
-                    <span class="day-label">${dayOfWeek}</span>
-                    ${date.getDate()}
-                `;
-                
-                calendar.appendChild(dayElement);
-            }
-        }
-        
-        function initCheckIn(user) {
-            const checkinBtn = document.getElementById('checkinBtn');
-            const checkinStatus = document.getElementById('checkinStatus');
-            const lastCheckinDate = document.getElementById('lastCheckinDate');
-            
             const today = new Date().toISOString().split('T')[0];
-            const hasCheckedInToday = (user.dailyCheckins || []).includes(today);
+            const hasCheckedInToday = (currentUserData.dailyCheckins || []).includes(today);
             
             if (hasCheckedInToday) {
                 checkinBtn.disabled = true;
                 checkinBtn.textContent = 'Already Checked In Today';
-                checkinBtn.classList.remove('pulse');
-                lastCheckinDate.textContent = 'Today';
-            } else {
-                // Find last check-in date
-                const checkins = user.dailyCheckins || [];
-                if (checkins.length > 0) {
-                    const lastCheckin = checkins[checkins.length - 1];
-                    const lastDate = new Date(lastCheckin);
-                    lastCheckinDate.textContent = lastDate.toLocaleDateString();
-                }
             }
             
-            checkinBtn.addEventListener('click', function() {
+            checkinBtn.addEventListener('click', async function() {
                 if (hasCheckedInToday) return;
                 
-                const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-                const userIndex = users.findIndex(u => u.username === user.username);
+                const userRef = db.collection('users').doc(currentUserId);
                 
-                if (userIndex === -1) return;
-                
-                // Add today's check-in
-                if (!users[userIndex].dailyCheckins) users[userIndex].dailyCheckins = [];
-                users[userIndex].dailyCheckins.push(today);
-                
-                // Calculate streak
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                
-                if (users[userIndex].dailyCheckins.includes(yesterdayStr)) {
-                    users[userIndex].streak = (users[userIndex].streak || 0) + 1;
-                } else {
-                    users[userIndex].streak = 1;
-                }
-                
-                // Add 10 points for daily check-in
-                users[userIndex].points = (users[userIndex].points || 0) + 10;
-                
-                // Add monthly points
-                const now = new Date();
-                const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
-                if (!users[userIndex].monthlyPoints) users[userIndex].monthlyPoints = {};
-                users[userIndex].monthlyPoints[monthKey] = (users[userIndex].monthlyPoints[monthKey] || 0) + 10;
-                
-                // Add to points history
-                if (!users[userIndex].pointsHistory) users[userIndex].pointsHistory = [];
-                users[userIndex].pointsHistory.push({
-                    date: today,
-                    description: 'Daily check-in',
-                    points: 10,
-                    type: 'earned'
+                await userRef.update({
+                    dailyCheckins: firebase.firestore.FieldValue.arrayUnion(today),
+                    points: firebase.firestore.FieldValue.increment(10),
+                    streak: firebase.firestore.FieldValue.increment(1)
                 });
                 
-                // Check for 7-day streak bonus
-                if (users[userIndex].streak % 7 === 0) {
-                    users[userIndex].points += 70;
-                    users[userIndex].monthlyPoints[monthKey] += 70;
-                    users[userIndex].pointsHistory.push({
-                        date: today,
-                        description: '7-day streak bonus',
-                        points: 70,
-                        type: 'bonus'
-                    });
-                    
-                    alert(`🎉 Congratulations! You've maintained a ${users[userIndex].streak}-day streak! Bonus: 70 points!`);
-                }
-                
-                // Update localStorage
-                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-                
-                // Update UI
-                checkinBtn.disabled = true;
-                checkinBtn.textContent = 'Already Checked In Today';
-                checkinBtn.classList.remove('pulse');
-                lastCheckinDate.textContent = 'Today';
-                
-                // Reload all data
-                const updatedUser = users[userIndex];
-                loadDashboardData(updatedUser);
-                loadPointsBreakdown(updatedUser);
-                loadPointsHistory(updatedUser);
-                calculateImpactStats(updatedUser);
-                loadAchievements(updatedUser);
+                // Refresh data
+                const userSnap = await userRef.get();
+                currentUserData = userSnap.data();
+                loadDashboardFromFirebase();
                 
                 alert('✅ Check-in successful! +10 points added.');
             });
