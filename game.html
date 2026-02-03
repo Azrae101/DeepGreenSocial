@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Trash Sorting Game - SustainaLearn</title>
+<link rel="icon" href="images/logodgi.jpg" type="image/jpeg">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1013,7 +1017,7 @@
                     ❓ How to Play
                 </button>
                 <button class="start-btn home-btn" id="startHomeBtn">
-                    🏠 Back to Home
+                    🏠 Back to Menu
                 </button>
             </div>
             
@@ -1124,10 +1128,10 @@
                             <li><strong>Hazardous waste</strong>: Batteries, light bulbs, paint</li>
                             <li><strong>Food waste</strong>: Food scraps, coffee filters, eggshells</li>
                             <li><strong>Metal</strong>: Cans, metal lids, screws</li>
-                            <li><strong>Cardboard</strong>: Cardboard boxes, pizza boxes, egg cartons</li>
+                            <li><strong>Cardboard</strong>: Cardboard boxes, egg cartons</li>
                             <li><strong>Paper</strong>: Newspapers, office paper, envelopes</li>
                             <li><strong>Plastic</strong>: Plastic bottles, trays, bags</li>
-                            <li><strong>General waste</strong>: Dirty packaging, diapers, cigarette butts</li>
+                            <li><strong>General waste</strong>: Dirty packaging, diapers, cigarette butts, pizza boxes</li>
                         </ul>
                     </div>
                 </div>
@@ -1310,7 +1314,7 @@ const itemTypes = [
     { 
         type: 'pizza_box', 
         name: 'Pizza Box',
-        correctBin: 'pap', 
+        correctBin: 'rest', 
         icon: '🍕'
     },
     { 
@@ -1403,10 +1407,10 @@ const itemTypes = [
 let gameActive = false;
 let score = 0;
 let highScore = localStorage.getItem('sustainalearn_trashHighScore') || 0;
-let lives = 5;
+let lives = 3;
 let items = [];
 let itemInterval;
-let gameSpeed = 2500;
+let gameSpeed = 1800;
 const minSpeed = 800;
 let speedIncreaseCounter = 0;
 let level = 1;
@@ -1418,6 +1422,17 @@ let binDropZones = [];
 let musicEnabled = true;
 let audioContext;
 let musicTimer = null;  // For background music interval
+
+// Improved drag-and-drop system variables
+let isDragging = false;
+let draggedItem = null;
+let dragStartX = 0;
+let dragStartY = 0;
+let itemStartX = 0;
+let itemStartY = 0;
+let isMouseDown = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
 // ======================
 // 🎵 NOTE FREQUENCIES
@@ -1621,150 +1636,7 @@ function playSound(type) {
 // Function to update hearts display
 function updateHeartsDisplay() {
     heartsContainer.innerHTML = '';
-    for (let i = 0; i < 5; i++) {
-        const heart = document.createElement('i');
-        heart.className = i < lives ? 'fas fa-heart heart' : 'fas fa-heart heart lost';
-        heartsContainer.appendChild(heart);
-    }
-}
-
-// --- Settings Functions ---
-function toggleMusic() {
-    musicEnabled = musicToggle.checked;
-    localStorage.setItem('sustainalearn_musicEnabled', musicEnabled);
-    
-    if (musicEnabled && gameActive) {
-        playBackgroundMusic();
-    } else {
-        stopBackgroundMusic();
-    }
-}
-
-// --- Start Game ---
-function startGame() {
-    if (gameActive) return;
-
-    gameActive = true;
-    score = 0;
-    lives = 5;
-    level = 1;
-    gameSpeed = 2500;
-    speedIncreaseCounter = 0;
-    itemsOnScreen = 0;
-
-    currentScoreEl.textContent = score;
-    currentLevelEl.textContent = level;
-    currentHighScoreEl.textContent = highScore;
-    updateHeartsDisplay();
-    
-    startScreen.style.display = 'none';
-    gameContainer.style.display = 'flex';
-    endScreen.classList.remove('show');
-    tutorialModal.classList.remove('show');
-    settingsModal.classList.remove('show');
-
-    currentBins = selectRandomBins();
-    updateCurrentItems();
-    updateBinsDisplay();
-
-    clearAllItems();
-
-    clearInterval(itemInterval);
-    
-    itemInterval = setInterval(createItem, gameSpeed);
-    
-    // Start background music if enabled
-    if (musicEnabled) {
-        playBackgroundMusic();
-    }
-}
-
-// --- END GAME ---
-function endGame() {
-    gameActive = false;
-    clearInterval(itemInterval);
-    stopBackgroundMusic(); // Stop music when game ends
-
-    document.querySelectorAll('.falling-item').forEach(item => {
-        clearInterval(item.fallInterval);
-        item.remove();
-    });
-
-    // Save points to user account if logged in
-    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-    if (currentUser) {
-        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-        const i = users.findIndex(u => u.username === currentUser.username);
-
-        if (i !== -1) {
-            users[i].gamePoints = (users[i].gamePoints || 0) + score;
-            
-            if (!users[i].pointsHistory) users[i].pointsHistory = [];
-            users[i].pointsHistory.push({
-                date: new Date().toISOString().split('T')[0],
-                description: 'Trash Sorting Game - Level ' + level,
-                points: score,
-                type: 'earned'
-            });
-
-            localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[i]));
-        }
-    }
-
-    finalScoreEl.textContent = score;
-    highScoreEndEl.textContent = highScore;
-    
-    if (score > highScore) {
-        newHighScoreMessage.innerHTML = '<div class="new-highscore">🎉 New High Score! 🎉</div>';
-        playSound('correct');
-    } else {
-        newHighScoreMessage.innerHTML = '';
-    }
-    
-    // Show end screen after a short delay
-    setTimeout(() => {
-        endScreen.classList.add('show');
-    }, 500);
-}
-
-// --- Show start screen ---
-function showStartScreen() {
-    gameActive = false;
-    clearInterval(itemInterval);
-    stopBackgroundMusic(); // Stop music when returning to start
-    clearAllItems();
-    
-    startScreen.style.display = 'flex';
-    gameContainer.style.display = 'none';
-    endScreen.classList.remove('show');
-    tutorialModal.classList.remove('show');
-    settingsModal.classList.remove('show');
-    
-    // Update high score display
-    highScore = localStorage.getItem('sustainalearn_trashHighScore') || 0;
-    highScoreStartEl.textContent = highScore;
-}
-
-// Initialize on load
-window.addEventListener('load', () => {
-    init();
-    showStartScreen();
-    
-    // Show tutorial on first visit
-    const hasSeenTutorial = localStorage.getItem('sustainalearn_gameTutorialSeen');
-    if (!hasSeenTutorial) {
-        setTimeout(() => {
-            tutorialModal.classList.add('show');
-            localStorage.setItem('sustainalearn_gameTutorialSeen', 'true');
-        }, 500);
-    }
-});
-
-// Function to update hearts display
-function updateHeartsDisplay() {
-    heartsContainer.innerHTML = '';
-    for (let i = 0; i < 5; i++) { // Changed from 3 to 5
+    for (let i = 0; i < 3; i++) {
         const heart = document.createElement('i');
         heart.className = i < lives ? 'fas fa-heart heart' : 'fas fa-heart heart lost';
         heartsContainer.appendChild(heart);
@@ -1783,7 +1655,7 @@ function updateCurrentItems() {
     currentItems = itemTypes.filter(item => binKeys.includes(item.correctBin));
 }
 
-// Function to update bins display with drop zones
+// Function to update bins display
 function updateBinsDisplay() {
     binsContainer.innerHTML = '';
     binDropZones = [];
@@ -1798,32 +1670,8 @@ function updateBinsDisplay() {
             <div style="font-size: 9px; margin-top: 3px;">${bin.description}</div>
         `;
         
-        const dropZone = document.createElement('div');
-        dropZone.className = 'bin-drop-zone';
-        dropZone.dataset.type = bin.key;
-        
-        binEl.appendChild(dropZone);
         binsContainer.appendChild(binEl);
-        
-        binDropZones.push(dropZone);
-    });
-    
-    setupDropZoneListeners();
-}
-
-// Function to setup drop zone event listeners
-function setupDropZoneListeners() {
-    binDropZones.forEach(dropZone => {
-        dropZone.replaceWith(dropZone.cloneNode(true));
-        const newDropZone = binsContainer.querySelector(`.bin-drop-zone[data-type="${dropZone.dataset.type}"]`);
-        
-        newDropZone.addEventListener('dragover', handleDragOver);
-        newDropZone.addEventListener('dragleave', handleDragLeave);
-        newDropZone.addEventListener('drop', handleDrop);
-        
-        const bin = newDropZone.closest('.bin');
-        bin.addEventListener('dragover', handleDragOver);
-        bin.addEventListener('dragleave', handleDragLeave);
+        binDropZones.push(binEl);
     });
 }
 
@@ -1834,6 +1682,16 @@ function clearAllItems() {
         item.remove();
     });
     itemsOnScreen = 0;
+    
+    // Clean up any leftover event listeners
+    if (isDragging) {
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchmove', onDragMoveTouch);
+        document.removeEventListener('touchend', onDragEndTouch);
+        isDragging = false;
+        draggedItem = null;
+    }
 }
 
 // Function to check if level should increase
@@ -1849,7 +1707,7 @@ function checkLevelUp() {
         updateCurrentItems();
         updateBinsDisplay();
         
-        gameSpeed = Math.max(minSpeed, 2500 - (level * 100));
+        gameSpeed = Math.max(minSpeed, 1800 - (level * 100));
         clearInterval(itemInterval);
         itemInterval = setInterval(createItem, gameSpeed);
         
@@ -1875,86 +1733,19 @@ function showGroundWarning() {
     }, 1500);
 }
 
-// Drag and drop handlers
-function handleDragOver(e) {
-    e.preventDefault();
-    const bin = e.target.closest('.bin');
-    if (bin) {
-        bin.classList.add('highlight');
-    }
-}
-
-function handleDragLeave(e) {
-    const bin = e.target.closest('.bin');
-    if (bin && !bin.contains(e.relatedTarget)) {
-        bin.classList.remove('highlight');
-    }
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    
-    const bin = e.target.closest('.bin');
-    if (!bin) return;
-    
-    bin.classList.remove('highlight');
-    
-    const id = e.dataTransfer.getData('itemId');
-    const item = document.getElementById(id);
-
-    if (!item) return;
-
-    const correct = item.dataset.correctBin;
-    const dropped = bin.dataset.type;
-
-    const binRect = bin.getBoundingClientRect();
-    const gameAreaRect = gameArea.getBoundingClientRect();
-    const x = (binRect.left + binRect.width/2 - gameAreaRect.left - 30);
-    const y = (binRect.top - gameAreaRect.top - 40);
-    
-    if (correct === dropped) {
-        score += 1;
-        currentScoreEl.textContent = score;
-        
-        showFeedback('✓ +1', x, y, '#4CAF50');
-        playSound('correct');
-        
-        checkLevelUp();
-        
-        speedIncreaseCounter++;
-        if (speedIncreaseCounter % 3 === 0 && gameSpeed > minSpeed) {
-            gameSpeed -= 50;
-            clearInterval(itemInterval);
-            itemInterval = setInterval(createItem, gameSpeed);
-        }
-
-        if (score > highScore) {
-            highScore = score;
-            currentHighScoreEl.textContent = highScore;
-            localStorage.setItem('sustainalearn_trashHighScore', highScore);
-        }
-    } else {
-        showFeedback('✗ -1 Life', x, y, '#ff6b6b');
-        playSound('incorrect');
-        loseLife();
-    }
-
-    clearInterval(item.fallInterval);
-    item.remove();
-    itemsOnScreen--;
-}
-
 // --- Start Game ---
 function startGame() {
     if (gameActive) return;
 
     gameActive = true;
     score = 0;
-    lives = 5; // Changed from 3 to 5
+    lives = 3;
     level = 1;
-    gameSpeed = 2500;
+    gameSpeed = 1800;
     speedIncreaseCounter = 0;
     itemsOnScreen = 0;
+    isDragging = false;
+    draggedItem = null;
 
     currentScoreEl.textContent = score;
     currentLevelEl.textContent = level;
@@ -2006,19 +1797,8 @@ function createItem() {
     const uniqueId = 'item_' + Date.now() + Math.random().toString(36).substr(2, 5);
     item.id = uniqueId;
     
-    item.setAttribute('draggable', 'true');
-    
-    item.addEventListener('dragstart', e => {
-        if (!gameActive) return;
-        e.dataTransfer.setData('itemId', uniqueId);
-        item.classList.add('dragging');
-        e.dataTransfer.setDragImage(item, 35, 35);
-        playSound('drop');
-    });
-    
-    item.addEventListener('dragend', e => {
-        item.classList.remove('dragging');
-    });
+    // Set up mouse/touch events for custom dragging
+    setupItemDragEvents(item, uniqueId);
 
     gameArea.appendChild(item);
     itemsOnScreen++;
@@ -2028,6 +1808,7 @@ function createItem() {
     
     item.fallInterval = setInterval(() => {
         if (!gameActive) return;
+        if (draggedItem === item) return; // Only pause THIS item if it's being dragged
 
         let top = parseInt(item.style.top);
         top += fallSpeed;
@@ -2046,6 +1827,336 @@ function createItem() {
             loseLife();
         }
     }, 30);
+}
+
+// ======================
+// 🎯 SETUP CUSTOM DRAG EVENTS
+// ======================
+function setupItemDragEvents(item, itemId) {
+    // Mouse events
+    item.addEventListener('mousedown', startDrag);
+    item.addEventListener('touchstart', startDragTouch);
+    
+    // Store the item ID for reference
+    item.dataset.id = itemId;
+    
+    // Make sure item is positioned for dragging
+    item.style.position = 'absolute';
+    item.style.transformOrigin = 'center';
+}
+
+// ======================
+// 🖱️ MOUSE DRAG FUNCTIONS
+// ======================
+function startDrag(e) {
+    if (!gameActive) return;
+    
+    e.preventDefault();
+    draggedItem = e.currentTarget;
+    
+    // Stop the falling animation
+    clearInterval(draggedItem.fallInterval);
+    
+    // Get initial positions
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    itemStartX = parseFloat(draggedItem.style.left) || 0;
+    itemStartY = parseFloat(draggedItem.style.top) || 0;
+    
+    // Calculate offset from mouse to item center
+    const rect = draggedItem.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    
+    // Add dragging class
+    draggedItem.classList.add('dragging');
+    draggedItem.style.zIndex = '1000';
+    draggedItem.style.transform = 'scale(1.1)';
+    draggedItem.style.cursor = 'grabbing';
+    
+    isDragging = true;
+    
+    // Add document-level event listeners
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    
+    playSound('drop');
+}
+
+function onDragMove(e) {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    
+    // Calculate new position
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    let newX = e.clientX - gameAreaRect.left - dragOffsetX;
+    let newY = e.clientY - gameAreaRect.top - dragOffsetY;
+    
+    // Constrain to game area bounds
+    newX = Math.max(0, Math.min(newX, gameAreaRect.width - draggedItem.offsetWidth));
+    newY = Math.max(0, Math.min(newY, gameAreaRect.height - draggedItem.offsetHeight));
+    
+    // Update item position
+    draggedItem.style.left = `${newX}px`;
+    draggedItem.style.top = `${newY}px`;
+    
+    // Check if over a bin for highlighting
+    checkBinHover(e.clientX, e.clientY);
+}
+
+function onDragEnd(e) {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    
+    // Remove document event listeners
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    
+    // Check for drop on a bin
+    const droppedBin = getBinAtPosition(e.clientX, e.clientY);
+    
+    if (droppedBin) {
+        handleItemDrop(draggedItem, droppedBin);
+    } else {
+        // Item dropped outside bins - resume falling
+        const fallingItem = draggedItem; // Store reference before resetting
+        fallingItem.classList.remove('dragging');
+        fallingItem.style.zIndex = '';
+        fallingItem.style.transform = '';
+        fallingItem.style.cursor = '';
+        
+        // Start falling again from current position
+        let fallSpeed = 1 + ((level - 1) * 0.2);
+        let rotation = 0;
+        
+        fallingItem.fallInterval = setInterval(() => {
+            if (!gameActive) return;
+            
+            let top = parseFloat(fallingItem.style.top);
+            top += fallSpeed;
+            fallingItem.style.top = `${top}px`;
+            
+            rotation += 0.5;
+            fallingItem.style.transform = `rotate(${rotation}deg)`;
+            
+            if (top >= gameArea.offsetHeight - 200) {
+                clearInterval(fallingItem.fallInterval);
+                fallingItem.remove();
+                itemsOnScreen--;
+                
+                showGroundWarning();
+                playSound('incorrect');
+                loseLife();
+            }
+        }, 30);
+    }
+    
+    // Reset dragging state
+    isDragging = false;
+    draggedItem = null;
+    
+    // Remove highlights from all bins
+    document.querySelectorAll('.bin').forEach(bin => {
+        bin.classList.remove('highlight');
+    });
+}
+
+// ======================
+// 📱 TOUCH SUPPORT FOR MOBILE
+// ======================
+function startDragTouch(e) {
+    if (!gameActive) return;
+    
+    e.preventDefault();
+    draggedItem = e.currentTarget;
+    
+    // Stop the falling animation
+    clearInterval(draggedItem.fallInterval);
+    
+    const touch = e.touches[0];
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
+    itemStartX = parseFloat(draggedItem.style.left) || 0;
+    itemStartY = parseFloat(draggedItem.style.top) || 0;
+    
+    // Calculate offset
+    const rect = draggedItem.getBoundingClientRect();
+    dragOffsetX = touch.clientX - rect.left;
+    dragOffsetY = touch.clientY - rect.top;
+    
+    // Add dragging class
+    draggedItem.classList.add('dragging');
+    draggedItem.style.zIndex = '1000';
+    draggedItem.style.transform = 'scale(1.1)';
+    
+    isDragging = true;
+    
+    // Add touch event listeners
+    document.addEventListener('touchmove', onDragMoveTouch, { passive: false });
+    document.addEventListener('touchend', onDragEndTouch);
+    
+    playSound('drop');
+}
+
+function onDragMoveTouch(e) {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    
+    // Calculate new position
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    let newX = touch.clientX - gameAreaRect.left - dragOffsetX;
+    let newY = touch.clientY - gameAreaRect.top - dragOffsetY;
+    
+    // Constrain to game area bounds
+    newX = Math.max(0, Math.min(newX, gameAreaRect.width - draggedItem.offsetWidth));
+    newY = Math.max(0, Math.min(newY, gameAreaRect.height - draggedItem.offsetHeight));
+    
+    // Update item position
+    draggedItem.style.left = `${newX}px`;
+    draggedItem.style.top = `${newY}px`;
+    
+    // Check if over a bin for highlighting
+    checkBinHover(touch.clientX, touch.clientY);
+}
+
+function onDragEndTouch(e) {
+    if (!isDragging || !draggedItem) return;
+    
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    
+    // Remove event listeners
+    document.removeEventListener('touchmove', onDragMoveTouch);
+    document.removeEventListener('touchend', onDragEndTouch);
+    
+    // Check for drop on a bin
+    const droppedBin = getBinAtPosition(touch.clientX, touch.clientY);
+    
+    if (droppedBin) {
+        handleItemDrop(draggedItem, droppedBin);
+    } else {
+        // Item dropped outside bins - resume falling
+        const fallingItem = draggedItem; // Store reference before resetting
+        fallingItem.classList.remove('dragging');
+        fallingItem.style.zIndex = '';
+        fallingItem.style.transform = '';
+        
+        // Start falling again from current position
+        let fallSpeed = 1 + ((level - 1) * 0.2);
+        let rotation = 0;
+        
+        fallingItem.fallInterval = setInterval(() => {
+            if (!gameActive) return;
+            
+            let top = parseFloat(fallingItem.style.top);
+            top += fallSpeed;
+            fallingItem.style.top = `${top}px`;
+            
+            rotation += 0.5;
+            fallingItem.style.transform = `rotate(${rotation}deg)`;
+            
+            if (top >= gameArea.offsetHeight - 200) {
+                clearInterval(fallingItem.fallInterval);
+                fallingItem.remove();
+                itemsOnScreen--;
+                
+                showGroundWarning();
+                playSound('incorrect');
+                loseLife();
+            }
+        }, 30);
+    }
+    
+    // Reset dragging state
+    isDragging = false;
+    draggedItem = null;
+    
+    // Remove highlights from all bins
+    document.querySelectorAll('.bin').forEach(bin => {
+        bin.classList.remove('highlight');
+    });
+}
+
+// ======================
+// 🗑️ BIN DETECTION FUNCTIONS
+// ======================
+function checkBinHover(clientX, clientY) {
+    document.querySelectorAll('.bin').forEach(bin => {
+        bin.classList.remove('highlight');
+    });
+    
+    const hoveredBin = getBinAtPosition(clientX, clientY);
+    if (hoveredBin) {
+        hoveredBin.classList.add('highlight');
+    }
+}
+
+function getBinAtPosition(clientX, clientY) {
+    // Get all bins and check if position is inside any bin
+    const bins = document.querySelectorAll('.bin');
+    
+    for (const bin of bins) {
+        const rect = bin.getBoundingClientRect();
+        
+        // Check if the point is inside the bin (with some padding)
+        if (clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom) {
+            return bin;
+        }
+    }
+    
+    return null;
+}
+
+// ======================
+// 🎯 HANDLE ITEM DROP
+// ======================
+function handleItemDrop(item, bin) {
+    const correct = item.dataset.correctBin;
+    const dropped = bin.dataset.type;
+    
+    const binRect = bin.getBoundingClientRect();
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    const x = (binRect.left + binRect.width/2 - gameAreaRect.left - 30);
+    const y = (binRect.top - gameAreaRect.top - 40);
+    
+    if (correct === dropped) {
+        score += 1;
+        currentScoreEl.textContent = score;
+        
+        showFeedback('✓ +1', x, y, '#4CAF50');
+        playSound('correct');
+        
+        checkLevelUp();
+        
+        speedIncreaseCounter++;
+        if (speedIncreaseCounter % 3 === 0 && gameSpeed > minSpeed) {
+            gameSpeed -= 50;
+            clearInterval(itemInterval);
+            itemInterval = setInterval(createItem, gameSpeed);
+        }
+
+        if (score > highScore) {
+            highScore = score;
+            currentHighScoreEl.textContent = highScore;
+            localStorage.setItem('sustainalearn_trashHighScore', highScore);
+        }
+    } else {
+        showFeedback('✗ -1 Life', x, y, '#ff6b6b');
+        playSound('incorrect');
+        loseLife();
+    }
+    
+    // Remove the item
+    item.remove();
+    itemsOnScreen--;
+    
+    // Remove highlight
+    bin.classList.remove('highlight');
 }
 
 // --- Show Feedback ---
@@ -2077,6 +2188,17 @@ function loseLife() {
 function endGame() {
     gameActive = false;
     clearInterval(itemInterval);
+    stopBackgroundMusic(); // Stop music when game ends
+    
+    // Reset dragging state
+    if (isDragging) {
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchmove', onDragMoveTouch);
+        document.removeEventListener('touchend', onDragEndTouch);
+        isDragging = false;
+        draggedItem = null;
+    }
 
     document.querySelectorAll('.falling-item').forEach(item => {
         clearInterval(item.fallInterval);
@@ -2125,7 +2247,18 @@ function endGame() {
 function showStartScreen() {
     gameActive = false;
     clearInterval(itemInterval);
+    stopBackgroundMusic(); // Stop music when returning to start
     clearAllItems();
+    
+    // Reset dragging state
+    if (isDragging) {
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchmove', onDragMoveTouch);
+        document.removeEventListener('touchend', onDragEndTouch);
+        isDragging = false;
+        draggedItem = null;
+    }
     
     startScreen.style.display = 'flex';
     gameContainer.style.display = 'none';
@@ -2145,6 +2278,8 @@ function toggleMusic() {
     
     if (musicEnabled && gameActive) {
         playBackgroundMusic();
+    } else {
+        stopBackgroundMusic();
     }
 }
 
@@ -2159,7 +2294,7 @@ function toggleTheme() {
 }
 
 function goToHome() {
-    window.location.href = 'index.html';
+    window.location.href = 'game-overview.html';
 }
 
 // --- EVENT LISTENERS ---
@@ -2215,8 +2350,5 @@ window.addEventListener('load', () => {
     }
 });
 </script>
-
-<!-- Add Font Awesome for hearts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 </body>
 </html>
