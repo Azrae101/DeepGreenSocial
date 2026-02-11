@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         :root {
             --primary-green: #2e7d32;
@@ -60,6 +61,13 @@
         .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .logo h1 {
@@ -436,6 +444,37 @@
                 margin-left: 0;
             }
         }
+
+        /* Toast Notification Styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #323232;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            max-width: 350px;
+            word-wrap: break-word;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success {
+            background: #2e7d32;
+        }
+        .toast.error {
+            background: #d32f2f;
+        }
+        .toast.info {
+            background: #1976d2;
+        }
     </style>
 </head>
 <body>
@@ -443,8 +482,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -600,25 +641,31 @@
     </footer>
 
     <script>
-        // Update auth buttons based on login status
-        function updateAuthButtons() {
-            const authButtons = document.getElementById('authButtons');
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+        // Toast notification function
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
             
-            if (currentUser) {
-                // User is logged in
-                authButtons.innerHTML = `
-                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
-                    <a href="points.html" class="btn btn-login">My Points</a>
-                    <button class="btn btn-register" id="logoutBtn">Logout</button>
-                `;
-                
-                document.getElementById('logoutBtn').addEventListener('click', function() {
-                    localStorage.removeItem('sustainalearn_currentUser');
-                    window.location.href = 'home.html';
-                });
-            } else {
-                // User is not logged in
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // Global variable for current user
+        let currentUser = null;
+
+        // Firebase Auth listener - ensures user is logged in
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            const authButtons = document.getElementById('authButtons');
+            
+            if (!firebaseUser) {
+                // Not logged in
+                localStorage.removeItem('sustainalearn_currentUser');
                 authButtons.innerHTML = `
                     <button class="btn btn-login" id="loginBtn">Login</button>
                     <button class="btn btn-register" id="registerBtn">Register</button>
@@ -631,20 +678,59 @@
                 document.getElementById('registerBtn').addEventListener('click', function() {
                     window.location.href = 'register.html';
                 });
-            }
-        }
-
-        // Article reading and quiz functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            updateAuthButtons();
-            
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            if (!currentUser) {
-                alert('Please log in to read articles and earn points');
-                window.location.href = 'login.html';
+                
+                showToast('Please log in to read articles and earn points', 'info', 2000);
+                setTimeout(() => window.location.href = 'login.html', 2000);
                 return;
             }
             
+            try {
+                // Get user data from Firestore
+                const userRef = db.collection('users').doc(firebaseUser.uid);
+                const userSnap = await userRef.get();
+                
+                if (userSnap.exists) {
+                    const userData = userSnap.data();
+                    currentUser = {
+                        uid: firebaseUser.uid,
+                        email: userData.email,
+                        username: userData.username || userData.email,
+                        firstName: userData.firstName || userData.name || 'User',
+                        lastName: userData.lastName || '',
+                        ...userData
+                    };
+                    
+                    // Update localStorage for compatibility
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
+                    
+                    // Update auth buttons - User is logged in
+                    authButtons.innerHTML = `
+                        <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
+                        <a href="points.html" class="btn btn-login">My Points</a>
+                        <button class="btn btn-register" id="logoutBtn">Logout</button>
+                    `;
+                    
+                    document.getElementById('logoutBtn').addEventListener('click', async function() {
+                        try {
+                            await auth.signOut();
+                            localStorage.removeItem('sustainalearn_currentUser');
+                            window.location.href = 'index.html';
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                        }
+                    });
+                    
+                    // Initialize article functionality
+                    initializeArticle();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showToast('Error loading your profile. Please try again.', 'error', 4000);
+            }
+        });
+
+        // Article reading and quiz functionality
+        function initializeArticle() {
             const readBtn = document.getElementById('readBtn');
             const quizBtn = document.getElementById('quizBtn');
             const quizContainer = document.getElementById('quizContainer');
@@ -682,7 +768,7 @@
                 
                 // Check if already read
                 if (users[userIndex].articlesRead.includes(articleId)) {
-                    alert('You have already read this article');
+                    showToast('You have already read this article', 'info');
                     return;
                 }
                 
@@ -704,7 +790,7 @@
                 readBtn.disabled = true;
                 readBtn.style.backgroundColor = '#6c757d';
                 
-                alert('Thank you for reading! You earned 50 points.');
+                showToast('Thank you for reading! You earned 50 points.', 'success', 4000);
             });
             
             // Show quiz
@@ -721,7 +807,7 @@
                 
                 // Check if all questions are answered
                 if (!q1 || !q2 || !q3) {
-                    alert('Please answer all questions');
+                    showToast('Please answer all questions', 'info');
                     return;
                 }
                 
@@ -770,7 +856,7 @@
                     quizResult.style.display = 'block';
                 }
             });
-        });
+        } // End initializeArticle
     </script>
 </body>
 </html>

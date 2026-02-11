@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     
     <style>
         /* Use your existing theme colors */
@@ -64,6 +65,13 @@
         .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .logo h1 {
@@ -672,8 +680,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -808,27 +818,23 @@
     </footer>
 
     <script>
-        // ====================
-        // Firebase Configuration
-        // ====================
-        // REPLACE WITH YOUR FIREBASE CONFIG
-        const firebaseConfig = {
-            apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
-            authDomain: "social-green-4d772.firebaseapp.com",
-            projectId: "social-green-4d772",
-            storageBucket: "social-green-4d772.firebasestorage.app",
-            messagingSenderId: "81847906637",
-            appId: "1:81847906637:web:d1f76632b8516e0c230704",
-            measurementId: "G-KQ0K9S913X"
-        };
-
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        // Toast notification function
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
         }
 
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        // Firebase is initialized via firebase-config.js
+        // auth, db, and storage are available globally
 
         // ====================
         // Global Variables
@@ -838,25 +844,11 @@
         const ADMIN_USERNAME = "Lol Hest";
 
         // ====================
-        // Authentication
+        // Authentication with Firebase Auth
         // ====================
-        function checkAuth() {
-            const user = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            
-            if (user) {
-                currentUser = user;
-                currentUserIsAdmin = (user.username === ADMIN_USERNAME);
-                
-                // Update auth buttons
-                updateAuthButtons();
-                
-                // Show create post form
-                document.getElementById('createPostCard').style.display = 'block';
-                
-                // Load posts
-                loadPosts();
-            } else {
-                // Not logged in
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (!firebaseUser) {
+                // Not logged in - show message
                 document.getElementById('postFeed').innerHTML = `
                     <div class="empty-state">
                         <h3>Join the Community! 🌱</h3>
@@ -864,8 +856,50 @@
                         <a href="login.html" class="btn btn-register" style="margin-top: 20px;">Log In to Continue</a>
                     </div>
                 `;
+                updateAuthButtons();
+                return;
             }
-        }
+            
+            try {
+                // Get user data from Firestore
+                const userRef = db.collection('users').doc(firebaseUser.uid);
+                const userSnap = await userRef.get();
+                
+                if (userSnap.exists) {
+                    const userData = userSnap.data();
+                    currentUser = {
+                        uid: firebaseUser.uid,
+                        email: userData.email,
+                        username: userData.username || userData.email,
+                        firstName: userData.firstName || userData.name || 'User',
+                        lastName: userData.lastName || '',
+                        ...userData
+                    };
+                    
+                    // Save to localStorage for compatibility
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
+                    
+                    currentUserIsAdmin = (currentUser.username === ADMIN_USERNAME || 
+                                         currentUser.email === 'admin@socialgreen.com');
+                    
+                    // Update auth buttons
+                    updateAuthButtons();
+                    
+                    // Show create post form
+                    document.getElementById('createPostCard').style.display = 'block';
+                    
+                    // Load posts
+                    loadPosts();
+                } else {
+                    console.error('User document not found in Firestore');
+                    showToast('User profile not found. Please try logging in again.', 'error', 4000);
+                    await auth.signOut();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showToast('Error loading user profile. Please try again.', 'error');
+            }
+        });
 
         function updateAuthButtons() {
             const authButtons = document.getElementById('authButtons');
@@ -880,9 +914,15 @@
                     <button class="btn btn-register" id="logoutBtn">Logout</button>
                 `;
                 
-                document.getElementById('logoutBtn').addEventListener('click', function() {
-                    localStorage.removeItem('sustainalearn_currentUser');
-                    window.location.reload();
+                document.getElementById('logoutBtn').addEventListener('click', async function() {
+                    try {
+                        await auth.signOut();
+                        localStorage.removeItem('sustainalearn_currentUser');
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                        showToast('Error logging out. Please try again.', 'error');
+                    }
                 });
             } else {
                 authButtons.innerHTML = `
@@ -922,7 +962,7 @@
                 return docRef.id;
             } catch (error) {
                 console.error('Error creating post:', error);
-                alert('Error creating post. Please try again.');
+                showToast('Error creating post. Please try again.', 'error');
                 return null;
             }
         }
@@ -1163,7 +1203,7 @@
                 
             } catch (error) {
                 console.error('Error adding comment:', error);
-                alert('Error adding comment. Please try again.');
+                showToast('Error adding comment. Please try again.', 'error');
             }
         }
 
@@ -1196,7 +1236,7 @@
                 
             } catch (error) {
                 console.error('Error deleting comment:', error);
-                alert('Error deleting comment.');
+                showToast('Error deleting comment.', 'error');
             }
         }
 
@@ -1220,7 +1260,7 @@
                 
             } catch (error) {
                 console.error('Error deleting post:', error);
-                alert('Error deleting post.');
+                showToast('Error deleting post.', 'error');
             }
         }
 
@@ -1312,8 +1352,7 @@
         // Event Listeners
         // ====================
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication
-            checkAuth();
+            // Firebase Auth listener handles authentication automatically
             
             // Character count for post text
             const postText = document.getElementById('postText');
@@ -1401,7 +1440,7 @@
                         
                     } catch (error) {
                         console.error('Error posting:', error);
-                        alert('Error creating post. Please try again.');
+                        showToast('Error creating post. Please try again.', 'error');
                     } finally {
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Post to Community';

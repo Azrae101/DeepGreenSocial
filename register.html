@@ -63,6 +63,13 @@
             align-items: center;
         }
 
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
         .logo h1 {
             color: var(--primary-green);
             font-size: 24px;
@@ -410,8 +417,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -529,9 +538,8 @@
     </footer>
 
     <script>
-        // Use the globally available Firebase instances from firebase-config.js
-        const auth = window.firebaseAuth;
-        const db = window.firebaseDb;
+        // Firebase instances are available globally from firebase-config.js
+        // No need to redeclare - just use auth and db directly
 
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {

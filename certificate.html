@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         /* Global Styles */
         :root {
@@ -62,6 +63,13 @@
         .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .logo h1 {
@@ -658,8 +666,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -820,26 +830,62 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+        // Toast notification function
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
             
-            if (!currentUser) {
-                alert('Please log in to view your certificate');
-                window.location.href = 'login.html';
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // Firebase Auth listener - ensures user is logged in
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (!firebaseUser) {
+                showToast('Please log in to view your certificate', 'info', 2000);
+                setTimeout(() => window.location.href = 'login.html', 2000);
                 return;
             }
             
-            // Update auth buttons
-            updateAuthButtons();
-            
-            // Load certificate data
-            loadCertificateData(currentUser);
+            try {
+                // Get user data from Firestore
+                const userRef = db.collection('users').doc(firebaseUser.uid);
+                const userSnap = await userRef.get();
+                
+                if (userSnap.exists) {
+                    const userData = userSnap.data();
+                    const currentUser = {
+                        uid: firebaseUser.uid,
+                        email: userData.email,
+                        username: userData.username || userData.email,
+                        firstName: userData.firstName || userData.name || 'User',
+                        lastName: userData.lastName || '',
+                        ...userData
+                    };
+                    
+                    // Update localStorage for compatibility
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
+                    
+                    // Update auth buttons
+                    updateAuthButtons(currentUser);
+                    
+                    // Load certificate data
+                    loadCertificateData(currentUser);
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showToast('Error loading your profile. Please try again.', 'error', 4000);
+            }
         });
         
-        function updateAuthButtons() {
+        function updateAuthButtons(currentUser) {
             const authButtons = document.getElementById('authButtons');
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
             
             if (currentUser) {
                 authButtons.innerHTML = `
@@ -856,9 +902,14 @@
             }
         }
         
-        function logout() {
-            localStorage.removeItem('sustainalearn_currentUser');
-            window.location.href = 'index.html';
+        async function logout() {
+            try {
+                await auth.signOut();
+                localStorage.removeItem('sustainalearn_currentUser');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
         }
         
         function loadCertificateData(user) {
@@ -1165,11 +1216,11 @@
                 downloadBtn.disabled = false;
                 
                 // Show success message
-                alert('Certificate downloaded successfully!');
+                showToast('Certificate downloaded successfully!', 'success', 3000);
                 
             } catch (error) {
                 console.error('Error generating PDF:', error);
-                alert('There was an error generating the PDF. Please try printing instead.');
+                showToast('There was an error generating the PDF. Please try printing instead.', 'error', 4000);
                 
                 // Restore button state
                 const downloadBtn = document.querySelector('.btn-download');

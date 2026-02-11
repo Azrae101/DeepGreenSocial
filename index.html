@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -64,6 +65,13 @@
         .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .logo h1 {
@@ -1020,8 +1028,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 30px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 30px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -1398,20 +1408,8 @@
     <button id="scrollToTop" aria-label="Scroll to top"></button>
 
 <script>
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyDAnzTtMgBJ57NjqsE7Te0htmMV9nf_gLg",
-        authDomain: "social-green-4d772.firebaseapp.com",
-        projectId: "social-green-4d772",
-        storageBucket: "social-green-4d772.firebasestorage.app",
-        messagingSenderId: "81847906637",
-        appId: "1:81847906637:web:9eaf5e8cd1cd5d659d05bb"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // Firebase is initialized via firebase-config.js
+    // auth and db are available globally
 
     // Update auth buttons based on Firebase auth status
     function updateAuthButtons(user) {
@@ -1643,6 +1641,9 @@
             }
         });
         
+        // Sort old events by most recent first (descending)
+        oldEvents.reverse();
+        
         // Get DOM elements
         const currentEventsList = document.getElementById('current-events-list');
         const noCurrentMsg = document.getElementById('no-current-events-message');
@@ -1677,7 +1678,7 @@
         }
         
         // Handle old events toggle
-        toggleBtn.addEventListener('click', function() {
+        toggleBtn.onclick = function() {
             if (oldSection.style.display === 'none') {
                 oldSection.style.display = 'block';
                 toggleBtn.textContent = 'Hide Old Events';
@@ -1686,13 +1687,13 @@
                 oldSection.style.display = 'none';
                 toggleBtn.textContent = 'Show Old Events';
             }
-        });
+        };
         
         // Handle "See more" button
-        seeMoreBtn.addEventListener('click', function() {
+        seeMoreBtn.onclick = function() {
             oldEventsShown += 5;
             renderOldEvents();
-        });
+        };
         
         // Hide "Show Old Events" button if there are no old events
         if (oldEvents.length === 0) {

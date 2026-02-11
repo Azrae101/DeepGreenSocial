@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
 <style>
     /* Import main site styles - KEEPING THE ORIGINAL COLOR THEME */
     :root {
@@ -2206,26 +2207,7 @@ function endGame() {
     });
 
     // Save points to user account if logged in
-    const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-    if (currentUser) {
-        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-        const i = users.findIndex(u => u.username === currentUser.username);
-
-        if (i !== -1) {
-            users[i].gamePoints = (users[i].gamePoints || 0) + score;
-            
-            if (!users[i].pointsHistory) users[i].pointsHistory = [];
-            users[i].pointsHistory.push({
-                date: new Date().toISOString().split('T')[0],
-                description: 'Trash Sorting Game - Level ' + level,
-                points: score,
-                type: 'earned'
-            });
-
-            localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[i]));
-        }
-    }
+    saveGameResultsToFirestore(score, level);
 
     finalScoreEl.textContent = score;
     highScoreEndEl.textContent = highScore;
@@ -2324,6 +2306,53 @@ closeSettingsBtn.addEventListener('click', () => {
 
 musicToggle.addEventListener('change', toggleMusic);
 themeToggle.addEventListener('change', toggleTheme);
+
+// Save game results to Firestore
+async function saveGameResultsToFirestore(score, level) {
+    try {
+        // Check if user is logged in with Firebase Auth
+        const user = auth.currentUser;
+        if (!user) {
+            console.log('User not logged in, game score not saved to Firestore');
+            return;
+        }
+
+        const userRef = db.collection('users').doc(user.uid);
+        const userSnap = await userRef.get();
+
+        if (userSnap.exists) {
+            const userData = userSnap.data();
+            const currentGamePoints = userData.gamePoints || 0;
+            const pointsHistory = userData.pointsHistory || [];
+
+            // Add new points history entry
+            pointsHistory.push({
+                date: new Date().toISOString().split('T')[0],
+                description: 'Trash Sorting Game - Level ' + level,
+                points: score,
+                type: 'earned'
+            });
+
+            // Update Firestore
+            await userRef.update({
+                gamePoints: currentGamePoints + score,
+                pointsHistory: pointsHistory
+            });
+
+            console.log('Game score saved to Firestore successfully!');
+
+            // Also update localStorage for compatibility
+            const updatedUserData = {
+                ...userData,
+                gamePoints: currentGamePoints + score,
+                pointsHistory: pointsHistory
+            };
+            localStorage.setItem('sustainalearn_currentUser', JSON.stringify(updatedUserData));
+        }
+    } catch (error) {
+        console.error('Error saving game results to Firestore:', error);
+    }
+}
 
 // Close modals when clicking outside
 window.addEventListener('click', (e) => {

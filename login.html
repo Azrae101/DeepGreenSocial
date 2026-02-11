@@ -64,6 +64,13 @@
             align-items: center;
         }
 
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
         .logo h1 {
             color: var(--primary-green);
             font-size: 24px;
@@ -396,8 +403,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -524,9 +533,18 @@
             
             if (!userSnap.exists) {
                 // Create user document if it doesn't exist
+                // Parse displayName to get firstName and lastName
+                const fullName = user.displayName || "User";
+                const nameParts = fullName.split(' ');
+                const firstName = nameParts[0] || "User";
+                const lastName = nameParts.slice(1).join(' ') || "";
+                
                 await userRef.set({
                     email: user.email,
-                    name: user.displayName || "User",
+                    username: user.email.split('@')[0],
+                    firstName: firstName,
+                    lastName: lastName,
+                    name: fullName,
                     points: 0,
                     totalUploads: 0,
                     streak: 0,
@@ -543,6 +561,23 @@
                     trashCollected: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+            } else {
+                // Check if existing document is missing firstName
+                const userData = userSnap.data();
+                if (!userData.firstName) {
+                    console.log('Updating user document with firstName...');
+                    // Parse displayName to get firstName and lastName
+                    const fullName = user.displayName || userData.name || "User";
+                    const nameParts = fullName.split(' ');
+                    const firstName = nameParts[0] || "User";
+                    const lastName = nameParts.slice(1).join(' ') || "";
+                    
+                    await userRef.update({
+                        firstName: firstName,
+                        lastName: lastName,
+                        username: userData.username || user.email.split('@')[0]
+                    });
+                }
             }
             
             // Redirect after a short delay

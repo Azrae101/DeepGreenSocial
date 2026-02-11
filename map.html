@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         /* Global Styles - from home.html */
         :root {
@@ -62,6 +63,13 @@
         .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .logo h1 {
@@ -403,8 +411,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -510,25 +520,52 @@
     
     <script>
         
-        // Update auth buttons based on login status
-        function updateAuthButtons() {
+        // Update auth buttons based on Firebase auth state
+        auth.onAuthStateChanged(async (firebaseUser) => {
             const authButtons = document.getElementById('authButtons');
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
             
-            if (currentUser) {
-                // User is logged in
-                authButtons.innerHTML = `
-                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
-                    <a href="points.html" class="btn btn-login">My Points</a>
-                    <button class="btn btn-register" id="logoutBtn">Logout</button>
-                `;
-                
-                document.getElementById('logoutBtn').addEventListener('click', function() {
-                    localStorage.removeItem('sustainalearn_currentUser');
-                    window.location.reload();
-                });
+            if (firebaseUser) {
+                try {
+                    // Get user data from Firestore
+                    const userRef = db.collection('users').doc(firebaseUser.uid);
+                    const userSnap = await userRef.get();
+                    
+                    if (userSnap.exists) {
+                        const userData = userSnap.data();
+                        const currentUser = {
+                            uid: firebaseUser.uid,
+                            email: userData.email,
+                            username: userData.username || userData.email,
+                            firstName: userData.firstName || userData.name || 'User',
+                            ...userData
+                        };
+                        
+                        // Update localStorage for compatibility
+                        localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
+                        
+                        // User is logged in
+                        authButtons.innerHTML = `
+                            <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${currentUser.firstName}</span>
+                            <a href="points.html" class="btn btn-login">My Points</a>
+                            <button class="btn btn-register" id="logoutBtn">Logout</button>
+                        `;
+                        
+                        document.getElementById('logoutBtn').addEventListener('click', async function() {
+                            try {
+                                await auth.signOut();
+                                localStorage.removeItem('sustainalearn_currentUser');
+                                window.location.reload();
+                            } catch (error) {
+                                console.error('Logout error:', error);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                }
             } else {
                 // User is not logged in
+                localStorage.removeItem('sustainalearn_currentUser');
                 authButtons.innerHTML = `
                     <button class="btn btn-login" id="loginBtn">Login</button>
                     <button class="btn btn-register" id="registerBtn">Register</button>
@@ -542,10 +579,7 @@
                     window.location.href = 'register.html';
                 });
             }
-        }
-        
-        // Initialize auth buttons on page load
-        document.addEventListener('DOMContentLoaded', updateAuthButtons);
+        });
         
         // Sustainable locations data
         const sustainableLocations = [
@@ -963,7 +997,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
             initLocationCards();
-            updateAuthButtons(); // Also initialize auth buttons
+            // Firebase auth listener handles auth buttons automatically
         });
     </script>
 </body>

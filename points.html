@@ -68,6 +68,13 @@
             align-items: center;
         }
 
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
         .logo h1 {
             color: var(--primary-green);
             font-size: 24px;
@@ -993,8 +1000,10 @@
     <header>
         <div class="container header-container">
             <div class="logo">
-                <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
-                <h1>Social & Green</h1>
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -1356,6 +1365,21 @@
     </footer>
 
     <script>
+        // Toast notification function
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         let currentUserData = null;
         let currentUserId = null;
 
@@ -1417,7 +1441,7 @@
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
-                alert('Error loading your data. Please refresh the page.');
+                showToast('Error loading your data. Please refresh the page.', 'error', 5000);
             }
         });
         
@@ -1435,21 +1459,42 @@
                 window.location.href = 'index.html';
             });
         }
+        
+        // Helper function to generate streak calendar
+        function generateStreakCalendar(dailyCheckins) {
+            const container = document.querySelector('.streak-calendar');
+            if (!container) return;
             
-            // Update auth buttons
-            updateAuthButtons();
+            container.innerHTML = '';
             
-            // Load all dashboard data
-            loadDashboardData(user);
-            loadPointsBreakdown(user);
-            loadEventsList(user);
-            initCheckIn(user);
-            loadAchievements(user);
-            loadLeaderboard(allUsers, user);
-            loadPointsHistory(user);
-            calculateImpactStats(user);
-            initHistoryFilters();
-        });
+            const today = new Date();
+            const daysOfWeek = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            
+            // Show last 7 days
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayIndex = date.getDay();
+                
+                const hasCheckedIn = dailyCheckins.includes(dateStr);
+                const isToday = i === 0;
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = `streak-day ${hasCheckedIn ? 'active' : 'inactive'} ${isToday ? 'today' : ''}`;
+                dayElement.innerHTML = `
+                    <span class="day-label">${daysOfWeek[dayIndex]}</span>
+                    ${hasCheckedIn ? '✓' : ''}
+                `;
+                
+                container.appendChild(dayElement);
+            }
+        }
+        
+        // Helper function to calculate daily check-in points
+        function calculateDailyPoints(userData) {
+            return (userData.dailyCheckins?.length || 0) * 10;
+        }
         
         function initializeUserData(currentUser) {
             // Get fresh user data from localStorage
@@ -1733,26 +1778,50 @@
             
             if (hasCheckedInToday) {
                 checkinBtn.disabled = true;
-                checkinBtn.textContent = 'Already Checked In Today';
+                checkinBtn.textContent = 'Already Checked In Today ✓';
+                checkinBtn.classList.remove('pulse');
             }
             
             checkinBtn.addEventListener('click', async function() {
                 if (hasCheckedInToday) return;
                 
-                const userRef = db.collection('users').doc(currentUserId);
-                
-                await userRef.update({
-                    dailyCheckins: firebase.firestore.FieldValue.arrayUnion(today),
-                    points: firebase.firestore.FieldValue.increment(10),
-                    streak: firebase.firestore.FieldValue.increment(1)
-                });
-                
-                // Refresh data
-                const userSnap = await userRef.get();
-                currentUserData = userSnap.data();
-                loadDashboardFromFirebase();
-                
-                alert('✅ Check-in successful! +10 points added.');
+                try {
+                    checkinBtn.disabled = true;
+                    checkinBtn.textContent = 'Checking in...';
+                    
+                    const userRef = db.collection('users').doc(currentUserId);
+                    const now = new Date();
+                    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                    
+                    // Get current monthly points
+                    const currentMonthlyPoints = currentUserData.monthlyPoints?.[monthKey] || 0;
+                    
+                    // Update Firestore
+                    await userRef.update({
+                        dailyCheckins: firebase.firestore.FieldValue.arrayUnion(today),
+                        points: firebase.firestore.FieldValue.increment(10),
+                        [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + 10,
+                        streak: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // Refresh data
+                    const userSnap = await userRef.get();
+                    currentUserData = userSnap.data();
+                    
+                    // Reload dashboard to show updated data
+                    loadDashboardFromFirebase();
+                    
+                    checkinBtn.textContent = 'Already Checked In Today ✓';
+                    checkinBtn.classList.remove('pulse');
+                    
+                    // Show success message
+                    showToast('✅ Check-in successful! +10 points added to your total and monthly score.', 'success', 4000);
+                } catch (error) {
+                    console.error('Check-in error:', error);
+                    showToast('Error during check-in. Please try again.', 'error');
+                    checkinBtn.disabled = false;
+                    checkinBtn.textContent = 'Check In Today +10 pts';
+                }
             });
         }
         
@@ -2038,7 +2107,7 @@
         }
         
         function showFullLeaderboard() {
-            alert('Full leaderboard feature coming soon! For now, you can see the top 5 contributors above.');
+            showToast('Full leaderboard feature coming soon! For now, you can see the top 5 contributors above.', 'info', 4000);
             // In a real implementation, this would open a modal or navigate to a full leaderboard page
         }
 
