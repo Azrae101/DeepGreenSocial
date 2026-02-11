@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Impact Self-Assessment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --light-green: #d5f4e6;
+            --dark-green: #1e8449;
+            --neutral-blue: #3498db;
+            --warning-red: #e74c3c;
+            --light-red: #fadbd8;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --background-light: #f9f9f9;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+            background-image: linear-gradient(to bottom, rgba(213, 244, 230, 0.2), rgba(52, 152, 219, 0.1));
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: var(--light-green);
+            color: var(--dark-green);
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            cursor: pointer;
+        }
+        
+        .back-button:hover {
+            background-color: var(--primary-green);
+            color: white;
+            transform: translateX(-3px);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary-green), var(--neutral-blue));
+        }
+        
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 2.8rem;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary-green), var(--dark-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 25px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .leaf-icon {
+            color: var(--primary-green);
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .quiz-container {
+            background-color: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+        }
+        
+        .question-container {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .question-container.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .question-number {
+            display: inline-block;
+            background-color: var(--light-green);
+            color: var(--dark-green);
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--text-dark);
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .option {
+            padding: 18px 20px;
+            background-color: var(--background-light);
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+        
+        .option:hover {
+            background-color: #f0f9ff;
+            border-color: var(--neutral-blue);
+            transform: translateY(-3px);
+        }
+        
+        .option.selected {
+            background-color: var(--light-green);
+            border-color: var(--primary-green);
+            color: var(--dark-green);
+            font-weight: 600;
+        }
+        
+        .option-icon {
+            margin-right: 15px;
+            font-size: 1.3rem;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-prev {
+            background-color: #f1f1f1;
+            color: var(--text-dark);
+        }
+        
+        .btn-prev:hover:not(:disabled) {
+            background-color: #e0e0e0;
+        }
+        
+        .btn-next {
+            background-color: var(--primary-green);
+            color: white;
+        }
+        
+        .btn-next:hover:not(:disabled) {
+            background-color: var(--dark-green);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .progress-container {
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary-green), var(--dark-green));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-top: 10px;
+        }
+        
+        .result-container {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+        
+        .result-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .result-score {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 20px 0;
+            display: inline-block;
+            padding: 10px 30px;
+            border-radius: 50px;
+        }
+        
+        .positive-score {
+            color: var(--dark-green);
+            background-color: var(--light-green);
+        }
+        
+        .negative-score {
+            color: var(--warning-red);
+            background-color: var(--light-red);
+        }
+        
+        .result-description {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            color: var(--text-dark);
+            line-height: 1.8;
+        }
+        
+        .tips-container {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: left;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .tips-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+        }
+        
+        .tips-title i {
+            margin-right: 10px;
+            color: var(--primary-green);
+        }
+        
+        .tips-list {
+            list-style-type: none;
+        }
+        
+        .tips-list li {
+            padding: 12px 0;
+            border-bottom: 1px dashed #ddd;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .tips-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .tip-icon {
+            color: var(--primary-green);
+            margin-right: 15px;
+            margin-top: 3px;
+            font-size: 1.2rem;
+        }
+        
+        .btn-restart {
+            background-color: var(--neutral-blue);
+            color: white;
+            margin: 30px auto 0;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-restart:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .encouragement {
+            font-style: italic;
+            margin-top: 10px;
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .back-button {
+                position: static;
+                display: inline-flex;
+                margin-bottom: 15px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .quiz-container {
+                padding: 20px;
+            }
+            
+            .question-text {
+                font-size: 1.2rem;
+            }
+            
+            .option {
+                padding: 15px;
+            }
+            
+            .result-title {
+                font-size: 2rem;
+            }
+            
+            .result-score {
+                font-size: 3rem;
+            }
+            
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="game-overview.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Games
+            </a>
+            <div class="leaf-icon">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <h1>Climate Impact Self-Assessment</h1>
+            <p class="subtitle">Discover how your daily choices affect the planet and get personalized tips to reduce your carbon footprint. Every positive change counts!</p>
+        </header>
+        
+        <div class="quiz-container">
+            <!-- Question 1 -->
+            <div class="question-container active" data-question="1">
+                <div class="question-number">Question 1 of 7</div>
+                <h2 class="question-text">How do you usually commute to work or school?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="2.3">
+                        <div class="option-icon"><i class="fas fa-car"></i></div>
+                        <div class="option-text">Drive alone in a car</div>
+                    </div>
+                    <div class="option" data-score="-1" data-co2="1.2">
+                        <div class="option-icon"><i class="fas fa-car-side"></i></div>
+                        <div class="option-text">Carpool or use a rideshare</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="0.4">
+                        <div class="option-icon"><i class="fas fa-bus"></i></div>
+                        <div class="option-text">Use public transportation</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.0">
+                        <div class="option-icon"><i class="fas fa-bicycle"></i></div>
+                        <div class="option-text">Walk, bike, or use an electric scooter</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 2 -->
+            <div class="question-container" data-question="2">
+                <div class="question-number">Question 2 of 7</div>
+                <h2 class="question-text">What's your typical diet like?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="3.3">
+                        <div class="option-icon"><i class="fas fa-drumstick-bite"></i></div>
+                        <div class="option-text">Heavy on meat, especially red meat</div>
+                    </div>
+                    <div class="option" data-score="-1" data-co2="2.0">
+                        <div class="option-icon"><i class="fas fa-hamburger"></i></div>
+                        <div class="option-text">Moderate meat consumption</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="1.0">
+                        <div class="option-icon"><i class="fas fa-seedling"></i></div>
+                        <div class="option-text">Mostly plant-based with occasional meat</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.6">
+                        <div class="option-icon"><i class="fas fa-leaf"></i></div>
+                        <div class="option-text">Vegetarian or vegan</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 3 -->
+            <div class="question-container" data-question="3">
+                <div class="question-number">Question 3 of 7</div>
+                <h2 class="question-text">How do you handle waste at home?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="0.8">
+                        <div class="option-icon"><i class="fas fa-trash"></i></div>
+                        <div class="option-text">Everything goes in the residual waste bin</div>
+                    </div>
+                    <div class="option" data-score="0" data-co2="0.5">
+                        <div class="option-icon"><i class="fas fa-recycle"></i></div>
+                        <div class="option-text">Sort my trash into different trashcans</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="0.2">
+                        <div class="option-icon"><i class="fas fa-recycle"></i></div>
+                        <div class="option-text">Regularly recycle and compost food waste</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.1">
+                        <div class="option-icon"><i class="fas fa-ban"></i></div>
+                        <div class="option-text">Minimal waste lifestyle (refuse, reduce, reuse)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 4 -->
+            <div class="question-container" data-question="4">
+                <div class="question-number">Question 4 of 7</div>
+                <h2 class="question-text">What's your approach to energy consumption at home?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="1.8">
+                        <div class="option-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="option-text">Rarely think about it, leave appliances on standby</div>
+                    </div>
+                    <div class="option" data-score="0" data-co2="1.2">
+                        <div class="option-icon"><i class="fas fa-lightbulb"></i></div>
+                        <div class="option-text">Turn off lights when not in use</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="0.7">
+                        <div class="option-icon"><i class="fas fa-solar-panel"></i></div>
+                        <div class="option-text">Use energy-efficient appliances and LED bulbs</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.2">
+                        <div class="option-icon"><i class="fas fa-sun"></i></div>
+                        <div class="option-text">Use renewable energy or actively minimize consumption</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 5 -->
+            <div class="question-container" data-question="5">
+                <div class="question-number">Question 5 of 7</div>
+                <h2 class="question-text">How do you approach shopping and consumption?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="1.5">
+                        <div class="option-icon"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="option-text">Frequent shopping, rarely considering sustainability</div>
+                    </div>
+                    <div class="option" data-score="0" data-co2="0.9">
+                        <div class="option-icon"><i class="fas fa-tags"></i></div>
+                        <div class="option-text">Occasionally buy sustainable products</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="0.5">
+                        <div class="option-icon"><i class="fas fa-leaf"></i></div>
+                        <div class="option-text">Prefer eco-friendly and durable products</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.2">
+                        <div class="option-icon"><i class="fas fa-heart"></i></div>
+                        <div class="option-text">Mindful consumer, buy second-hand, repair items</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 6 -->
+            <div class="question-container" data-question="6">
+                <div class="question-number">Question 6 of 7</div>
+                <h2 class="question-text">How often do you fly or take long-distance trips?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-2" data-co2="4.5">
+                        <div class="option-icon"><i class="fas fa-plane"></i></div>
+                        <div class="option-text">Fly several times a year (4+ flights)</div>
+                    </div>
+                    <div class="option" data-score="-1" data-co2="2.5">
+                        <div class="option-icon"><i class="fas fa-plane-departure"></i></div>
+                        <div class="option-text">Fly 1-3 times per year</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="0.8">
+                        <div class="option-icon"><i class="fas fa-train"></i></div>
+                        <div class="option-text">Prefer trains or buses for long-distance travel</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="0.3">
+                        <div class="option-icon"><i class="fas fa-home"></i></div>
+                        <div class="option-text">Rarely travel long distances, stay local</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question 7 -->
+            <div class="question-container" data-question="7">
+                <div class="question-number">Question 7 of 7</div>
+                <h2 class="question-text">How involved are you in sustainability activities and community action?</h2>
+                <div class="options-container">
+                    <div class="option" data-score="-1" data-co2="0.0">
+                        <div class="option-icon"><i class="fas fa-couch"></i></div>
+                        <div class="option-text">Not involved, focus on my own lifestyle</div>
+                    </div>
+                    <div class="option" data-score="1" data-co2="-0.5">
+                        <div class="option-icon"><i class="fas fa-user-friends"></i></div>
+                        <div class="option-text">Occasionally participate in local clean-ups or events</div>
+                    </div>
+                    <div class="option" data-score="2" data-co2="-1.0">
+                        <div class="option-icon"><i class="fas fa-hands-helping"></i></div>
+                        <div class="option-text">Regularly volunteer and advocate for sustainability</div>
+                    </div>
+                    <div class="option" data-score="3" data-co2="-1.5">
+                        <div class="option-icon"><i class="fas fa-users"></i></div>
+                        <div class="option-text">Lead initiatives, organize events, and inspire others</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Result Container -->
+            <div class="result-container">
+                <div class="result-icon">
+                    <i class="fas fa-globe-americas"></i>
+                </div>
+                <h2 class="result-title">Your Climate Impact Assessment</h2>
+                <div style="margin: 30px 0;">
+                    <div style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 10px;">Daily CO₂ Emissions</div>
+                    <div class="result-score positive-score" id="co2Score">10.5 kg</div>
+                    <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 10px;">Global average: ~12 kg/day | Sustainable target: ~6 kg/day</div>
+                </div>
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 10px;">Impact Score</div>
+                    <div style="font-size: 2.5rem; font-weight: 700;" id="finalScore">+5</div>
+                </div>
+                <p class="result-description" id="resultDescription">
+                    Based on your answers, you're making conscious efforts to reduce your environmental impact. Keep up the good work!
+                </p>
+                
+                <div class="tips-container">
+                    <h3 class="tips-title"><i class="fas fa-arrow-down"></i> Reduce</h3>
+                    <ul class="tips-list" id="reduceTipsList">
+                        <li><span class="tip-icon"><i class="fas fa-minus-circle"></i></span> Consider using public transportation or carpooling at least once a week</li>
+                        <li><span class="tip-icon"><i class="fas fa-minus-circle"></i></span> Try incorporating one meat-free day per week into your diet</li>
+                        <li><span class="tip-icon"><i class="fas fa-minus-circle"></i></span> Set up a simple recycling system at home if you don't have one already</li>
+                    </ul>
+                </div>
+                
+                <div class="tips-container" style="margin-top: 20px;">
+                    <h3 class="tips-title"><i class="fas fa-arrow-up"></i> Do More Of</h3>
+                    <ul class="tips-list" id="doMoreTipsList">
+                        <li><span class="tip-icon"><i class="fas fa-plus-circle"></i></span> Replace traditional light bulbs with LED alternatives</li>
+                        <li><span class="tip-icon"><i class="fas fa-plus-circle"></i></span> Before buying new, consider if you can repair or buy second-hand</li>
+                    </ul>
+                </div>
+                
+                <button class="btn-restart" id="restartBtn">
+                    <i class="fas fa-redo"></i> Take the Quiz Again
+                </button>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">0% Complete</div>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="navigation-buttons">
+                <button class="btn-prev" id="prevBtn" disabled>
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn-next" id="nextBtn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button class="btn-next" id="submitBtn" style="display: none;">
+                    See Results <i class="fas fa-chart-bar"></i>
+                </button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>This assessment is for educational purposes. Every small change contributes to a healthier planet!</p>
+            <p class="encouragement">Remember: Progress, not perfection, is what matters for our planet.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const questionContainers = document.querySelectorAll('.question-container');
+            const options = document.querySelectorAll('.option');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const resultContainer = document.querySelector('.result-container');
+            const finalScore = document.getElementById('finalScore');
+            const resultDescription = document.getElementById('resultDescription');
+            
+            // Quiz State
+            let currentQuestion = 0;
+            let scores = [0, 0, 0, 0, 0, 0, 0]; // Store score for each question
+            let co2Values = [0, 0, 0, 0, 0, 0, 0]; // Store CO2 values for each question
+            const totalQuestions = questionContainers.length;
+            
+            // Initialize
+            updateProgress();
+            
+            // Option Selection
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from all options in this question
+                    const questionNum = parseInt(this.closest('.question-container').dataset.question);
+                    const questionOptions = this.closest('.question-container').querySelectorAll('.option');
+                    questionOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Store the score and CO2 value for this question
+                    scores[questionNum - 1] = parseInt(this.dataset.score);
+                    co2Values[questionNum - 1] = parseFloat(this.dataset.co2);
+                    
+                    // Enable next button
+                    if (currentQuestion < totalQuestions - 1) {
+                        nextBtn.disabled = false;
+                    } else {
+                        submitBtn.disabled = false;
+                    }
+                });
+            });
+            
+            // Navigation
+            prevBtn.addEventListener('click', function() {
+                if (currentQuestion > 0) {
+                    changeQuestion(currentQuestion - 1);
+                }
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                if (currentQuestion < totalQuestions - 1) {
+                    changeQuestion(currentQuestion + 1);
+                }
+            });
+            
+            submitBtn.addEventListener('click', showResults);
+            restartBtn.addEventListener('click', restartQuiz);
+            
+            // Function to change question
+            function changeQuestion(newIndex) {
+                // Hide current question
+                questionContainers[currentQuestion].classList.remove('active');
+                
+                // Show new question
+                questionContainers[newIndex].classList.add('active');
+                
+                // Update current question index
+                currentQuestion = newIndex;
+                
+                // Update button states
+                prevBtn.disabled = currentQuestion === 0;
+                
+                // Show/hide next and submit buttons
+                if (currentQuestion === totalQuestions - 1) {
+                    nextBtn.style.display = 'none';
+                    submitBtn.style.display = 'flex';
+                    // Check if answer is selected for this question
+                    const selectedOption = questionContainers[currentQuestion].querySelector('.option.selected');
+                    submitBtn.disabled = !selectedOption;
+                } else {
+                    nextBtn.style.display = 'flex';
+                    submitBtn.style.display = 'none';
+                    // Check if answer is selected for this question
+                    const selectedOption = questionContainers[currentQuestion].querySelector('.option.selected');
+                    nextBtn.disabled = !selectedOption;
+                }
+                
+                // Update progress
+                updateProgress();
+            }
+            
+            // Update progress bar
+            function updateProgress() {
+                const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}% Complete`;
+            }
+            
+            // Calculate and show results
+            function showResults() {
+                // Calculate total score and CO2
+                const totalScore = scores.reduce((sum, score) => sum + score, 0);
+                const totalCO2 = co2Values.reduce((sum, co2) => sum + co2, 0);
+                
+                // Hide quiz, show results
+                document.querySelector('.quiz-container > .question-container.active').classList.remove('active');
+                document.querySelector('.progress-container').style.display = 'none';
+                document.querySelector('.navigation-buttons').style.display = 'none';
+                resultContainer.style.display = 'block';
+                
+                // Set CO2 score
+                const co2Score = document.getElementById('co2Score');
+                co2Score.textContent = `${totalCO2.toFixed(1)} kg/day`;
+                
+                // Color code CO2 score
+                if (totalCO2 <= 6) {
+                    co2Score.className = 'result-score positive-score';
+                } else if (totalCO2 <= 10) {
+                    co2Score.className = 'result-score';
+                    co2Score.style.backgroundColor = '#fff3cd';
+                    co2Score.style.color = '#856404';
+                } else {
+                    co2Score.className = 'result-score negative-score';
+                }
+                
+                // Set score and description
+                finalScore.textContent = totalScore >= 0 ? `+${totalScore}` : `${totalScore}`;
+                
+                // Update result based on score
+                let description = '';
+                
+                // Combine CO2 and score for overall assessment
+                if (totalCO2 <= 6 && totalScore >= 8) {
+                    description = `Excellent! Your estimated daily CO₂ emissions of ${totalCO2.toFixed(1)} kg are within sustainable limits, and your community engagement is making a positive difference. You're a sustainability champion!`;
+                } else if (totalCO2 <= 6) {
+                    description = `Great job! Your estimated daily CO₂ emissions of ${totalCO2.toFixed(1)} kg are within sustainable limits. Consider increasing your community involvement to multiply your impact!`;
+                } else if (totalCO2 <= 10 && totalScore >= 5) {
+                    description = `You're doing well! Your daily CO₂ emissions of ${totalCO2.toFixed(1)} kg are close to sustainable levels. A few more adjustments and you'll reach the target of 6 kg/day.`;
+                } else if (totalCO2 <= 10) {
+                    description = `You're on the right track! Your daily CO₂ emissions of ${totalCO2.toFixed(1)} kg are approaching sustainable levels, but there's room for improvement. Check out the tips below!`;
+                } else if (totalScore >= 0) {
+                    description = `Your daily CO₂ emissions of ${totalCO2.toFixed(1)} kg are above the sustainable target of 6 kg/day. Don't worry - every journey begins with awareness! The tips below will help you reduce your impact.`;
+                } else {
+                    description = `There's significant opportunity to reduce your environmental impact. Your current daily emissions of ${totalCO2.toFixed(1)} kg are well above sustainable levels. Start with small changes - they add up quickly!`;
+                }
+                
+                resultDescription.textContent = description;
+                
+                // Update tips based on areas for improvement
+                const reduceTipsByCategory = {
+                    transport: "Reduce car usage - consider public transportation, carpooling, or cycling",
+                    diet: "Reduce meat consumption - try one or more meat-free days per week",
+                    waste: "Reduce waste sent to landfills - set up recycling and composting",
+                    energy: "Reduce standby power consumption - unplug devices when not in use",
+                    shopping: "Reduce unnecessary purchases - buy only what you truly need",
+                    travel: "Reduce air travel - choose trains or buses when possible",
+                    community: "Reduce your impact by inspiring others - share your journey"
+                };
+                
+                const doMoreTipsByCategory = {
+                    transport: "Walk, bike or use electric transport more often",
+                    diet: "Eat more local, seasonal, and plant-based foods",
+                    waste: "Repair, reuse, and upcycle items instead of discarding them",
+                    energy: "Use more energy-efficient appliances and LED bulbs",
+                    shopping: "Buy more second-hand and support sustainable brands",
+                    travel: "Explore more local destinations and staycations",
+                    community: "Participate more in local sustainability initiatives and volunteer work"
+                };
+                
+                const generalReduceTips = [
+                    "Reduce food waste by planning meals and storing food properly",
+                    "Reduce single-use plastics - bring reusable bags, bottles, and containers",
+                    "Reduce water consumption - take shorter showers and fix leaks"
+                ];
+                
+                const generalDoMoreTips = [
+                    "Support more local farmers and producers to reduce transportation emissions",
+                    "Invest in renewable energy or green energy plans if possible",
+                    "Engage more with your community on sustainability topics"
+                ];
+                
+                // Clear existing tips
+                const reduceTipsList = document.getElementById('reduceTipsList');
+                const doMoreTipsList = document.getElementById('doMoreTipsList');
+                reduceTipsList.innerHTML = '';
+                doMoreTipsList.innerHTML = '';
+                
+                // Add tips based on high CO2 areas
+                const categories = ['transport', 'diet', 'waste', 'energy', 'shopping', 'travel', 'community'];
+                let reduceTipsAdded = 0;
+                let doMoreTipsAdded = 0;
+                
+                for (let i = 0; i < co2Values.length && (reduceTipsAdded < 3 || doMoreTipsAdded < 3); i++) {
+                    if ((i < 6 && co2Values[i] > 1.0) || (i === 6 && co2Values[i] >= 0)) {
+                        if (reduceTipsAdded < 3) {
+                            const tip = reduceTipsByCategory[categories[i]];
+                            const li = document.createElement('li');
+                            li.innerHTML = `<span class="tip-icon"><i class="fas fa-minus-circle"></i></span> ${tip}`;
+                            reduceTipsList.appendChild(li);
+                            reduceTipsAdded++;
+                        }
+                        if (doMoreTipsAdded < 3) {
+                            const tip = doMoreTipsByCategory[categories[i]];
+                            const li = document.createElement('li');
+                            li.innerHTML = `<span class="tip-icon"><i class="fas fa-plus-circle"></i></span> ${tip}`;
+                            doMoreTipsList.appendChild(li);
+                            doMoreTipsAdded++;
+                        }
+                    }
+                }
+                
+                // Add general tips to fill up to 3 tips each
+                for (let i = 0; reduceTipsAdded < 3 && i < generalReduceTips.length; i++) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="tip-icon"><i class="fas fa-minus-circle"></i></span> ${generalReduceTips[i]}`;
+                    reduceTipsList.appendChild(li);
+                    reduceTipsAdded++;
+                }
+                
+                for (let i = 0; doMoreTipsAdded < 3 && i < generalDoMoreTips.length; i++) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="tip-icon"><i class="fas fa-plus-circle"></i></span> ${generalDoMoreTips[i]}`;
+                    doMoreTipsList.appendChild(li);
+                    doMoreTipsAdded++;
+                }
+            }
+            
+            // Restart the quiz
+            function restartQuiz() {
+                // Reset state
+                currentQuestion = 0;
+                scores = [0, 0, 0, 0, 0, 0, 0];
+                co2Values = [0, 0, 0, 0, 0, 0, 0];
+                
+                // Reset UI
+                options.forEach(option => option.classList.remove('selected'));
+                questionContainers.forEach(container => container.classList.remove('active'));
+                questionContainers[0].classList.add('active');
+                
+                document.querySelector('.progress-container').style.display = 'block';
+                document.querySelector('.navigation-buttons').style.display = 'flex';
+                resultContainer.style.display = 'none';
+                
+                // Reset buttons
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                nextBtn.style.display = 'flex';
+                submitBtn.style.display = 'none';
+                
+                // Update progress
+                updateProgress();
+            }
+            
+            // Initialize first question options
+            const firstQuestionOptions = questionContainers[0].querySelectorAll('.option');
+            firstQuestionOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    nextBtn.disabled = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
