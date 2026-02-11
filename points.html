@@ -993,6 +993,40 @@
                 padding: 20px;
             }
         }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-gray);
+            color: var(--white);
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            transition: bottom 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+
+        .toast.success {
+            background-color: var(--primary-green);
+        }
+
+        .toast.error {
+            background-color: #e53935;
+        }
+
+        .toast.info {
+            background-color: #2196F3;
+        }
     </style>
 </head>
 <body>
@@ -1429,6 +1463,14 @@
                     currentUserData = newSnap.data();
                 } else {
                     currentUserData = userSnap.data();
+                    
+                    // Ensure trashCollected field exists for existing users
+                    if (!currentUserData.trashCollected) {
+                        await userRef.update({
+                            trashCollected: []
+                        });
+                        currentUserData.trashCollected = [];
+                    }
                 }
                 
                 console.log('User data loaded:', currentUserData);
@@ -1437,7 +1479,7 @@
                 loadDashboardFromFirebase();
                 updateAuthButtons(user);
                 initCheckInFirebase();
-                initTrashCompetition(user);
+                initTrashCompetition();
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -2112,7 +2154,7 @@
         }
 
         // Trash competition!!! ---------------------
-        function initTrashCompetition(user) {
+        function initTrashCompetition() {
             const submitBtn = document.getElementById('submitTrashBtn');
             const trashInput = document.getElementById('trashUpload');
             const trashStatus = document.getElementById('trashStatus');
@@ -2133,8 +2175,7 @@
             });
 
             submitBtn.addEventListener('click', async function() {
-                const currentUser = window.auth.currentUser;
-                if (!currentUser) {
+                if (!currentUserId) {
                     trashStatus.textContent = '⚠️ Please log in first!';
                     trashStatus.className = 'trash-status error';
                     return;
@@ -2147,32 +2188,65 @@
                 }
 
                 const file = trashInput.files[0];
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    trashStatus.textContent = '⚠️ Please select an image file!';
+                    trashStatus.className = 'trash-status error';
+                    return;
+                }
+
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Uploading...';
+                trashStatus.style.display = 'none';
 
                 try {
-                    // 1️⃣ Upload to Firebase Storage
-                    const storageRef = ref(window.storage, `trashUploads/${currentUser.uid}/${Date.now()}_${file.name}`);
-                    await uploadBytes(storageRef, file);
-                    const imageUrl = await getDownloadURL(storageRef);
+                    // 1️⃣ Upload to Firebase Storage using compat API
+                    const timestamp = Date.now();
+                    const fileName = `${timestamp}_${file.name}`;
+                    const storageRef = storage.ref(`trashUploads/${currentUserId}/${fileName}`);
+                    
+                    const uploadTask = await storageRef.put(file);
+                    const imageUrl = await storageRef.getDownloadURL();
 
-                    // 2️⃣ Save submission record
-                    await addDoc(collection(window.db, "uploads"), {
-                        userId: currentUser.uid,
-                        imageUrl: imageUrl,
-                        status: "pending",
-                        timestamp: serverTimestamp()
+                    // 2️⃣ Add to user's trashCollected array in Firestore
+                    const userRef = db.collection('users').doc(currentUserId);
+                    await userRef.update({
+                        trashCollected: firebase.firestore.FieldValue.arrayUnion({
+                            imageUrl: imageUrl,
+                            date: new Date().toISOString(),
+                            timestamp: timestamp
+                        })
                     });
 
-                    trashStatus.textContent = '✅ Uploaded! Awaiting approval.';
+                    // 3️⃣ Update local user data
+                    if (!currentUserData.trashCollected) {
+                        currentUserData.trashCollected = [];
+                    }
+                    currentUserData.trashCollected.push({
+                        imageUrl: imageUrl,
+                        date: new Date().toISOString(),
+                        timestamp: timestamp
+                    });
+
+                    // 4️⃣ Update points breakdown display
+                    loadPointsBreakdownFirebase();
+                    
+                    // 5️⃣ Update trash stats
+                    await updateTrashStatsFirebase();
+
+                    trashStatus.textContent = '✅ Successfully uploaded! Your contribution has been recorded.';
                     trashStatus.className = 'trash-status success';
                     
                     // Reset form
                     trashInput.value = '';
                     selectedFile.style.display = 'none';
                     fileLabel.textContent = 'Choose a photo or drag & drop';
+                    
+                    showToast('🎉 Trash collection photo uploaded successfully!', 'success', 4000);
                 } catch (err) {
-                    trashStatus.textContent = 'Error: ' + err.message;
+                    console.error('Upload error:', err);
+                    trashStatus.textContent = '❌ Error: ' + err.message;
                     trashStatus.className = 'trash-status error';
                 }
 
@@ -2181,91 +2255,111 @@
             });
 
             // Load initial trash stats
-            updateTrashStats(user);
+            updateTrashStatsFirebase();
         }
 
-        function updateTrashStats(user) {
-            const allUsers = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+        async function updateTrashStatsFirebase() {
+            if (!currentUserData) return;
+            
             const now = new Date();
             
             // Total submissions
-            const totalSubmissions = (user.trashCollected || []).length;
+            const totalSubmissions = (currentUserData.trashCollected || []).length;
             document.getElementById('trashPoints').textContent = totalSubmissions;
             
             // This month's submissions
-            const thisMonth = (user.trashCollected || []).filter(t => {
+            const thisMonth = (currentUserData.trashCollected || []).filter(t => {
                 const tDate = new Date(t.date);
                 return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
             }).length;
             document.getElementById('trashThisMonth').textContent = thisMonth;
             
-            // Calculate rank
-            const userCounts = allUsers.map(u => {
-                const trashThisMonth = (u.trashCollected || []).filter(t => {
-                    const tDate = new Date(t.date);
-                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+            // Calculate rank by fetching all users
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const userCounts = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const trashThisMonth = (userData.trashCollected || []).filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                    });
+                    userCounts.push({ 
+                        uid: doc.id, 
+                        count: trashThisMonth.length 
+                    });
                 });
-                return { username: u.username, count: trashThisMonth.length };
-            });
-            
-            userCounts.sort((a, b) => b.count - a.count);
-            const rank = userCounts.findIndex(u => u.username === user.username) + 1;
-            
-            if (rank > 0 && thisMonth > 0) {
-                document.getElementById('trashRank').textContent = `#${rank}`;
-            } else {
+                
+                // Sort descending
+                userCounts.sort((a, b) => b.count - a.count);
+                const rank = userCounts.findIndex(u => u.uid === currentUserId) + 1;
+                
+                if (rank > 0 && thisMonth > 0) {
+                    document.getElementById('trashRank').textContent = `#${rank}`;
+                } else {
+                    document.getElementById('trashRank').textContent = '-';
+                }
+            } catch (error) {
+                console.error('Error calculating rank:', error);
                 document.getElementById('trashRank').textContent = '-';
             }
         }
 
-        // Call this when DOM content is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
-            if (currentUser) {
-                initTrashCompetition(currentUser);
-            }
-        });
+        async function awardTrashCompetitionPoints() {
+            try {
+                const now = new Date();
+                const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
 
-        function awardTrashCompetitionPoints() {
-            const allUsers = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-            const now = new Date();
-            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
-
-            // Count submissions per user this month
-            const userCounts = allUsers.map(u => {
-                const trashThisMonth = (u.trashCollected || []).filter(t => {
-                    const tDate = new Date(t.date);
-                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                // Get all users from Firestore
+                const usersSnapshot = await db.collection('users').get();
+                const userCounts = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const trashThisMonth = (userData.trashCollected || []).filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                    });
+                    
+                    if (trashThisMonth.length > 0) {
+                        userCounts.push({ 
+                            uid: doc.id, 
+                            data: userData,
+                            count: trashThisMonth.length 
+                        });
+                    }
                 });
-                return { username: u.username, count: trashThisMonth.length };
-            });
 
-            // Sort descending
-            userCounts.sort((a, b) => b.count - a.count);
+                // Sort descending
+                userCounts.sort((a, b) => b.count - a.count);
 
-            // Award points to top 3
-            const pointsForPlaces = [500, 250, 100];
+                // Award points to top 3
+                const pointsForPlaces = [500, 250, 100];
 
-            for (let i = 0; i < 3; i++) {
-                if (userCounts[i] && userCounts[i].count > 0) {
-                    const userIndex = allUsers.findIndex(u => u.username === userCounts[i].username);
-                    if (userIndex !== -1) {
-                        allUsers[userIndex].points = (allUsers[userIndex].points || 0) + pointsForPlaces[i];
-
-                        // Add points history
-                        if (!allUsers[userIndex].pointsHistory) allUsers[userIndex].pointsHistory = [];
-                        allUsers[userIndex].pointsHistory.push({
+                for (let i = 0; i < 3 && i < userCounts.length; i++) {
+                    const user = userCounts[i];
+                    const userRef = db.collection('users').doc(user.uid);
+                    
+                    // Add bonus points
+                    await userRef.update({
+                        points: firebase.firestore.FieldValue.increment(pointsForPlaces[i]),
+                        pointsHistory: firebase.firestore.FieldValue.arrayUnion({
                             date: now.toISOString().split('T')[0],
                             description: `Trash Challenge - Place #${i + 1}`,
                             points: pointsForPlaces[i],
                             type: 'bonus'
-                        });
-                    }
+                        })
+                    });
+                    
+                    console.log(`Awarded ${pointsForPlaces[i]} points to place #${i + 1}`);
                 }
+                
+                return { success: true, winnersCount: Math.min(3, userCounts.length) };
+            } catch (error) {
+                console.error('Error awarding trash competition points:', error);
+                return { success: false, error: error.message };
             }
-
-            // Save
-            localStorage.setItem('sustainalearn_users', JSON.stringify(allUsers));
         }
 
 

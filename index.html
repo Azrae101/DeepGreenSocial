@@ -154,6 +154,12 @@
         .auth-buttons {
             display: flex;
             gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auth-buttons.loaded {
+            opacity: 1;
         }
 
         .btn {
@@ -1411,9 +1417,31 @@
     // Firebase is initialized via firebase-config.js
     // auth and db are available globally
 
+    // Immediately check localStorage for faster initial display
+    (function() {
+        const authButtons = document.getElementById('authButtons');
+        const cachedUser = localStorage.getItem('sustainalearn_currentUser');
+        
+        if (cachedUser) {
+            try {
+                const userData = JSON.parse(cachedUser);
+                const firstName = userData?.firstName || 'User';
+                authButtons.innerHTML = `
+                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${firstName}</span>
+                    <a href="points.html" class="btn btn-login">My Points</a>
+                    <button class="btn btn-register" id="logoutBtn">Sign Out</button>
+                `;
+            } catch (e) {
+                // Invalid cached data, will be fixed by Firebase
+            }
+        }
+        authButtons.classList.add('loaded');
+    })();
+
     // Update auth buttons based on Firebase auth status
     function updateAuthButtons(user) {
         const authButtons = document.getElementById('authButtons');
+        authButtons.classList.add('loaded');
         
         if (user) {
             // User is logged in - get user data from Firestore

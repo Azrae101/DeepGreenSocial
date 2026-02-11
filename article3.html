@@ -694,12 +694,32 @@
         // Global variable for current user
         let currentUser = null;
 
+        // Immediately check localStorage for faster initial display
+        (function() {
+            const authButtons = document.getElementById('authButtons');
+            const cachedUser = localStorage.getItem('sustainalearn_currentUser');
+            
+            if (cachedUser) {
+                try {
+                    const userData = JSON.parse(cachedUser);
+                    const firstName = userData?.firstName || 'User';
+                    authButtons.innerHTML = `
+                        <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${firstName}</span>
+                        <a href="points.html" class="btn btn-login">My Points</a>
+                        <button class="btn btn-register" id="logoutBtn">Logout</button>
+                    `;
+                } catch (e) {
+                    // Invalid cached data, will be fixed by Firebase
+                }
+            }
+        })();
+
         // Firebase Auth listener - ensures user is logged in
         auth.onAuthStateChanged(async (firebaseUser) => {
             const authButtons = document.getElementById('authButtons');
             
             if (!firebaseUser) {
-                // Not logged in
+                // Not logged in - allow reading but not earning points
                 localStorage.removeItem('sustainalearn_currentUser');
                 authButtons.innerHTML = `
                     <button class="btn btn-login" id="loginBtn">Login</button>
@@ -714,8 +734,11 @@
                     window.location.href = 'register.html';
                 });
                 
-                showToast('Please log in to read articles and earn points', 'info', 2000);
-                setTimeout(() => window.location.href = 'login.html', 2000);
+                // Show message that login is needed for points
+                showToast('Login to earn points for reading articles!', 'info', 3000);
+                
+                // Disable point-earning features
+                disablePointFeatures();
                 return;
             }
             
@@ -763,6 +786,28 @@
                 showToast('Error loading your profile. Please try again.', 'error', 4000);
             }
         });
+
+        // Disable point-earning features for non-logged-in users
+        function disablePointFeatures() {
+            const readBtn = document.getElementById('readBtn');
+            const quizBtn = document.getElementById('quizBtn');
+            
+            if (readBtn) {
+                readBtn.textContent = 'Login to Earn Points';
+                readBtn.onclick = function() {
+                    showToast('Please login to earn points', 'info');
+                    window.location.href = 'login.html';
+                };
+            }
+            
+            if (quizBtn) {
+                quizBtn.textContent = 'Login to Take Quiz';
+                quizBtn.onclick = function() {
+                    showToast('Please login to take the quiz and earn points', 'info');
+                    window.location.href = 'login.html';
+                };
+            }
+        }
 
         // Article reading and quiz functionality
         async function initializeArticle() {

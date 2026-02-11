@@ -197,6 +197,52 @@
         line-height: 1.8;
     }
 
+    /* Login Warning Banner */
+    .login-warning {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    }
+
+    .login-warning .icon {
+        font-size: 2rem;
+    }
+
+    .login-warning .message {
+        flex: 1;
+    }
+
+    .login-warning .message h3 {
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+    }
+
+    .login-warning .message p {
+        margin: 0;
+        opacity: 0.95;
+    }
+
+    .login-warning .login-btn {
+        background: white;
+        color: var(--accent-color);
+        padding: 10px 25px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .login-warning .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
     /* Games Grid */
     .games-grid {
         display: grid;
@@ -578,6 +624,16 @@
     <!-- Games Overview Section -->
     <section class="games-section">
         <div class="container">
+            <!-- Login Warning Banner -->
+            <div class="login-warning" id="loginWarning" style="display: none;">
+                <div class="icon">⚠️</div>
+                <div class="message">
+                    <h3>Not Logged In</h3>
+                    <p>You can play games, but you won't earn points. Log in to track your progress and compete on the leaderboard!</p>
+                </div>
+                <a href="login.html" class="login-btn">Login Now</a>
+            </div>
+
             <div class="section-title">
                 <h2>Educational Games for Sustainability</h2>
                 <p>Play, learn, and contribute to a greener planet! Our interactive games are designed to make sustainability education fun and engaging for everyone.</p>
@@ -918,10 +974,21 @@
     </footer>
 
 <script>
+// Immediately update auth buttons on page load (before Firebase check)
+(function() {
+    updateAuthButtons();
+})();
+
 // Authentication
 function updateAuthButtons() {
     const authButtons = document.getElementById('authButtons');
     const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+    
+    // Show/hide login warning based on user status
+    const warningBanner = document.getElementById('loginWarning');
+    if (warningBanner) {
+        warningBanner.style.display = currentUser ? 'none' : 'flex';
+    }
     
     if (currentUser) {
         authButtons.innerHTML = `

@@ -889,17 +889,34 @@
         // ====================
         // Authentication with Firebase Auth
         // ====================
+        
+        // Immediately check localStorage for faster initial display
+        (function() {
+            const cachedUser = localStorage.getItem('sustainalearn_currentUser');
+            if (cachedUser) {
+                try {
+                    const userData = JSON.parse(cachedUser);
+                    currentUser = userData;
+                    updateAuthButtons();
+                } catch (e) {
+                    // Invalid cached data, will be fixed by Firebase
+                }
+            } else {
+                updateAuthButtons();
+            }
+        })();
+
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (!firebaseUser) {
-                // Not logged in - show message
-                document.getElementById('postFeed').innerHTML = `
-                    <div class="empty-state">
-                        <h3>Join the Community! 🌱</h3>
-                        <p>Log in to share your sustainable actions and see what others are doing.</p>
-                        <a href="login.html" class="btn btn-register" style="margin-top: 20px;">Log In to Continue</a>
-                    </div>
-                `;
+                // Not logged in - allow viewing but not posting/commenting
+                currentUser = null;
                 updateAuthButtons();
+                
+                // Hide create post form
+                document.getElementById('createPostCard').style.display = 'none';
+                
+                // Load posts for viewing
+                loadPosts();
                 return;
             }
             
@@ -1058,7 +1075,13 @@
                     const post = doc.data();
                     
                     // Show approved posts to everyone, all posts to admins
-                    if (post.approved || currentUserIsAdmin || post.userId === currentUser.username) {
+                    // If not logged in, only show approved posts
+                    if (!currentUser) {
+                        if (post.approved) {
+                            renderPost(post);
+                            approvedCount++;
+                        }
+                    } else if (post.approved || currentUserIsAdmin || post.userId === currentUser.username) {
                         renderPost(post);
                         if (post.approved) approvedCount++;
                     }
@@ -1186,13 +1209,14 @@
                         Comments (${post.comments ? post.comments.length : 0})
                     </div>
                     
-                    <form class="comment-form" onsubmit="addComment('${post.id}'); return false;">
+                    <form class="comment-form" onsubmit="${currentUser ? `addComment('${post.id}'); return false;` : `showToast('Please login to comment', 'info'); return false;`}">
                         <input type="text" 
                                class="comment-input" 
                                id="comment-input-${post.id}"
-                               placeholder="Add a comment..." 
-                               maxlength="200">
-                        <button type="submit" class="btn btn-comment">Post</button>
+                               placeholder="${currentUser ? 'Add a comment...' : 'Login to comment...'}" 
+                               maxlength="200"
+                               ${currentUser ? '' : 'disabled'}>
+                        <button type="submit" class="btn btn-comment" ${currentUser ? '' : 'onclick="window.location.href=\'login.html\'; return false;"'}>${currentUser ? 'Post' : 'Login'}</button>
                     </form>
                     
                     <div class="comments-list" id="comments-list-${post.id}">
@@ -1245,7 +1269,10 @@
         // Post Interactions
         // ====================
         async function toggleLike(postId) {
-            if (!currentUser) return;
+            if (!currentUser) {
+                showToast('Please login to like posts', 'info');
+                return;
+            }
             
             try {
                 const postRef = db.collection('posts').doc(postId);
@@ -1282,7 +1309,10 @@
         }
 
         async function addComment(postId) {
-            if (!currentUser) return;
+            if (!currentUser) {
+                showToast('Please login to comment', 'info');
+                return;
+            }
             
             const commentInput = document.getElementById(`comment-input-${postId}`);
             const commentText = commentInput.value.trim();
