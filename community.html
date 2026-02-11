@@ -238,11 +238,13 @@
         }
 
         .image-preview {
-            max-width: 200px;
-            max-height: 200px;
+            max-width: 100%;
+            max-height: 300px;
             margin-top: 10px;
             border-radius: 8px;
             display: none;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            object-fit: contain;
         }
 
         .post-actions {
@@ -260,11 +262,15 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            border: 2px dashed #ccc;
+            font-weight: 500;
         }
 
         .file-input-label:hover {
             background: #e0e0e0;
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
         }
 
         .file-input {
@@ -392,6 +398,17 @@
 
         .action-btn.delete-btn:hover {
             background: #ffebee;
+        }
+        
+        /* Pending post indicator */
+        .pending-badge {
+            background: #fff3e0;
+            color: var(--accent-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
         }
 
         /* Comments Section */
@@ -720,11 +737,20 @@
                         ></textarea>
                         
                         <div class="image-upload">
-                            <label class="file-input-label">
+                            <label class="file-input-label" id="imageLabel">
                                 📸 Add Photo
-                                <input type="file" id="postImage" class="file-input" accept="image/*">
+                                <input type="file" id="postImage" class="file-input" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
                             </label>
-                            <img id="imagePreview" class="image-preview" alt="Preview">
+                            <div id="imagePreviewContainer" style="display: none; position: relative; margin-top: 10px;">
+                                <img id="imagePreview" class="image-preview" alt="Preview" style="display: block;">
+                                <button type="button" id="removeImage" class="btn" style="margin-top: 10px; background: var(--danger-red); color: white; padding: 6px 12px; font-size: 0.9em;">✕ Remove Image</button>
+                            </div>
+                            <div id="uploadProgress" style="display: none; margin-top: 10px;">
+                                <div style="background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden;">
+                                    <div id="progressBar" style="background: var(--primary-green); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                                </div>
+                                <p style="margin-top: 5px; font-size: 0.9em; color: #666;" id="uploadStatus">Uploading...</p>
+                            </div>
                         </div>
                         
                         <div class="post-actions">
@@ -753,7 +779,8 @@
                         <li>Be kind and respectful to others</li>
                         <li>No spam or self-promotion</li>
                         <li>Keep discussions eco-friendly</li>
-                        <li>Report inappropriate content</li>
+                        <li>Posts require admin approval before going live</li>
+                        <li>Comments are posted immediately</li>
                     </ul>
                 </div>
 
@@ -776,6 +803,15 @@
                 <div style="margin-top: 30px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
                     <p style="margin: 0; color: var(--primary-green); font-size: 0.9em;">
                         <strong>💡 Tip:</strong> Earn 5 points for each post and 2 points for each comment!
+                    </p>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #fff3e0; border-radius: 8px;">
+                    <p style="margin: 0; color: var(--accent-color); font-size: 0.85em;">
+                        <strong>📸 Image Tips:</strong><br>
+                        • Max size: 5MB<br>
+                        • Formats: JPG, PNG, GIF, WebP<br>
+                        • Preview before posting
                     </p>
                 </div>
             </div>
@@ -836,12 +872,19 @@
         // Firebase is initialized via firebase-config.js
         // auth, db, and storage are available globally
 
+        // Check if Firebase Storage is available
+        if (!storage) {
+            console.error('Firebase Storage is not initialized!');
+            showToast('Storage service not available. Please check Firebase configuration.', 'error', 5000);
+        }
+
         // ====================
         // Global Variables
         // ====================
         let currentUser = null;
         let currentUserIsAdmin = false;
         const ADMIN_USERNAME = "Lol Hest";
+        const ADMIN_EMAILS = ["clara.holst@outlook.com", "clar.holst@gmail.com", "admin@socialgreen.com"];
 
         // ====================
         // Authentication with Firebase Auth
@@ -879,8 +922,9 @@
                     // Save to localStorage for compatibility
                     localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
                     
+                    // Check if user is admin by username or email
                     currentUserIsAdmin = (currentUser.username === ADMIN_USERNAME || 
-                                         currentUser.email === 'admin@socialgreen.com');
+                                         ADMIN_EMAILS.includes(currentUser.email));
                     
                     // Update auth buttons
                     updateAuthButtons();
@@ -910,6 +954,11 @@
                         👋 Welcome, ${currentUser.firstName || currentUser.username}
                         ${currentUserIsAdmin ? '<span style="background: gold; color: black; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 5px;">ADMIN</span>' : ''}
                     </span>
+                    ${currentUserIsAdmin ? `
+                        <span style="position: relative; margin-right: 10px;">
+                            <span style="color: var(--accent-color); font-weight: 500;">⏳ Pending: <span id="pendingCount" style="display: none;">0</span></span>
+                        </span>
+                    ` : ''}
                     <a href="points.html" class="btn btn-login">My Points</a>
                     <button class="btn btn-register" id="logoutBtn">Logout</button>
                 `;
@@ -937,6 +986,13 @@
         // ====================
         async function createPost(postData) {
             try {
+                console.log('Creating post with data:', postData);
+                console.log('Current user:', currentUser);
+                
+                if (!currentUser) {
+                    throw new Error('User not authenticated');
+                }
+                
                 const post = {
                     userId: currentUser.username,
                     userDisplayName: currentUser.firstName || currentUser.username,
@@ -944,17 +1000,23 @@
                     imageUrl: postData.imageUrl || null,
                     likes: [],
                     comments: [],
+                    approved: currentUserIsAdmin, // Admins posts are auto-approved
+                    approvedBy: currentUserIsAdmin ? currentUser.email : null,
+                    approvedAt: currentUserIsAdmin ? firebase.firestore.FieldValue.serverTimestamp() : null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
+                console.log('Adding post to Firestore...');
                 // Add to Firestore
                 const docRef = await db.collection('posts').add(post);
+                console.log('Post added with ID:', docRef.id);
                 
                 // Add post ID
                 await db.collection('posts').doc(docRef.id).update({
                     id: docRef.id
                 });
+                console.log('Post ID updated in document');
 
                 // Update user points in localStorage
                 updateUserPoints(5, 'Posted in community');
@@ -962,8 +1024,9 @@
                 return docRef.id;
             } catch (error) {
                 console.error('Error creating post:', error);
-                showToast('Error creating post. Please try again.', 'error');
-                return null;
+                console.error('Error details:', error.code, error.message);
+                showToast('Error creating post: ' + error.message, 'error', 5000);
+                throw error; // Re-throw to be handled by caller
             }
         }
 
@@ -979,23 +1042,65 @@
                 if (snapshot.empty) {
                     postFeed.innerHTML = '<div class="empty-state">No posts yet. Be the first to share! 🌟</div>';
                     updateStats(0);
+                    if (currentUserIsAdmin) {
+                        loadPendingPosts();
+                    }
                     return;
                 }
-                
-                // Update stats
-                updateStats(snapshot.size);
                 
                 // Clear loader
                 postFeed.innerHTML = '';
                 
+                let approvedCount = 0;
+                
                 // Render each post
                 snapshot.forEach(doc => {
                     const post = doc.data();
-                    renderPost(post);
+                    
+                    // Show approved posts to everyone, all posts to admins
+                    if (post.approved || currentUserIsAdmin || post.userId === currentUser.username) {
+                        renderPost(post);
+                        if (post.approved) approvedCount++;
+                    }
                 });
+                
+                // Update stats with approved posts count
+                updateStats(approvedCount);
+                
+                // Load pending posts for admin
+                if (currentUserIsAdmin) {
+                    loadPendingPosts();
+                }
             } catch (error) {
                 console.error('Error loading posts:', error);
                 postFeed.innerHTML = '<div class="empty-state">Error loading posts. Please refresh.</div>';
+            }
+        }
+        
+        async function loadPendingPosts() {
+            if (!currentUserIsAdmin) return;
+            
+            try {
+                const snapshot = await db.collection('posts')
+                    .where('approved', '==', false)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                const pendingCount = snapshot.size;
+                
+                // Update pending count in badge
+                const pendingBadge = document.getElementById('pendingCount');
+                if (pendingBadge) {
+                    pendingBadge.textContent = pendingCount;
+                    pendingBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+                }
+                
+                // Show notification if there are pending posts
+                if (pendingCount > 0) {
+                    console.log(`${pendingCount} pending post(s) awaiting approval`);
+                }
+            } catch (error) {
+                console.error('Error loading pending posts:', error);
             }
         }
 
@@ -1021,7 +1126,14 @@
             // Check if current user can delete this post
             const canDelete = currentUserIsAdmin || post.userId === currentUser.username;
             
+            // Check if post needs approval
+            const isPending = !post.approved;
+            const canApprove = currentUserIsAdmin && isPending;
+            
             postElement.innerHTML = `
+                ${isPending ? `<div style="background: #fff3e0; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--accent-color);">
+                    ⏳ <strong>Pending Approval</strong> - This post is waiting for admin review
+                </div>` : ''}
                 <div class="post-header">
                     <div class="post-user">
                         <div class="user-avatar">
@@ -1032,11 +1144,21 @@
                             <div class="post-time">${postDate}</div>
                         </div>
                     </div>
-                    ${canDelete ? `
-                        <button class="action-btn delete-btn" onclick="deletePost('${post.id}')" title="Delete post">
-                            🗑️ Delete
-                        </button>
-                    ` : ''}
+                    <div style="display: flex; gap: 10px;">
+                        ${canApprove ? `
+                            <button class="action-btn" onclick="approvePost('${post.id}')" title="Approve post" style="color: var(--primary-green); background: #e8f5e9;">
+                                ✓ Approve
+                            </button>
+                            <button class="action-btn delete-btn" onclick="rejectPost('${post.id}')" title="Reject post">
+                                ✗ Reject
+                            </button>
+                        ` : ''}
+                        ${canDelete && !canApprove ? `
+                            <button class="action-btn delete-btn" onclick="deletePost('${post.id}')" title="Delete post">
+                                🗑️ Delete
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
                 
                 <div class="post-content">
@@ -1264,6 +1386,58 @@
             }
         }
 
+        async function approvePost(postId) {
+            if (!currentUserIsAdmin) {
+                showToast('Only admins can approve posts.', 'error');
+                return;
+            }
+            
+            try {
+                // Update post in Firestore
+                await db.collection('posts').doc(postId).update({
+                    approved: true,
+                    approvedBy: currentUser.email,
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('Post approved:', postId);
+                showToast('Post approved successfully! ✅', 'success', 3000);
+                
+                // Reload posts
+                await loadPosts();
+                
+            } catch (error) {
+                console.error('Error approving post:', error);
+                showToast('Error approving post: ' + error.message, 'error');
+            }
+        }
+
+        async function rejectPost(postId) {
+            if (!currentUserIsAdmin) {
+                showToast('Only admins can reject posts.', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reject and delete this post? This cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                // Delete from Firestore
+                await db.collection('posts').doc(postId).delete();
+                
+                console.log('Post rejected and deleted:', postId);
+                showToast('Post rejected and removed. ❌', 'success', 3000);
+                
+                // Reload posts
+                await loadPosts();
+                
+            } catch (error) {
+                console.error('Error rejecting post:', error);
+                showToast('Error rejecting post: ' + error.message, 'error');
+            }
+        }
+
         // ====================
         // Helper Functions
         // ====================
@@ -1299,16 +1473,23 @@
         }
 
         async function updateStats(totalPostsCount) {
-            // Update total posts
+            // Update total approved posts
             document.getElementById('totalPosts').textContent = totalPostsCount || 0;
             
-            // Update user's post count
+            // Update user's post count (all their posts, approved or not)
             if (currentUser) {
                 try {
                     const snapshot = await db.collection('posts')
                         .where('userId', '==', currentUser.username)
                         .get();
-                    document.getElementById('yourPosts').textContent = snapshot.size;
+                    const userPostsCount = snapshot.size;
+                    document.getElementById('yourPosts').textContent = userPostsCount;
+                    
+                    // Show how many are pending for this user
+                    const pendingCount = snapshot.docs.filter(doc => !doc.data().approved).length;
+                    if (pendingCount > 0 && !currentUserIsAdmin) {
+                        console.log(`You have ${pendingCount} post(s) pending approval`);
+                    }
                 } catch (error) {
                     console.error('Error counting user posts:', error);
                 }
@@ -1378,23 +1559,68 @@
                 });
             }
             
-            // Image preview
+            // Image preview and validation
             const postImage = document.getElementById('postImage');
             const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const removeImageBtn = document.getElementById('removeImage');
+            const imageLabel = document.getElementById('imageLabel');
+            
+            // Function to validate and process image
+            async function handleImageSelection(file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showToast('Please select a valid image file (JPG, PNG, GIF, or WebP)', 'error', 4000);
+                    postImage.value = '';
+                    return false;
+                }
+                
+                // Validate file size (max 5MB)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showToast('Image is too large. Please select an image under 5MB.', 'error', 4000);
+                    postImage.value = '';
+                    return false;
+                }
+                
+                // Show file size
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                console.log(`Image selected: ${file.name} (${fileSizeMB}MB)`);
+                
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                    imageLabel.style.background = '#e8f5e9';
+                    imageLabel.innerHTML = `✓ Photo Selected (${fileSizeMB}MB)`;
+                };
+                reader.onerror = function() {
+                    showToast('Error reading image file', 'error', 3000);
+                    postImage.value = '';
+                };
+                reader.readAsDataURL(file);
+                return true;
+            }
             
             if (postImage) {
-                postImage.addEventListener('change', function(e) {
+                postImage.addEventListener('change', async function(e) {
                     const file = e.target.files[0];
                     if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            imagePreview.src = e.target.result;
-                            imagePreview.style.display = 'block';
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        imagePreview.style.display = 'none';
+                        await handleImageSelection(file);
                     }
+                });
+            }
+            
+            // Remove image button
+            if (removeImageBtn) {
+                removeImageBtn.addEventListener('click', function() {
+                    postImage.value = '';
+                    imagePreview.src = '';
+                    imagePreviewContainer.style.display = 'none';
+                    imageLabel.style.background = '';
+                    imageLabel.innerHTML = '📸 Add Photo';
                 });
             }
             
@@ -1418,29 +1644,112 @@
                         
                         // Upload image if exists
                         if (imageFile) {
-                            const storageRef = storage.ref();
-                            const imageRef = storageRef.child(`post-images/${Date.now()}_${imageFile.name}`);
-                            await imageRef.put(imageFile);
-                            imageUrl = await imageRef.getDownloadURL();
+                            console.log('Uploading image...');
+                            
+                            // Show progress bar
+                            const uploadProgress = document.getElementById('uploadProgress');
+                            const progressBar = document.getElementById('progressBar');
+                            const uploadStatus = document.getElementById('uploadStatus');
+                            uploadProgress.style.display = 'block';
+                            
+                            try {
+                                // Validate file size one more time
+                                const maxSize = 5 * 1024 * 1024;
+                                if (imageFile.size > maxSize) {
+                                    throw new Error('Image is too large (max 5MB)');
+                                }
+                                
+                                const storageRef = storage.ref();
+                                const fileName = `${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                                const imageRef = storageRef.child(`post-images/${fileName}`);
+                                
+                                // Upload with progress tracking
+                                const uploadTask = imageRef.put(imageFile);
+                                
+                                // Monitor upload progress
+                                uploadTask.on('state_changed',
+                                    (snapshot) => {
+                                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                        progressBar.style.width = progress + '%';
+                                        uploadStatus.textContent = `Uploading... ${Math.round(progress)}%`;
+                                        console.log('Upload progress:', progress + '%');
+                                    },
+                                    (error) => {
+                                        console.error('Upload error:', error);
+                                        throw error;
+                                    }
+                                );
+                                
+                                // Wait for upload to complete
+                                await uploadTask;
+                                
+                                // Get download URL
+                                imageUrl = await imageRef.getDownloadURL();
+                                uploadStatus.textContent = 'Upload complete!';
+                                console.log('Image uploaded successfully:', imageUrl);
+                                
+                                // Hide progress after short delay
+                                setTimeout(() => {
+                                    uploadProgress.style.display = 'none';
+                                    progressBar.style.width = '0%';
+                                }, 1000);
+                                
+                            } catch (uploadError) {
+                                uploadProgress.style.display = 'none';
+                                console.error('Image upload failed:', uploadError);
+                                
+                                // Provide specific error messages
+                                let errorMessage = 'Failed to upload image. ';
+                                if (uploadError.code === 'storage/unauthorized') {
+                                    errorMessage += 'Permission denied. Please check Firebase Storage rules.';
+                                } else if (uploadError.code === 'storage/canceled') {
+                                    errorMessage += 'Upload was canceled.';
+                                } else if (uploadError.code === 'storage/unknown') {
+                                    errorMessage += 'Unknown error occurred. Please try again.';
+                                } else if (uploadError.code === 'storage/quota-exceeded') {
+                                    errorMessage += 'Storage quota exceeded.';
+                                } else {
+                                    errorMessage += uploadError.message;
+                                }
+                                
+                                throw new Error(errorMessage);
+                            }
                         }
                         
                         // Create post
-                        await createPost({ text, imageUrl });
+                        console.log('Creating post...');
+                        const postId = await createPost({ text, imageUrl });
+                        
+                        // Check if post was created successfully
+                        if (!postId) {
+                            throw new Error('Failed to create post');
+                        }
+                        
+                        console.log('Post created successfully with ID:', postId);
                         
                         // Reset form
                         postForm.reset();
-                        imagePreview.style.display = 'none';
+                        imagePreview.src = '';
+                        imagePreviewContainer.style.display = 'none';
+                        imageLabel.style.background = '';
+                        imageLabel.innerHTML = '📸 Add Photo';
                         charCount.textContent = '0';
                         
                         // Reload posts
-                        loadPosts();
+                        await loadPosts();
                         
-                        // Show success message
-                        showNotification('Post shared successfully!');
+                        // Show success message based on admin status
+                        if (currentUserIsAdmin) {
+                            showNotification('Post published successfully!');
+                            showToast('Your post is now live! 🌱', 'success', 3000);
+                        } else {
+                            showNotification('Post submitted for review!');
+                            showToast('Your post has been submitted and is waiting for admin approval. ⏳', 'success', 4000);
+                        }
                         
                     } catch (error) {
                         console.error('Error posting:', error);
-                        showToast('Error creating post. Please try again.', 'error');
+                        showToast('Error creating post: ' + error.message, 'error', 5000);
                     } finally {
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Post to Community';

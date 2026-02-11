@@ -1497,6 +1497,7 @@
             <div class="event-details">
                 <span class="event-date">${event.date}</span>
                 <h3>${event.name}</h3>
+                ${event.danishName && event.danishName !== event.name ? `<p style="font-style: italic; color: #666; font-size: 0.9rem; margin-top: -8px; margin-bottom: 10px;">${event.danishName}</p>` : ''}
                 <p>${event.description}</p>
                 <div class="event-signup-info">
                     <div class="event-participants">${event.location}</div>
