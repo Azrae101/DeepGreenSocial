@@ -1185,6 +1185,14 @@
                         <span class="breakdown-category">Daily Check-ins</span>
                         <span class="breakdown-points" id="dailyPoints">0 points</span>
                     </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-category">Community Interaction</span>
+                        <span class="breakdown-points" id="communityPoints">0 points</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-category">Trash Collection</span>
+                        <span class="breakdown-points" id="trashBreakdownPoints">0 items</span>
+                    </div>
                 </div>
                 
                 <div class="events-list">
@@ -1207,7 +1215,7 @@
             <!-- Trash Collection Competition -->
             <div class="trash-competition">
                 <h3>🗑️ Trash Collection Challenge</h3>
-                <p>Upload a photo of the trash you collect. The top contributors each month get bonus points!</p>
+                <p>Upload a photo of the trash you collect and earn <strong>+5 points</strong> per upload! The top contributors each month get bonus points!</p>
                 
                 <div class="trash-upload-section">
                     <div class="file-input-wrapper">
@@ -1456,6 +1464,7 @@
                         articlesRead: [],
                         articlesQuizPassed: [],
                         trashCollected: [],
+                        communityPoints: 0,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
@@ -1470,6 +1479,14 @@
                             trashCollected: []
                         });
                         currentUserData.trashCollected = [];
+                    }
+                    
+                    // Ensure communityPoints field exists for existing users
+                    if (currentUserData.communityPoints === undefined) {
+                        await userRef.update({
+                            communityPoints: 0
+                        });
+                        currentUserData.communityPoints = 0;
                     }
                 }
                 
@@ -1650,6 +1667,9 @@
             loadPointsHistoryFirebase();
             loadAchievementsFirebase();
             calculateImpactStatsFirebase();
+            
+            // Initialize history filters after loading history
+            setTimeout(() => initHistoryFilters(), 100);
         }
         
         function loadPointsBreakdownFirebase() {
@@ -1661,14 +1681,19 @@
             const articlesPoints = (currentUserData.articlesRead?.length || 0) * 50;
             const quizzesPoints = (currentUserData.articlesQuizPassed?.length || 0) * 100;
             const dailyPoints = calculateDailyPoints(currentUserData);
-            const trashPoints = (currentUserData.trashCollected?.length || 0);
+            const trashItems = (currentUserData.trashCollected?.length || 0);
+            const communityPoints = currentUserData.communityPoints || 0;
 
-            document.getElementById('trashPoints').textContent = `${trashPoints} item(s)`;
             document.getElementById('eventsPoints').textContent = `${eventsPoints} points`;
             document.getElementById('gamesPoints').textContent = `${gamesPoints} points`;
             document.getElementById('articlesPoints').textContent = `${articlesPoints} points`;
             document.getElementById('quizzesPoints').textContent = `${quizzesPoints} points`;
             document.getElementById('dailyPoints').textContent = `${dailyPoints} points`;
+            document.getElementById('communityPoints').textContent = `${communityPoints} points`;
+            document.getElementById('trashBreakdownPoints').textContent = `${trashItems} items`;
+            
+            // Also update trash stats display
+            document.getElementById('trashPoints').textContent = trashItems;
         }
         
         function loadEventsListFirebase() {
@@ -1838,12 +1863,18 @@
                     // Get current monthly points
                     const currentMonthlyPoints = currentUserData.monthlyPoints?.[monthKey] || 0;
                     
-                    // Update Firestore
+                    // Update Firestore with points and history
                     await userRef.update({
                         dailyCheckins: firebase.firestore.FieldValue.arrayUnion(today),
                         points: firebase.firestore.FieldValue.increment(10),
                         [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + 10,
-                        streak: firebase.firestore.FieldValue.increment(1)
+                        streak: firebase.firestore.FieldValue.increment(1),
+                        pointsHistory: firebase.firestore.FieldValue.arrayUnion({
+                            date: today,
+                            description: 'Daily Check-in',
+                            points: 10,
+                            type: 'earned'
+                        })
                     });
                     
                     // Refresh data
@@ -2211,12 +2242,21 @@
 
                     // 2️⃣ Add to user's trashCollected array in Firestore
                     const userRef = db.collection('users').doc(currentUserId);
+                    const today = new Date().toISOString().split('T')[0];
+                    
                     await userRef.update({
                         trashCollected: firebase.firestore.FieldValue.arrayUnion({
                             imageUrl: imageUrl,
                             date: new Date().toISOString(),
                             timestamp: timestamp
-                        })
+                        }),
+                        pointsHistory: firebase.firestore.FieldValue.arrayUnion({
+                            date: today,
+                            description: 'Trash Collection Photo Uploaded',
+                            points: 5,
+                            type: 'earned'
+                        }),
+                        points: firebase.firestore.FieldValue.increment(5)
                     });
 
                     // 3️⃣ Update local user data
@@ -2228,14 +2268,26 @@
                         date: new Date().toISOString(),
                         timestamp: timestamp
                     });
+                    
+                    // Update points and history locally
+                    if (!currentUserData.pointsHistory) {
+                        currentUserData.pointsHistory = [];
+                    }
+                    currentUserData.pointsHistory.push({
+                        date: today,
+                        description: 'Trash Collection Photo Uploaded',
+                        points: 5,
+                        type: 'earned'
+                    });
+                    currentUserData.points = (currentUserData.points || 0) + 5;
 
-                    // 4️⃣ Update points breakdown display
-                    loadPointsBreakdownFirebase();
+                    // 4️⃣ Reload dashboard to show updated data
+                    loadDashboardFromFirebase();
                     
                     // 5️⃣ Update trash stats
                     await updateTrashStatsFirebase();
 
-                    trashStatus.textContent = '✅ Successfully uploaded! Your contribution has been recorded.';
+                    trashStatus.textContent = '✅ Successfully uploaded! +5 points earned!';
                     trashStatus.className = 'trash-status success';
                     
                     // Reset form
@@ -2243,7 +2295,7 @@
                     selectedFile.style.display = 'none';
                     fileLabel.textContent = 'Choose a photo or drag & drop';
                     
-                    showToast('🎉 Trash collection photo uploaded successfully!', 'success', 4000);
+                    showToast('🎉 Trash collection photo uploaded successfully! +5 points', 'success', 4000);
                 } catch (err) {
                     console.error('Upload error:', err);
                     trashStatus.textContent = '❌ Error: ' + err.message;
@@ -2361,6 +2413,69 @@
                 return { success: false, error: error.message };
             }
         }
+
+        // Global function to award community points (can be called from other pages)
+        async function awardCommunityPoints(points, description) {
+            if (!currentUserId || !currentUserData) {
+                console.error('User not authenticated');
+                return { success: false, error: 'User not authenticated' };
+            }
+
+            try {
+                const userRef = db.collection('users').doc(currentUserId);
+                const today = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                
+                // Get current monthly points
+                const currentMonthlyPoints = currentUserData.monthlyPoints?.[monthKey] || 0;
+
+                // Update Firestore
+                await userRef.update({
+                    communityPoints: firebase.firestore.FieldValue.increment(points),
+                    points: firebase.firestore.FieldValue.increment(points),
+                    [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + points,
+                    pointsHistory: firebase.firestore.FieldValue.arrayUnion({
+                        date: today,
+                        description: description || 'Community Interaction',
+                        points: points,
+                        type: 'earned'
+                    })
+                });
+
+                // Update local data
+                currentUserData.communityPoints = (currentUserData.communityPoints || 0) + points;
+                currentUserData.points = (currentUserData.points || 0) + points;
+                if (!currentUserData.pointsHistory) {
+                    currentUserData.pointsHistory = [];
+                }
+                currentUserData.pointsHistory.push({
+                    date: today,
+                    description: description || 'Community Interaction',
+                    points: points,
+                    type: 'earned'
+                });
+
+                // Reload dashboard
+                loadDashboardFromFirebase();
+
+                console.log(`Awarded ${points} community points for: ${description}`);
+                return { success: true, points: points };
+            } catch (error) {
+                console.error('Error awarding community points:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Make function globally available
+        window.awardCommunityPoints = awardCommunityPoints;
+
+        // Example usage for community features:
+        // Call this from community.html or other pages:
+        // - Creating a post: awardCommunityPoints(5, 'Created a community post')
+        // - Commenting: awardCommunityPoints(2, 'Posted a comment')
+        // - Liking: awardCommunityPoints(1, 'Liked a post')
+        // - Sharing: awardCommunityPoints(3, 'Shared a post')
 
 
 
