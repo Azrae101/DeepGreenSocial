@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CogCards - Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #f72585;
+            --accent: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            margin-bottom: 5vh;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .containertitle {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 5vh;
+            margin-bottom: 2vh;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            color: var(--dark);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .deck-info {
+            background-color: var(--accent);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .question {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 30px 0;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .options button {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .options button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .options button.correct {
+            background-color: var(--success);
+            transform: scale(1.02);
+        }
+
+        .options button.wrong {
+            background-color: var(--danger);
+        }
+
+        .options button:disabled {
+            opacity: 0.9;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .back-btn {
+            position: absolute;
+            bottom: -125px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+
+        .music-control i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: var(--light);
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 150px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .container, .containertitle {
+                width: 90%;
+                padding: 15px;
+            }
+
+            .options button {
+                width: 90%;
+            }
+        }
+
+        /* Animation for correct answers */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.3s;
+        }
+        .replay-btn {
+          position: absolute;
+          bottom: -70px;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 12px 25px;
+          background-color: var(--secondary);
+          color: white;
+          border: none;
+          border-radius: 50px;
+          cursor: pointer;
+          transition: all 0.3s;
+          font-weight: 600;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          z-index: 10;
+      }
+
+      .replay-btn:hover {
+          background-color: #d3166b;
+          transform: translateX(-50%) translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+        .end-screen {
+        text-align: center;
+        display: none;
+      }
+
+      .congrats-message {
+        font-size: 24px;
+        color: #4CAF50;
+        margin-bottom: 20px;
+      }
+
+      /* Difficulty Selection Styles */
+      .difficulty-menu {
+        display: block;
+        text-align: center;
+      }
+
+      .difficulty-menu h2 {
+        color: var(--primary);
+        font-size: 2rem;
+        margin-bottom: 30px;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .difficulty-btn {
+        padding: 20px 30px;
+        font-size: 1.3rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+      }
+
+      .difficulty-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .difficulty-btn.easy {
+        background: linear-gradient(135deg, #4caf50, #45a049);
+      }
+
+      .difficulty-btn.medium {
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+      }
+
+      .difficulty-btn.hard {
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+      }
+
+      .difficulty-description {
+        font-size: 0.9rem;
+        margin-top: 8px;
+        opacity: 0.9;
+      }
+
+      .quiz-content {
+        display: none;
+      }
+
+      .difficulty-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-left: 10px;
+      }
+
+      .difficulty-badge.easy {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .difficulty-badge.medium {
+        background-color: #ff9800;
+        color: white;
+      }
+
+      .difficulty-badge.hard {
+        background-color: #f44336;
+        color: white;
+      }
+
+    </style>
+    <link rel="icon" href="{{ url_for('static', filename='icon.png') }}">
+</head>
+<body>
+    <!-- Music Control -->
+    <div class="music-control" id="musicControl">
+        <i class="fas fa-music"></i>
+    </div>
+
+    <div class="containertitle">
+        <h1>Climate Science Quiz</h1>
+        <p class="subtitle">Challenge your knowledge of advanced climate concepts and sustainability!</p>
+        <div class="deck-info">
+            <i class="fas fa-layer-group"></i> Deck: Climate Action & Sustainability
+            <span id="difficultyBadge" class="difficulty-badge" style="display: none;"></span>
+        </div>
+    </div>
+
+    <div class="container difficulty-menu" id="difficultyMenu">
+        <h2>Select Your Difficulty Level</h2>
+        <div class="difficulty-buttons">
+            <button class="difficulty-btn easy" onclick="startQuiz('easy')">
+                <div><i class="fas fa-seedling"></i> Easy</div>
+                <div class="difficulty-description">Basic sustainability concepts - perfect for beginners</div>
+            </button>
+            <button class="difficulty-btn medium" onclick="startQuiz('medium')">
+                <div><i class="fas fa-leaf"></i> Medium</div>
+                <div class="difficulty-description">Intermediate climate knowledge - test your understanding</div>
+            </button>
+            <button class="difficulty-btn hard" onclick="startQuiz('hard')">
+                <div><i class="fas fa-fire"></i> Hard</div>
+                <div class="difficulty-description">Advanced climate science - for the experts</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="container quiz-content" id="quizContent">
+        <p id="question" class="question"></p>
+        <div id="options" class="options"></div>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-label">Questions</div>
+                <div class="stat-value" id="progress">0/4</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+        </div>
+        
+        <button class="back-btn" onclick="location.href='game-overview.html'">
+            <i class="fas fa-arrow-left"></i> Back to Games
+        </button>
+
+        <button class="replay-btn" id="replayButton" style="display: none;">
+            <i class="fas fa-redo"></i> Play Again
+        </button>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <script>
+        const questionsByDifficulty = {
+            easy: [
+                {
+                    term: "Reduce, Reuse, Recycle",
+                    definition: "What are the three Rs of waste management that help reduce environmental impact?"
+                },
+                {
+                    term: "Solar, wind, and hydro power",
+                    definition: "What are three common types of renewable energy sources?"
+                },
+                {
+                    term: "Carbon dioxide (CO₂)",
+                    definition: "What is the primary greenhouse gas produced by burning fossil fuels?"
+                },
+                {
+                    term: "LED bulbs",
+                    definition: "What type of light bulb uses 75% less energy than traditional incandescent bulbs?"
+                },
+                {
+                    term: "Photosynthesis",
+                    definition: "What process do plants use to absorb CO₂ from the atmosphere?"
+                },
+                {
+                    term: "Public transportation",
+                    definition: "What form of travel produces fewer emissions per person than driving alone?"
+                },
+                {
+                    term: "Composting",
+                    definition: "What process turns food scraps and yard waste into nutrient-rich soil?"
+                },
+                {
+                    term: "Fossil fuels",
+                    definition: "What non-renewable energy sources include coal, oil, and natural gas?"
+                },
+                {
+                    term: "Reduce meat consumption",
+                    definition: "What dietary change can significantly lower your carbon footprint?"
+                },
+                {
+                    term: "Reusable bags",
+                    definition: "What alternative to plastic bags helps reduce single-use plastic waste?"
+                }
+            ],
+            medium: [
+                {
+                    term: "Carbon footprint",
+                    definition: "What term measures the total greenhouse gas emissions caused by an individual or organization?"
+                },
+                {
+                    term: "Biodiversity loss",
+                    definition: "What environmental crisis describes the extinction of species at unprecedented rates?"
+                },
+                {
+                    term: "Sustainable agriculture",
+                    definition: "What farming approach balances food production with environmental protection?"
+                },
+                {
+                    term: "Ocean acidification",
+                    definition: "What process occurs when excess CO₂ is absorbed by seawater, harming marine life?"
+                },
+                {
+                    term: "Fast fashion",
+                    definition: "What clothing industry practice produces 10% of global carbon emissions?"
+                },
+                {
+                    term: "Greenwashing",
+                    definition: "What term describes misleading marketing about environmental benefits?"
+                },
+                {
+                    term: "Carbon sequestration",
+                    definition: "What process captures and stores atmospheric CO₂ long-term?"
+                },
+                {
+                    term: "Circular economy",
+                    definition: "What economic model eliminates waste by keeping resources in continuous use?"
+                },
+                {
+                    term: "Food miles",
+                    definition: "What term describes the distance food travels from production to consumer?"
+                },
+                {
+                    term: "Zero waste",
+                    definition: "What lifestyle philosophy aims to send nothing to landfills?"
+                }
+            ],
+            hard: [
+                {
+                    term: "Scope 3 emissions",
+                    definition: "What term describes indirect emissions from a company's value chain, including use of sold products?"
+                },
+                {
+                    term: "Planetary boundaries",
+                    definition: "What framework identifies nine Earth system processes that regulate planet stability?"
+                },
+                {
+                    term: "1.5°C pathway",
+                    definition: "What Paris Agreement target requires emissions to peak before 2025 and decline 43% by 2030?"
+                },
+                {
+                    term: "Climate tipping points",
+                    definition: "What term describes critical thresholds beyond which ecosystems change irreversibly?"
+                },
+                {
+                    term: "Albedo effect",
+                    definition: "What phenomenon occurs when melting ice exposes darker surfaces that absorb more heat?"
+                },
+                {
+                    term: "Just transition",
+                    definition: "What principle ensures moving to a green economy doesn't leave workers behind?"
+                },
+                {
+                    term: "Rebound effect (Jevons paradox)",
+                    definition: "What occurs when efficiency gains lead to increased consumption, offsetting benefits?"
+                },
+                {
+                    term: "Embodied carbon",
+                    definition: "What term refers to total GHG emissions during production and transport of materials?"
+                },
+                {
+                    term: "Blue carbon",
+                    definition: "What describes carbon captured by ocean ecosystems like mangroves and seagrass?"
+                },
+                {
+                    term: "Degrowth",
+                    definition: "What economic philosophy advocates reducing consumption to stay within planetary limits?"
+                }
+            ]
+        };
+
+        let originalCards = [];
+        let allTerms = [];
+        let allDefs = [];
+        let currentDifficulty = '';
+
+        function startQuiz(difficulty) {
+            currentDifficulty = difficulty;
+            originalCards = questionsByDifficulty[difficulty];
+            allTerms = originalCards.map(c => c.term);
+            allDefs = originalCards.map(c => c.definition);
+            
+            // Update UI
+            document.getElementById('difficultyMenu').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'block';
+            
+            // Show difficulty badge
+            const badge = document.getElementById('difficultyBadge');
+            badge.style.display = 'inline-block';
+            badge.className = `difficulty-badge ${difficulty}`;
+            badge.textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+            
+            // Generate quiz and start
+            const quizDataTemp = generateQuizData(originalCards);
+            quizData.length = 0;
+            quizData.push(...quizDataTemp);
+            
+            // Reset game state
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreElement.textContent = '0';
+            replayButton.style.display = 'none';
+            
+            loadQuestion();
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function generateQuizData(cards) {
+            const quizData = [];
+            for (const card of cards) {
+                const correct = card.term;
+                const question = card.definition;
+
+                // Get 3 random incorrect answers
+                let distractors = allTerms.filter(term => term !== correct);
+                shuffle(distractors);
+                const options = [correct, ...distractors.slice(0, 3)];
+                shuffle(options);
+
+                quizData.push({ question, correct, options });
+            }
+            shuffle(quizData);
+            return quizData;
+        }
+
+        let quizData = [];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const scoreElement = document.getElementById("score");
+        const progressElement = document.getElementById("progress");
+        const musicControl = document.getElementById("musicControl");
+        const bgMusic = document.getElementById("bgMusic");
+        const replayButton = document.getElementById('replayButton');
+
+        let musicPlaying = false;
+
+        // Try to start music on first user interaction
+        function startMusicOnInteraction() {
+            if (!musicPlaying) {
+                bgMusic.play().then(() => {
+                    musicPlaying = true;
+                    musicControl.innerHTML = '<i class="fas fa-music"></i>';
+                }).catch(error => {
+                    console.log('Autoplay prevented:', error);
+                    musicControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                });
+                // Remove listener after first interaction
+                document.removeEventListener('click', startMusicOnInteraction);
+            }
+        }
+        
+        // Add listener for first user click
+        document.addEventListener('click', startMusicOnInteraction, { once: true });
+
+        function loadQuestion() {
+            const current = quizData[currentQuestionIndex];
+            document.getElementById("question").textContent = current.question;
+
+            const shuffledOptions = [...current.options];
+            shuffle(shuffledOptions);
+
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = "";
+
+            shuffledOptions.forEach(option => {
+                const btn = document.createElement("button");
+                btn.textContent = option;
+                btn.onclick = () => checkAnswer(btn, option, current.correct);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Update progress
+            progressElement.textContent = `${currentQuestionIndex + 1}/${quizData.length}`;
+        }
+
+        function checkAnswer(button, selected, correct) {
+          const buttons = document.querySelectorAll(".options button");
+          buttons.forEach(btn => {
+              btn.disabled = true;
+              if (btn.textContent === correct) {
+                  btn.classList.add("correct");
+              }
+              if (btn.textContent === selected && selected !== correct) {
+                  btn.classList.add("wrong");
+              }
+          });
+
+          if (selected === correct) {
+              score++;
+              scoreElement.textContent = score;
+              scoreElement.classList.add("pulse");
+              setTimeout(() => scoreElement.classList.remove("pulse"), 300);
+          }
+
+          setTimeout(() => {
+              currentQuestionIndex++;
+              if (currentQuestionIndex < quizData.length) {
+                  loadQuestion();
+              } else {
+                  document.getElementById("question").textContent = "Quiz completed! 🎉";
+                  document.getElementById("options").innerHTML = "";
+                  progressElement.textContent = `Score: ${score}/${quizData.length}`;
+                  replayButton.style.display = 'block'; // Show replay button
+              }
+          }, 1200);
+        }
+
+        function replayGame() {
+          // Reset to difficulty menu
+          document.getElementById('quizContent').style.display = 'none';
+          document.getElementById('difficultyMenu').style.display = 'block';
+          document.getElementById('difficultyBadge').style.display = 'none';
+          
+          // Reset game state
+          currentQuestionIndex = 0;
+          score = 0;
+          scoreElement.textContent = '0';
+          replayButton.style.display = 'none';
+        }
+
+        replayButton.addEventListener('click', replayGame);
+
+        // Music control
+        function toggleMusic() {
+            if (musicPlaying) {
+                bgMusic.pause();
+                musicControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                musicPlaying = false;
+            } else {
+                bgMusic.play().then(() => {
+                    musicControl.innerHTML = '<i class="fas fa-music"></i>';
+                    musicPlaying = true;
+                }).catch(error => {
+                    console.log('Play failed:', error);
+                });
+            }
+        }
+
+        musicControl.addEventListener("click", toggleMusic);
+        // Don't auto-load question - wait for difficulty selection
+
+    </script>
+</body>
+</html>

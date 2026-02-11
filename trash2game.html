@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>♻️ EcoCatcher – Sustainability Arcade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1e3c2c 0%, #2a5530 100%);
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-wrapper {
+            background: #0f2a1a;
+            border-radius: 36px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid #5f8b4b;
+        }
+
+        .game-panel {
+            background: #1d4a2c;
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 0 10px #0a1f12;
+        }
+
+        canvas {
+            display: block;
+            width: 700px;
+            height: 450px;
+            border-radius: 20px;
+            box-shadow: 0 0 0 3px #7fb381, 0 12px 28px black;
+            background: radial-gradient(circle at 50% 30%, #a8e6cf, #469970);
+            cursor: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+            color: #f1ffe7;
+            font-weight: bold;
+            font-size: 1.6rem;
+            text-shadow: 2px 2px 0 #173e1f;
+            padding: 0 20px;
+        }
+
+        .stats span {
+            background: #142d1a;
+            padding: 12px 30px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid #b1e6a0;
+            box-shadow: inset 0 -3px 0 #0b1f0e;
+        }
+
+        .controls {
+            display: flex;
+            gap: 30px;
+            margin-top: 18px;
+            color: #e6f0d2;
+            font-size: 1.2rem;
+            background: #204d2a;
+            padding: 12px 40px;
+            border-radius: 80px;
+            border: 1px solid #80b582;
+        }
+
+        .tip-box {
+            background: #f5ffe0;
+            padding: 15px 25px;
+            margin-top: 20px;
+            border-radius: 40px;
+            color: #1f4f2b;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-left: 10px solid #8fc99e;
+            box-shadow: 0 6px 0 #3f6040;
+            width: 100%;
+            text-align: center;
+        }
+
+        button {
+            background: #fdca40;
+            border: none;
+            color: #1f3a1f;
+            font-weight: bold;
+            font-size: 1.5rem;
+            padding: 10px 40px;
+            border-radius: 60px;
+            border-bottom: 8px solid #b38f2a;
+            transition: 0.06s;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 20px;
+        }
+
+        button:active {
+            border-bottom-width: 3px;
+            transform: translateY(5px);
+        }
+
+        .footer {
+            color: #cfe6cd;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="game-panel">
+        <!-- Canvas for game -->
+        <canvas id="gameCanvas" width="700" height="450"></canvas>
+
+        <!-- Score & lives -->
+        <div class="stats">
+            <span>♻️ SCORE <span id="scoreDisplay">0</span></span>
+            <span>❤️ LIVES <span id="livesDisplay">3</span></span>
+            <button id="restartBtn">↻ RESTART</button>
+            <button id="menuBtn" style="background: #4caf50; border-bottom-color: #2e7d32;">🏠 MENU</button>
+        </div>
+
+        <!-- movement hints -->
+        <div class="controls">
+            <span>← → move bin</span>
+            <span>✅ catch recyclables & compost</span>
+            <span>🚫 avoid trash items</span>
+        </div>
+
+        <!-- dynamic sustainability tip -->
+        <div id="tipMessage" class="tip-box">
+            💚 Tip: Catch recyclables & compostables! Avoid trash items like styrofoam & chip bags!
+        </div>
+        <div class="footer">
+            🌱 Every catch teaches sustainability — you're making a difference!
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const livesSpan = document.getElementById('livesDisplay');
+        const tipDiv = document.getElementById('tipMessage');
+
+        // ----- GAME DIMENSIONS -----
+        const CW = 700, CH = 450;
+        const BIN_WIDTH = 140, BIN_HEIGHT = 80;
+        const BIN_Y = CH - BIN_HEIGHT - 15;  // bottom area
+
+        // ----- GAME STATE -----
+        let binX = (CW - BIN_WIDTH) / 2;
+        let score = 0;
+        let lives = 3;
+        let gameActive = true;
+        let gameOverFlag = false;
+        let frameId = null;
+
+        // ----- ITEMS -----
+        let items = [];
+        const ITEM_RADIUS = 22;
+        const MAX_ITEMS = 20;
+        const SPAWN_RATE = 35; // frames between spawns (higher = slower)
+        let frameCounter = 0;
+
+        // movement flags
+        let leftPressed = false;
+        let rightPressed = false;
+        const MOVE_SPEED = 9;
+
+        // ----- ITEM TYPES -----
+        const TYPES = [
+            // Recyclables (good)
+            { name: 'Glass Bottle', emoji: '🍾', color: '#4fc3f7', good: true, score: 15, tip: 'Glass bottles & jars are recyclable!', bg: '#b3e5fc' },
+            { name: 'Metal Can', emoji: '🥫', color: '#90a4ae', good: true, score: 12, tip: 'Metal cans go in recycling!', bg: '#cfd8dc' },
+            { name: 'Plastic Bottle', emoji: '🫙', color: '#26a69a', good: true, score: 10, tip: 'Plastic bottles are recyclable!', bg: '#b2dfdb' },
+            { name: 'Newspaper', emoji: '📰', color: '#78909c', good: true, score: 10, tip: 'Paper & newspapers go in recycling!', bg: '#cfd8dc' },
+            { name: 'Cardboard', emoji: '📦', color: '#a1887f', good: true, score: 12, tip: 'Cardboard boxes are recyclable!', bg: '#d7ccc8' },
+            
+            // Compost (good)
+            { name: 'Apple Core', emoji: '🍎', color: '#66bb6a', good: true, score: 15, tip: 'Food scraps go in compost!', bg: '#c8e6c9' },
+            { name: 'Banana Peel', emoji: '🍌', color: '#9ccc65', good: true, score: 15, tip: 'Fruit peels are compostable!', bg: '#dcedc8' },
+            { name: 'Coffee Grounds', emoji: '☕', color: '#8d6e63', good: true, score: 15, tip: 'Coffee grounds make great compost!', bg: '#d7ccc8' },
+            { name: 'Leaves', emoji: '🍂', color: '#8b5a2b', good: true, score: 12, tip: 'Leaves & yard waste go in compost!', bg: '#dab88b' },
+            { name: 'Eggshells', emoji: '🥚', color: '#ffe082', good: true, score: 15, tip: 'Eggshells are compostable!', bg: '#fff9c4' },
+            
+            // Trash (bad - avoid)
+            { name: 'Styrofoam', emoji: '📦', color: '#757575', good: false, score: -10, tip: 'Styrofoam goes to landfill!', bg: '#bdbdbd' },
+            { name: 'Chip Bag', emoji: '🍿', color: '#6d4c41', good: false, score: -8, tip: 'Chip bags are not recyclable!', bg: '#bcaaa4' },
+            { name: 'Dirty Container', emoji: '🗑️', color: '#5d5d5d', good: false, score: -10, tip: 'Dirty containers go to landfill!', bg: '#b0b0b0' },
+            { name: 'Plastic Film', emoji: '🛍️', color: '#78909c', good: false, score: -8, tip: 'Plastic film is not recyclable!', bg: '#b0bec5' }
+        ];
+
+        // ----- HELPER FUNCTIONS -----
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // spawn a new falling item
+        function spawnItem() {
+            if (!gameActive) return;
+            if (items.length > MAX_ITEMS) return;
+            const type = TYPES[Math.floor(Math.random() * TYPES.length)];
+            const x = random(ITEM_RADIUS + 5, CW - ITEM_RADIUS - 5);
+            const y = -ITEM_RADIUS;
+            const speed = random(1.0, 2.2); // Slower falling speed
+            items.push({
+                ...type,
+                x, y,
+                speed,
+                radius: ITEM_RADIUS
+            });
+        }
+
+        // collision: bin vs item (rect vs circle)
+        function checkCollision(binRect, item) {
+            // find closest point on rectangle to circle
+            const closestX = Math.max(binRect.x, Math.min(item.x, binRect.x + binRect.w));
+            const closestY = Math.max(binRect.y, Math.min(item.y, binRect.y + binRect.h));
+            const dx = closestX - item.x;
+            const dy = closestY - item.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance <= item.radius;
+        }
+
+        // update score & lives, show messages
+        function processHit(item, index) {
+            if (!gameActive) return;
+
+            if (item.good) {
+                score += item.score;
+                tipDiv.innerText = `✅ Great! +${item.score}  (${item.emoji} ${item.tip})`;
+            } else {
+                // bad item caught
+                score += item.score;  // negative
+                lives -= 1;
+                const penalty = Math.abs(item.score);
+                tipDiv.innerText = `⚠️ Oops! -${penalty} pts, ❤️ lost.  (${item.emoji} ${item.tip})`;
+                if (lives < 0) lives = 0;
+                livesSpan.innerText = lives;
+            }
+
+            scoreSpan.innerText = score;
+            items.splice(index, 1);
+
+            if (lives <= 0) {
+                gameActive = false;
+                gameOverFlag = true;
+                tipDiv.innerText = '💔 GAME OVER – but every game teaches us! Click RESTART to try again.';
+            }
+        }
+
+        // item reaches bottom without being caught
+        function itemMissed(item, index) {
+            if (!gameActive) return;
+            if (item.good) {
+                // missed good item: lose life (small penalty)
+                lives -= 1;
+                if (lives < 0) lives = 0;
+                livesSpan.innerText = lives;
+                tipDiv.innerText = `😟 Missed ${item.emoji} ${item.name}! -1 life. Catch recyclables & compost!`;
+                if (lives <= 0) {
+                    gameActive = false;
+                    gameOverFlag = true;
+                    tipDiv.innerText = '💔 GAME OVER – but remember: every mistake teaches us. ♻️ Restart!';
+                }
+            }
+            // missed trash is neutral (it goes to landfill anyway) — no penalty
+            items.splice(index, 1);
+        }
+
+        // reset everything
+        function resetGame() {
+            gameActive = true;
+            gameOverFlag = false;
+            score = 0;
+            lives = 3;
+            items = [];
+            binX = (CW - BIN_WIDTH) / 2;
+            leftPressed = false;
+            rightPressed = false;
+            scoreSpan.innerText = '0';
+            livesSpan.innerText = '3';
+            tipDiv.innerText = '💚 Tip: Catch recyclables & compostables! Avoid trash items like styrofoam & chip bags!';
+            frameCounter = 0;
+        }
+
+        // ----- DRAWING -----
+        function drawGround() {
+            // grass strip at bottom
+            ctx.fillStyle = '#548c2f';
+            ctx.fillRect(0, CH - 18, CW, 20);
+            ctx.fillStyle = '#6aa84f';
+            ctx.fillRect(0, CH - 14, CW, 8);
+        }
+
+        function drawBin() {
+            // recycling bin - bigger and more detailed
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 5;
+            
+            // bin body with gradient
+            const gradient = ctx.createLinearGradient(binX, BIN_Y, binX, BIN_Y + BIN_HEIGHT);
+            gradient.addColorStop(0, '#2e7d32');
+            gradient.addColorStop(1, '#1b5e20');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(binX, BIN_Y, BIN_WIDTH, BIN_HEIGHT, 15);
+            ctx.fill();
+            
+            // bin rim/top
+            ctx.fillStyle = '#1b5e20';
+            ctx.fillRect(binX - 5, BIN_Y - 5, BIN_WIDTH + 10, 8);
+            
+            // recycling symbols - two of them
+            ctx.shadowBlur = 2;
+            ctx.font = 'bold 42px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#f3ffd8';
+            ctx.textAlign = 'center';
+            ctx.fillText('♻️', binX + BIN_WIDTH/2, BIN_Y + BIN_HEIGHT/2 + 10);
+            
+            // bin label
+            ctx.font = 'bold 14px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#c8e6c9';
+            ctx.fillText('CATCH', binX + BIN_WIDTH/2, BIN_Y + 20);
+            ctx.fillText('GOOD ITEMS', binX + BIN_WIDTH/2, BIN_Y + BIN_HEIGHT - 10);
+            
+            // highlight/border
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = '#81c784';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.roundRect(binX, BIN_Y, BIN_WIDTH, BIN_HEIGHT, 15);
+            ctx.stroke();
+            
+            // Reset text align
+            ctx.textAlign = 'left';
+        }
+
+        // helper for rounded rect
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            this.moveTo(x + r, y);
+            this.lineTo(x + w - r, y);
+            this.quadraticCurveTo(x + w, y, x + w, y + r);
+            this.lineTo(x + w, y + h - r);
+            this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            this.lineTo(x + r, y + h);
+            this.quadraticCurveTo(x, y + h, x, y + h - r);
+            this.lineTo(x, y + r);
+            this.quadraticCurveTo(x, y, x + r, y);
+            return this;
+        };
+
+        function drawItems() {
+            for (let item of items) {
+                // shadow for floating effect
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetY = 4;
+
+                // background circle with gradient
+                const itemGradient = ctx.createRadialGradient(item.x-5, item.y-5, 0, item.x, item.y, item.radius);
+                itemGradient.addColorStop(0, item.bg);
+                itemGradient.addColorStop(1, item.color);
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                ctx.fillStyle = itemGradient;
+                ctx.fill();
+                
+                // outer ring for depth
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // inner shine
+                ctx.shadowBlur = 2;
+                ctx.beginPath();
+                ctx.arc(item.x-4, item.y-4, item.radius-6, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fill();
+                
+                // emoji - bigger
+                ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = 'white';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'black';
+                ctx.textAlign = 'center';
+                ctx.fillText(item.emoji, item.x, item.y + 10);
+            }
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+
+        function drawGameOver() {
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = '#102014';
+            ctx.fillRect(0, CH/2-70, CW, 100);
+            ctx.globalAlpha = 1;
+            ctx.font = 'bold 38px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#fef9d7';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 12;
+            ctx.fillText('🌍 PLAY AGAIN?', CW/2-180, CH/2);
+            ctx.shadowBlur = 0;
+        }
+
+        // ----- GAME LOOP -----
+        function gameLoop() {
+            if (!gameActive && !gameOverFlag) {
+                // if game not active but not over (e.g., restart triggers)
+                if (frameId) cancelAnimationFrame(frameId);
+                return;
+            }
+
+            // 1. UPDATE
+            if (gameActive) {
+                // move bin
+                if (leftPressed && binX > 5) binX -= MOVE_SPEED;
+                if (rightPressed && binX < CW - BIN_WIDTH - 5) binX += MOVE_SPEED;
+
+                // spawn falling items
+                frameCounter++;
+                if (frameCounter % SPAWN_RATE === 0) {
+                    spawnItem();
+                    // increase difficulty a bit over time
+                    if (frameCounter % (SPAWN_RATE*5) === 0 && SPAWN_RATE > 12) {
+                        // spawn a little more often – dynamic
+                    }
+                }
+
+                // move items and check collisions
+                const binRect = { x: binX, y: BIN_Y, w: BIN_WIDTH, h: BIN_HEIGHT };
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const item = items[i];
+                    item.y += item.speed;
+
+                    // collision with bin
+                    if (checkCollision(binRect, item)) {
+                        processHit(item, i);
+                        continue;
+                    }
+
+                    // out of bottom?
+                    if (item.y - item.radius > CH + 15) {
+                        itemMissed(item, i);
+                    }
+                }
+            }
+
+            // 2. DRAW
+            ctx.clearRect(0, 0, CW, CH);
+            // sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, CH);
+            gradient.addColorStop(0, '#afe0ce');
+            gradient.addColorStop(0.7, '#b1e6c5');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CW, CH);
+            drawGround();
+            drawItems();
+            drawBin();
+
+            if (!gameActive && gameOverFlag) {
+                drawGameOver();
+            }
+
+            // 3. LOOP
+            frameId = requestAnimationFrame(gameLoop);
+        }
+
+        // ----- EVENT LISTENERS -----
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                leftPressed = true;
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                rightPressed = true;
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') {
+                leftPressed = false;
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                rightPressed = false;
+                e.preventDefault();
+            }
+        });
+
+        // restart button
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            resetGame();
+        });
+
+        // menu button
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            window.location.href = 'game-overview.html';
+        });
+
+        // Prevent page scrolling on arrow keys
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+            }
+        }, false);
+
+        // start the game!
+        resetGame();
+        gameLoop();
+
+        // Cleanup animation frame (good practice)
+        window.addEventListener('beforeunload', () => {
+            if (frameId) cancelAnimationFrame(frameId);
+        });
+
+        // TODO: make it touch-friendly? quick hint for mobile (no touch controls but show message)
+        // For simplicity we keep arrow keys; canvas doesn't support touch drag here, but can be added.
+        // optional display: 
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            tipDiv.innerText = '📱 Use arrow keys (keyboard) or connect a keyboard to play. Touch controls coming soon!';
+        }
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐝 Pollinator Protector · Sustainability Arcade</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1d4f3a 0%, #236b4a 100%);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .game-container {
+      background: #1a3e2b;
+      border-radius: 40px;
+      padding: 20px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.6), inset 0 1px 4px rgba(255,255,200,0.2);
+      border: 1px solid #6fa56b;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .canvas-wrapper {
+      background: #98d6a0;
+      border-radius: 24px;
+      padding: 10px;
+      box-shadow: inset 0 0 18px #3f7352;
+    }
+
+    canvas {
+      display: block;
+      width: 700px;
+      height: 450px;
+      border-radius: 20px;
+      box-shadow: 0 0 0 3px #b6e6a7, 0 12px 28px #0f1f13;
+      background: radial-gradient(circle at 50% 30%, #c8f0c0, #79c2a0);
+      cursor: none;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      align-items: center;
+      margin-top: 18px;
+      color: #f9ffe5;
+      font-weight: bold;
+      font-size: 1.5rem;
+      text-shadow: 2px 2px 0 #1d4227;
+      padding: 0 12px;
+      flex-wrap: wrap;
+    }
+
+    .stats span {
+      background: #1b4127;
+      padding: 10px 28px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 2px solid #d1efb7;
+      box-shadow: inset 0 -3px 0 #0e2818;
+    }
+
+    .streak-badge {
+      background: linear-gradient(145deg, #ff9800, #f57c00) !important;
+      border-color: #fff3e0 !important;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    button {
+      background: #fedb5f;
+      border: none;
+      color: #1d4a2a;
+      font-weight: 700;
+      font-size: 1.5rem;
+      padding: 10px 32px;
+      border-radius: 80px;
+      border-bottom: 8px solid #c49a2b;
+      transition: 0.06s;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:active {
+      border-bottom-width: 3px;
+      transform: translateY(5px);
+    }
+
+    .info-panel {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-top: 16px;
+      background: #eefbe0;
+      padding: 16px 24px;
+      border-radius: 20px;
+      border-left: 12px solid #78b56b;
+      color: #1e4f2a;
+      font-weight: 600;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .tip-icon {
+      font-size: 1.8rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .edu-facts {
+      background: linear-gradient(145deg, #fff8e1, #fffde7);
+      padding: 20px 28px;
+      border-radius: 20px;
+      border: 3px solid #ffd54f;
+      margin-top: 16px;
+      color: #5d4037;
+      font-weight: 600;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .edu-facts strong {
+      color: #e65100;
+      font-size: 1.05rem;
+    }
+
+    .menu-section {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px dashed #4a7555;
+      max-width: 800px;
+    }
+
+    .footer {
+      color: #d2ecce;
+      margin-top: 16px;
+      text-align: center;
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <div class="canvas-wrapper">
+    <canvas id="gameCanvas" width="700" height="450"></canvas>
+  </div>
+
+  <div class="stats">
+    <span>🌼 NECTAR <span id="scoreDisplay">0</span></span>
+    <span id="streakBadge">🔥 STREAK <span id="streakDisplay">0</span></span>
+    <span>❤️ LIVES <span id="livesDisplay">3</span></span>
+    <button id="restartBtn">↻ RESTART</button>
+  </div>
+
+  <div class="info-panel" id="tipMessage">
+    <span class="tip-icon">🐝</span> Move your mouse to fly the bee to flowers. Avoid pesticides!
+  </div>
+
+  <div class="edu-facts" id="factsPanel">
+    <strong>🌍 Did You Know?</strong> <span id="factText">Bees pollinate 75% of the world's crops. Without them, we'd lose fruits, vegetables, and nuts!</span>
+  </div>
+</div>
+
+<div class="menu-section">
+  <button id="menuBtn" style="background: #4caf50; border-bottom-color: #2e7d32;">🏠 BACK TO MENU</button>
+</div>
+
+<div class="footer">
+  🌻 Every flower pollinated helps our planet. You're a hero for bees!
+</div>
+
+<script>
+  (function(){
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const streakSpan = document.getElementById('streakDisplay');
+    const streakBadge = document.getElementById('streakBadge');
+    const tipDiv = document.getElementById('tipMessage');
+    const factText = document.getElementById('factText');
+
+    // ---------- canvas dimensions ----------
+    const CW = 700, CH = 450;
+
+    // ---------- bee (player) ----------
+    let bee = {
+      x: CW/2,
+      y: CH/2,
+      radius: 18
+    };
+
+    // ---------- game state ----------
+    let score = 0;
+    let lives = 3;
+    let streak = 0;
+    let bestStreak = 0;
+    let gameActive = true;
+    let gameOverFlag = false;
+    let frameId = null;
+    let difficulty = 1;
+    let flowersCollected = 0;
+
+    // ---------- flowers ----------
+    let flowers = [];
+    const FLOWER_RADIUS = 22;
+    const MAX_FLOWERS = 12;
+    const FLOWER_SPAWN_DELAY = 40;
+    let flowerCounter = 0;
+
+    // Educational flower types with facts
+    const FLOWER_TYPES = [
+      { name: 'Sunflower', hue: 45, fact: 'Sunflowers track the sun across the sky! 🌻', nectar: 12 },
+      { name: 'Lavender', hue: 270, fact: 'Lavender attracts bees from miles away with its scent! 💜', nectar: 10 },
+      { name: 'Wildflower', hue: 30, fact: 'Native wildflowers support 4x more pollinators than non-natives! 🌼', nectar: 15 },
+      { name: 'Clover', hue: 320, fact: 'Clover fixes nitrogen in soil, enriching it naturally! 🍀', nectar: 8 },
+      { name: 'Dandelion', hue: 50, fact: 'Dandelions are crucial early-season food for bees! 🌻', nectar: 10 },
+      { name: 'Poppy', hue: 0, fact: 'Poppies provide pollen even though they have no nectar! 🌺', nectar: 11 }
+    ];
+
+    // ---------- pesticides ----------
+    let pesticides = [];
+    const PEST_RADIUS = 16;
+    const MAX_PESTICIDES = 18;
+    const PEST_SPAWN_DELAY = 28;
+    let pestCounter = 0;
+
+    // ---------- mouse tracking ----------
+    let mouseX = bee.x, mouseY = bee.y;
+    let mouseInside = true;
+
+    // Educational facts that rotate
+    const EDUCATION_FACTS = [
+      "Bees pollinate 75% of the world's crops. Without them, we'd lose fruits, vegetables, and nuts!",
+      "A single bee colony can pollinate 300 million flowers each day!",
+      "Pesticides harm bee navigation and memory. Choose organic gardens to protect them!",
+      "Bees are declining at alarming rates - 40% of bee species are threatened with extinction.",
+      "Plant native wildflowers to support local bee populations - they're 4x more effective!",
+      "Avoid using pesticides in your garden. Use natural pest control methods instead.",
+      "Bees communicate through dancing! The 'waggle dance' tells others where flowers are.",
+      "One-third of the food we eat depends on pollinators like bees, butterflies, and birds.",
+      "Create bee habitats by leaving patches of bare soil and hollow stems in your garden.",
+      "Buy local honey to support beekeepers who protect bee populations!"
+    ];
+
+    let currentFactIndex = 0;
+
+    function rotateFact() {
+      currentFactIndex = (currentFactIndex + 1) % EDUCATION_FACTS.length;
+      factText.textContent = EDUCATION_FACTS[currentFactIndex];
+    }
+
+    // Rotate facts every 12 seconds
+    setInterval(rotateFact, 12000);
+
+    // ---------- spawn flowers ----------
+    function spawnFlower() {
+      if (!gameActive) return;
+      if (flowers.length >= MAX_FLOWERS) return;
+      const x = Math.random() * (CW - 2 * FLOWER_RADIUS) + FLOWER_RADIUS;
+      const y = Math.random() * (CH - 2 * FLOWER_RADIUS) + FLOWER_RADIUS;
+      
+      const type = FLOWER_TYPES[Math.floor(Math.random() * FLOWER_TYPES.length)];
+      
+      flowers.push({
+        x, y,
+        radius: FLOWER_RADIUS,
+        color: `hsl(${type.hue}, 85%, 65%)`,
+        centerColor: `hsl(${type.hue}, 90%, 50%)`,
+        nectar: type.nectar,
+        type: type
+      });
+    }
+
+    // ---------- spawn pesticides ----------
+    function spawnPesticide() {
+      if (!gameActive) return;
+      if (pesticides.length >= MAX_PESTICIDES) return;
+      const x = Math.random() * (CW - 2 * PEST_RADIUS) + PEST_RADIUS;
+      const y = -PEST_RADIUS;
+      const speed = (1.8 + Math.random() * 2.5) * difficulty;
+      pesticides.push({
+        x, y,
+        radius: PEST_RADIUS,
+        speed: speed,
+        color: '#4a5c5e',
+        glow: '#203132'
+      });
+    }
+
+    // ---------- reset game ----------
+    function resetGame() {
+      gameActive = true;
+      gameOverFlag = false;
+      score = 0;
+      lives = 3;
+      streak = 0;
+      bestStreak = 0;
+      difficulty = 1;
+      flowersCollected = 0;
+      flowers = [];
+      pesticides = [];
+      bee.x = CW/2;
+      bee.y = CH/2;
+      mouseX = bee.x;
+      mouseY = bee.y;
+      flowerCounter = 0;
+      pestCounter = 0;
+      scoreSpan.innerText = '0';
+      livesSpan.innerText = '3';
+      streakSpan.innerText = '0';
+      streakBadge.classList.remove('streak-badge');
+      tipDiv.innerHTML = '<span class="tip-icon">🐝</span> Move your mouse to fly the bee to flowers. Avoid pesticides!';
+      currentFactIndex = 0;
+      factText.textContent = EDUCATION_FACTS[0];
+    }
+
+    // ---------- mouse handlers ----------
+    function onMouseMove(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CW / rect.width;
+      const scaleY = CH / rect.height;
+      const canvasRelativeX = (e.clientX - rect.left) * scaleX;
+      const canvasRelativeY = (e.clientY - rect.top) * scaleY;
+      mouseX = Math.min(Math.max(canvasRelativeX, bee.radius), CW - bee.radius);
+      mouseY = Math.min(Math.max(canvasRelativeY, bee.radius), CH - bee.radius);
+      mouseInside = true;
+    }
+
+    function onMouseLeave() {
+      mouseInside = false;
+    }
+
+    // ---------- collision: bee vs flower ----------
+    function collectFlower(index) {
+      const flower = flowers[index];
+      
+      score += flower.nectar;
+      streak++;
+      flowersCollected++;
+      
+      if (streak > bestStreak) {
+        bestStreak = streak;
+      }
+      
+      if (streak >= 5) {
+        const bonus = Math.floor(streak / 5) * 5;
+        score += bonus;
+        streakBadge.classList.add('streak-badge');
+      }
+      
+      scoreSpan.innerText = score;
+      streakSpan.innerText = streak;
+      
+      tipDiv.innerHTML = `<span class="tip-icon">🌸</span> ${flower.type.name} collected! +${flower.nectar} nectar. ${flower.type.fact}`;
+      
+      if (flowersCollected % 10 === 0 && difficulty < 2) {
+        difficulty += 0.1;
+      }
+      
+      flowers.splice(index, 1);
+    }
+
+    // ---------- collision: bee vs pesticide ----------
+    function hitPesticide(index) {
+      lives -= 1;
+      if (lives < 0) lives = 0;
+      livesSpan.innerText = lives;
+      
+      if (streak >= 5) {
+        streakBadge.classList.remove('streak-badge');
+      }
+      streak = 0;
+      streakSpan.innerText = '0';
+      
+      const pestMessages = [
+        'Pesticide contact! -1 life. Neonicotinoids harm bee nervous systems - avoid them!',
+        'Hit by pesticide! Organic farming protects 50% more pollinator species!',
+        'Pesticide damage! Even "bee-safe" pesticides can harm when mixed with others.',
+        'Ouch! Pesticides reduce bee colony survival by up to 85%. Support organic farming!'
+      ];
+      const msg = pestMessages[Math.floor(Math.random() * pestMessages.length)];
+      tipDiv.innerHTML = `<span class="tip-icon">⚠️</span> ${msg}`;
+      
+      pesticides.splice(index, 1);
+      if (lives <= 0) {
+        gameActive = false;
+        gameOverFlag = true;
+        tipDiv.innerHTML = '<span class="tip-icon">💔</span> GAME OVER – You collected ' + flowersCollected + ' flowers and learned so much! Restart to help more bees!';
+      }
+    }
+
+    // ---------- move bee ----------
+    function moveBee() {
+      if (!gameActive) return;
+      if (mouseInside) {
+        bee.x += (mouseX - bee.x) * 0.16;
+        bee.y += (mouseY - bee.y) * 0.16;
+      }
+      bee.x = Math.min(Math.max(bee.x, bee.radius), CW - bee.radius);
+      bee.y = Math.min(Math.max(bee.y, bee.radius), CH - bee.radius);
+    }
+
+    // ---------- draw background ----------
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, CH);
+      grad.addColorStop(0, '#b8e0b2');
+      grad.addColorStop(0.8, '#a1d3a0');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, CW, CH);
+      for (let i = 0; i < 10; i++) {
+        ctx.beginPath();
+        ctx.arc(40 + i * 70, CH - 30 + Math.sin(i) * 8, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#d9b441';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#98b06f';
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    // ---------- draw flowers ----------
+    function drawFlowers() {
+      for (let f of flowers) {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * 60) * Math.PI / 180;
+          const px = f.x + Math.cos(angle) * 15;
+          const py = f.y + Math.sin(angle) * 15;
+          ctx.beginPath();
+          ctx.ellipse(px, py, 10, 14, angle, 0, Math.PI * 2);
+          ctx.fillStyle = f.color;
+          ctx.fill();
+        }
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = f.centerColor;
+        ctx.fill();
+      }
+    }
+
+    // ---------- draw pesticides ----------
+    function drawPesticides() {
+      for (let p of pesticides) {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#201010';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius-2, 0, Math.PI*2);
+        ctx.fillStyle = '#4e6b6b';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x-3, p.y-3, p.radius-8, 0, Math.PI*2);
+        ctx.fillStyle = '#739595';
+        ctx.fill();
+        ctx.font = '20px "Segoe UI"';
+        ctx.fillStyle = '#1e2a2a';
+        ctx.fillText('☠', p.x-15, p.y+9);
+      }
+    }
+
+    // ---------- draw bee ----------
+    function drawBee() {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#3a3a1a';
+      ctx.beginPath();
+      ctx.ellipse(bee.x, bee.y, 16, 12, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#f3c74d';
+      ctx.fill();
+      ctx.fillStyle = '#3a281a';
+      ctx.beginPath();
+      ctx.ellipse(bee.x-6, bee.y-1, 5, 10, 0.2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(bee.x+6, bee.y+1, 5, 10, -0.1, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,240,0.7)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(bee.x-12, bee.y-12, 10, 6, -0.4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(bee.x+12, bee.y-14, 10, 6, 0.4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(bee.x+6, bee.y-4, 3, 0, 2*Math.PI);
+      ctx.fillStyle = '#16100c';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // ---------- draw game over ----------
+    function drawGameOverMessage() {
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#112211';
+      ctx.fillRect(CW/2-220, CH/2-80, 440, 160);
+      ctx.globalAlpha = 1;
+      
+      ctx.font = 'bold 32px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#fefee3';
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = '#4a7c5e';
+      ctx.textAlign = 'center';
+      ctx.fillText('🌼 GAME OVER', CW/2, CH/2-30);
+      
+      ctx.font = 'bold 20px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#b4e3aa';
+      ctx.fillText(`Flowers: ${flowersCollected} | Best Streak: ${bestStreak}`, CW/2, CH/2+10);
+      
+      ctx.font = '18px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#d0f0c8';
+      ctx.fillText('Every pollinator counts! 🐝', CW/2, CH/2+45);
+      
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
+    }
+
+    // ---------- main game loop ----------
+    function gameLoop() {
+      if (!gameActive && !gameOverFlag) {
+        if (frameId) cancelAnimationFrame(frameId);
+        return;
+      }
+
+      if (gameActive) {
+        moveBee();
+
+        flowerCounter++;
+        if (flowerCounter >= FLOWER_SPAWN_DELAY) {
+          spawnFlower();
+          flowerCounter = 0;
+        }
+
+        pestCounter++;
+        if (pestCounter >= PEST_SPAWN_DELAY) {
+          spawnPesticide();
+          pestCounter = 0;
+        }
+
+        for (let i = pesticides.length - 1; i >= 0; i--) {
+          pesticides[i].y += pesticides[i].speed;
+          if (pesticides[i].y - pesticides[i].radius > CH + 20) {
+            pesticides.splice(i, 1);
+          }
+        }
+
+        for (let i = flowers.length - 1; i >= 0; i--) {
+          const dx = bee.x - flowers[i].x;
+          const dy = bee.y - flowers[i].y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < bee.radius + flowers[i].radius) {
+            collectFlower(i);
+          }
+        }
+
+        for (let i = pesticides.length - 1; i >= 0; i--) {
+          const dx = bee.x - pesticides[i].x;
+          const dy = bee.y - pesticides[i].y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < bee.radius + pesticides[i].radius) {
+            hitPesticide(i);
+            if (lives === 0) break;
+          }
+        }
+      }
+
+      ctx.clearRect(0, 0, CW, CH);
+      drawBackground();
+      drawFlowers();
+      drawPesticides();
+      drawBee();
+
+      if (gameOverFlag && !gameActive) {
+        drawGameOverMessage();
+      }
+
+      frameId = requestAnimationFrame(gameLoop);
+    }
+
+    // ---------- event binding ----------
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseleave', onMouseLeave);
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const scaleX = CW / rect.width;
+      const scaleY = CH / rect.height;
+      mouseX = Math.min(Math.max((touch.clientX - rect.left) * scaleX, bee.radius), CW - bee.radius);
+      mouseY = Math.min(Math.max((touch.clientY - rect.top) * scaleY, bee.radius), CH - bee.radius);
+      mouseInside = true;
+    });
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); mouseInside = false; });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      resetGame();
+    });
+
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      window.location.href = 'game-overview.html';
+    });
+
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('dragstart', (e) => e.preventDefault());
+
+    resetGame();
+    gameLoop();
+
+    window.addEventListener('beforeunload', () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    });
+  })();
+</script>
+</body>
+</html>
