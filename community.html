@@ -407,8 +407,22 @@
             color: var(--primary-green);
         }
 
-        .action-btn.liked {
+        .action-btn.like-btn {
+            font-weight: 500;
+        }
+
+        .action-btn.like-btn:hover {
+            background: rgba(244, 67, 54, 0.1);
             color: var(--danger-red);
+        }
+
+        .action-btn.like-btn.liked {
+            color: var(--danger-red);
+            background: rgba(244, 67, 54, 0.05);
+        }
+
+        .action-btn.like-btn.liked:hover {
+            background: rgba(244, 67, 54, 0.15);
         }
 
         .action-btn.delete-btn {
@@ -1285,12 +1299,19 @@
                 </div>
                 
                 <div class="post-actions-bar">
-                    <button class="action-btn ${userLiked ? 'liked' : ''}" 
-                            onclick="toggleLike('${post.id}')"
-                            data-like-count="${post.likes ? post.likes.length : 0}">
-                        ${userLiked ? '❤️' : '🤍'} 
-                        <span>${post.likes ? post.likes.length : 0}</span>
-                    </button>
+                    ${currentUser ? `
+                        <button class="action-btn like-btn ${userLiked ? 'liked' : ''}" 
+                                onclick="toggleLike('${post.id}')"
+                                title="${userLiked ? 'Unlike this post' : 'Like this post'}">
+                            ${userLiked ? '❤️' : '🤍'} 
+                            <span>${post.likes ? post.likes.length : 0}</span>
+                        </button>
+                    ` : `
+                        <span class="action-btn" style="cursor: default;">
+                            ${post.likes && post.likes.length > 0 ? '❤️' : '🤍'} 
+                            <span>${post.likes ? post.likes.length : 0}</span>
+                        </span>
+                    `}
                     
                     <button class="action-btn" onclick="focusComment('${post.id}')">
                         💬 Comment
