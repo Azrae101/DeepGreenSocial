@@ -312,9 +312,11 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
             gap: 15px;
             flex-wrap: wrap;
+            border-bottom: 1px solid transparent;
         }
 
         .post-user {
@@ -330,6 +332,7 @@
             gap: 10px;
             flex-shrink: 0;
             align-items: flex-start;
+            margin-left: auto;
         }
 
         .user-avatar {
@@ -356,13 +359,15 @@
         }
 
         .post-content {
-            margin: 20px 0;
+            margin: 0 0 20px 0;
+            clear: both;
         }
 
         .post-text {
             font-size: 1.05em;
             line-height: 1.6;
             margin-bottom: 15px;
+            word-wrap: break-word;
         }
 
         .post-image {
@@ -375,10 +380,11 @@
         .post-actions-bar {
             display: flex;
             gap: 20px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
             clear: both;
+            position: relative;
         }
 
         .action-btn {
@@ -540,6 +546,37 @@
         .comment-text {
             font-size: 0.95em;
             line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .comment-like-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.85em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .comment-like-btn:hover {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--primary-green);
+        }
+
+        .comment-like-btn.liked {
+            color: var(--danger-red);
         }
 
         .delete-comment {
@@ -548,7 +585,7 @@
             border: none;
             cursor: pointer;
             font-size: 0.8em;
-            padding: 2px 6px;
+            padding: 4px 8px;
             border-radius: 4px;
         }
 
@@ -711,11 +748,17 @@
             .post-header {
                 flex-direction: column;
                 align-items: flex-start;
+                padding-bottom: 20px;
             }
 
             .post-header-actions {
                 width: 100%;
                 justify-content: flex-end;
+                margin-top: 15px;
+                margin-left: 0;
+            }
+
+            .post-content {
                 margin-top: 10px;
             }
 
@@ -1286,36 +1329,57 @@
             // Sort comments by timestamp (newest first)
             comments.sort((a, b) => b.createdAt - a.createdAt);
             
-            return comments.map(comment => `
-                <div class="comment">
-                    <div class="comment-avatar">
-                        ${comment.userDisplayName ? comment.userDisplayName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                    <div class="comment-content">
-                        <div class="comment-header">
-                            <span class="comment-user">
-                                ${comment.userDisplayName || comment.userId}
-                                ${(comment.userDisplayName === ADMIN_USERNAME || comment.userId === ADMIN_USERNAME) ? '<span class="admin-badge">ADMIN</span>' : ''}
-                            </span>
-                            <span class="comment-time">
-                                ${new Date(comment.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </span>
+            return comments.map(comment => {
+                // Initialize likes array if it doesn't exist
+                if (!comment.likes) comment.likes = [];
+                
+                const userLiked = currentUser && comment.likes.includes(currentUser.username);
+                const likeCount = comment.likes.length;
+                
+                return `
+                    <div class="comment">
+                        <div class="comment-avatar">
+                            ${comment.userDisplayName ? comment.userDisplayName.charAt(0).toUpperCase() : 'U'}
                         </div>
-                        <div class="comment-text">${escapeHtml(comment.text)}</div>
-                        ${(currentUserIsAdmin || comment.userId === currentUser.username) ? `
-                            <button class="delete-comment" 
-                                    onclick="deleteComment('${comment.id}', '${comment.postId}')">
-                                Delete
-                            </button>
-                        ` : ''}
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-user">
+                                    ${comment.userDisplayName || comment.userId}
+                                    ${(comment.userDisplayName === ADMIN_USERNAME || comment.userId === ADMIN_USERNAME) ? '<span class="admin-badge">ADMIN</span>' : ''}
+                                </span>
+                                <span class="comment-time">
+                                    ${new Date(comment.createdAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
+                            <div class="comment-text">${escapeHtml(comment.text)}</div>
+                            <div class="comment-actions">
+                                ${currentUser ? `
+                                    <button class="comment-like-btn ${userLiked ? 'liked' : ''}" 
+                                            onclick="toggleCommentLike('${comment.id}', '${comment.postId}')">
+                                        ${userLiked ? '❤️' : '🤍'} 
+                                        <span>${likeCount}</span>
+                                    </button>
+                                ` : `
+                                    <span style="font-size: 0.85em; color: #888;">
+                                        ${likeCount > 0 ? `❤️ ${likeCount}` : ''}
+                                    </span>
+                                `}
+                                ${(currentUserIsAdmin || (currentUser && comment.userId === currentUser.username)) ? `
+                                    <button class="delete-comment" 
+                                            onclick="deleteComment('${comment.id}', '${comment.postId}')">
+                                        Delete
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // ====================
@@ -1380,6 +1444,7 @@
                     userId: currentUser.username,
                     userDisplayName: currentUser.firstName || currentUser.username,
                     text: commentText,
+                    likes: [],
                     createdAt: Date.now()
                 };
                 
@@ -1409,6 +1474,62 @@
             } catch (error) {
                 console.error('Error adding comment:', error);
                 showToast('Error adding comment. Please try again.', 'error');
+            }
+        }
+
+        async function toggleCommentLike(commentId, postId) {
+            if (!currentUser) {
+                showToast('Please login to like comments', 'info');
+                return;
+            }
+            
+            try {
+                const postRef = db.collection('posts').doc(postId);
+                const postDoc = await postRef.get();
+                
+                if (!postDoc.exists) return;
+                
+                const post = postDoc.data();
+                const comments = post.comments || [];
+                
+                // Find the comment
+                const commentIndex = comments.findIndex(c => c.id === commentId);
+                if (commentIndex === -1) return;
+                
+                const comment = comments[commentIndex];
+                
+                // Initialize likes array if it doesn't exist
+                if (!comment.likes) {
+                    comment.likes = [];
+                }
+                
+                // Toggle like
+                const userIndex = comment.likes.indexOf(currentUser.username);
+                
+                if (userIndex > -1) {
+                    // Unlike
+                    comment.likes.splice(userIndex, 1);
+                } else {
+                    // Like
+                    comment.likes.push(currentUser.username);
+                    
+                    // Award 1 point for liking a comment
+                    updateUserPoints(1, 'Liked a comment');
+                }
+                
+                // Update comments array
+                comments[commentIndex] = comment;
+                
+                // Update in Firestore
+                await postRef.update({ comments });
+                
+                // Refresh comments display
+                const commentsList = document.getElementById(`comments-list-${postId}`);
+                commentsList.innerHTML = renderComments(comments);
+                
+            } catch (error) {
+                console.error('Error toggling comment like:', error);
+                showToast('Error updating like. Please try again.', 'error');
             }
         }
 
