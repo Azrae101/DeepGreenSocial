@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Settings - SustainaLearn</title>
+    <link rel="icon" type="image/jpeg" href="images/logodgi.jpg">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --accent-color: #ff9800;
+            --light-gray: #f5f5f5;
+            --dark-gray: #424242;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+            position: relative;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        nav ul li a:hover {
+            background-color: var(--light-green);
+            color: var(--white);
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--white);
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            z-index: 1000;
+            margin-top: 5px;
+        }
+
+        .dropdown-content a {
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            color: var(--dark-gray);
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--light-gray);
+            color: var(--primary-green);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown > a::after {
+            content: ' ▼';
+            font-size: 0.7em;
+            margin-left: 5px;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-login {
+            background-color: transparent;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+
+        .btn-register {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Settings Container */
+        .settings-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .settings-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .settings-header h2 {
+            font-size: 32px;
+            color: var(--dark-gray);
+            margin-bottom: 10px;
+        }
+
+        .settings-header p {
+            font-size: 16px;
+            color: #777;
+        }
+
+        .settings-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .settings-section h3 {
+            font-size: 20px;
+            color: var(--primary-green);
+            margin-bottom: 20px;
+        }
+
+        .current-info {
+            background-color: #e8f5e9;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--dark-green);
+        }
+
+        .current-info strong {
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            background-color: var(--white);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .form-group input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 12px 24px;
+            background-color: var(--primary-green);
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 16px;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background-color: var(--dark-green);
+        }
+
+        .btn-submit:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            padding: 12px 24px;
+            background-color: transparent;
+            color: var(--dark-gray);
+            font-weight: 500;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+
+        .btn-cancel:hover {
+            background-color: #f0f0f0;
+        }
+
+        .flash-message {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Re-authentication Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            animation: slideInModal 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInModal {
+            from { 
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--dark-gray);
+            font-size: 22px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: var(--dark-gray);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 40px 0 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--accent-color);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                padding: 15px 0;
+            }
+
+            nav ul {
+                margin: 15px 0;
+            }
+
+            .auth-buttons {
+                margin-top: 10px;
+            }
+
+            .settings-container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="images/logodgi.jpg" alt="Social & Green Logo" style="height: 40px; width: auto;">
+                    <h1>Social & Green</h1>
+                </a>
+            </div>
+            <nav>
+                <ul>
+                    <li class="dropdown">
+                        <a href="index.html">Home</a>
+                        <div class="dropdown-content">
+                            <a href="index.html#events">Events</a>
+                            <a href="index.html#news">News</a>
+                            <a href="index.html#map">Sustainable Aarhus</a>
+                        </div>
+                    </li>
+                    <li><a href="game-overview.html">Games</a></li>
+                    <li><a href="community.html">Community</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons" id="authButtons">
+                <button class="btn btn-login" onclick="window.location.href='login.html'">Login</button>
+                <button class="btn btn-register" onclick="window.location.href='register.html'">Register</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+        <div class="settings-header">
+            <h2>⚙️ Account Settings</h2>
+            <p>Manage your account information and security</p>
+        </div>
+
+        <!-- Flash Messages -->
+        <div id="flashMessages"></div>
+
+        <!-- Update Name Section -->
+        <div class="settings-section">
+            <h3 style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">👤</span> Your Name</h3>
+            <div class="current-info">
+                <strong>Current:</strong> <span id="currentName">Loading...</span>
+            </div>
+            <form id="nameForm">
+                <div class="form-group">
+                    <label for="newFirstName">First Name</label>
+                    <input type="text" id="newFirstName" name="newFirstName" placeholder="Enter your first name" required>
+                </div>
+                <div class="form-group">
+                    <label for="newLastName">Last Name</label>
+                    <input type="text" id="newLastName" name="newLastName" placeholder="Enter your last name">
+                    <div class="help-text">Last name is optional.</div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Update Name</button>
+                    <button type="button" class="btn-cancel" onclick="document.getElementById('nameForm').reset()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Update Username Section -->
+        <div class="settings-section">
+            <h3 style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">@</span> Username</h3>
+            <div class="current-info">
+                <strong>Current:</strong> <span id="currentUsername">Loading...</span>
+            </div>
+            <form id="usernameForm">
+                <div class="form-group">
+                    <label for="newUsername">New Username</label>
+                    <input type="text" id="newUsername" name="newUsername" placeholder="Enter new username" required>
+                    <div class="help-text">Your username is displayed to other users in the community.</div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Update Username</button>
+                    <button type="button" class="btn-cancel" onclick="document.getElementById('newUsername').value=''">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Update Email Section -->
+        <div class="settings-section">
+            <h3 style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">📧</span> Email Address</h3>
+            <div class="current-info">
+                <strong>Current:</strong> <span id="currentEmail">Loading...</span>
+            </div>
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="newEmail">New Email Address</label>
+                    <input type="email" id="newEmail" name="newEmail" placeholder="Enter new email address" required>
+                    <div class="help-text">A verification email will be sent to your new address.</div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Update Email</button>
+                    <button type="button" class="btn-cancel" onclick="document.getElementById('newEmail').value=''">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Update Password Section -->
+        <div class="settings-section">
+            <h3 style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">🔒</span> Password</h3>
+            <div class="current-info">
+                <strong>Security:</strong> Keep your password secure and unique
+            </div>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required minlength="6">
+                    <div class="help-text">Password must be at least 6 characters long.</div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required minlength="6">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Update Password</button>
+                    <button type="button" class="btn-cancel" onclick="document.getElementById('passwordForm').reset()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Re-authentication Modal -->
+    <div id="reauthModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔐 Verify Your Identity</h3>
+                <span class="close" onclick="closeReauthModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>For security reasons, please enter your current password to continue.</p>
+                
+                <div id="modalFlashMessages"></div>
+                
+                <form id="reauthForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter your current password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Verify</button>
+                        <button type="button" class="btn-cancel" onclick="closeReauthModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>SustainaLearn</h3>
+                    <p>Making sustainability accessible, engaging, and actionable for everyone.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="game-overview.html">Games</a></li>
+                        <li><a href="community.html">Community</a></li>
+                        <li><a href="points.html">My Points</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li>socialandgreen@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 SustainaLearn. All rights reserved. | Designed with 💚 for a greener planet</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let pendingAction = null; // Store pending action after re-authentication
+
+        // Check if user is logged in
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (!firebaseUser) {
+                // Redirect to login if not authenticated
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Get user data from Firestore
+                const userRef = db.collection('users').doc(firebaseUser.uid);
+                const userSnap = await userRef.get();
+
+                if (userSnap.exists) {
+                    const userData = userSnap.data();
+                    currentUser = {
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        username: userData.username || firebaseUser.email.split('@')[0],
+                        firstName: userData.firstName || 'User',
+                        ...userData
+                    };
+
+                    // Update auth buttons
+                    updateAuthButtons();
+
+                    // Display current information
+                    const fullName = currentUser.firstName + (currentUser.lastName ? ' ' + currentUser.lastName : '');
+                    document.getElementById('currentName').textContent = fullName;
+                    document.getElementById('currentUsername').textContent = currentUser.username;
+                    document.getElementById('currentEmail').textContent = currentUser.email;
+                    
+                    // Pre-fill name form
+                    document.getElementById('newFirstName').value = currentUser.firstName || '';
+                    document.getElementById('newLastName').value = currentUser.lastName || '';
+                } else {
+                    console.error('User document not found');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showMessage('Error loading your data. Please try again.', 'error');
+            }
+        });
+
+        // Update auth buttons
+        function updateAuthButtons() {
+            const authButtons = document.getElementById('authButtons');
+            if (currentUser) {
+                authButtons.innerHTML = `
+                    <div style="position: relative; display: inline-block; margin-right: 15px;">
+                        <span id="userMenuToggle" style="color: var(--primary-green); cursor: pointer; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">Welcome, ${currentUser.firstName} ▼</span>
+                        <div id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 4px; margin-top: 5px; z-index: 1000;">
+                            <a href="points.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">📊 My Points</a>
+                            <a href="user-settings.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">⚙️ Settings</a>
+                            <a href="#" id="logoutBtn" style="display: block; padding: 12px 16px; color: #d32f2f; text-decoration: none; border-top: 1px solid #e0e0e0; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">🚪 Logout</a>
+                        </div>
+                    </div>
+                `;
+
+                // Add click handler for user menu toggle
+                const menuToggle = document.getElementById('userMenuToggle');
+                const dropdown = document.getElementById('userDropdown');
+                
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', () => {
+                    dropdown.style.display = 'none';
+                });
+                
+                dropdown.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await auth.signOut();
+                        localStorage.removeItem('sustainalearn_currentUser');
+                        window.location.href = 'index.html';
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                });
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const flashMessages = document.getElementById('flashMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flash-message flash-${type}`;
+            messageDiv.textContent = message;
+            flashMessages.appendChild(messageDiv);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+
+            // Scroll to message
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Show modal message
+        function showModalMessage(message, type) {
+            const modalFlashMessages = document.getElementById('modalFlashMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flash-message flash-${type}`;
+            messageDiv.textContent = message;
+            modalFlashMessages.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Open re-authentication modal
+        function openReauthModal(action) {
+            pendingAction = action;
+            document.getElementById('reauthModal').style.display = 'block';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('modalFlashMessages').innerHTML = '';
+        }
+
+        // Close re-authentication modal
+        function closeReauthModal() {
+            document.getElementById('reauthModal').style.display = 'none';
+            pendingAction = null;
+        }
+
+        // Re-authentication form handler
+        document.getElementById('reauthForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const password = document.getElementById('currentPassword').value;
+            const submitBtn = this.querySelector('.btn-submit');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying...';
+
+            try {
+                // Re-authenticate user
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    auth.currentUser.email,
+                    password
+                );
+
+                await auth.currentUser.reauthenticateWithCredential(credential);
+
+                // Close modal
+                closeReauthModal();
+
+                // Execute pending action
+                if (pendingAction) {
+                    await pendingAction();
+                }
+
+            } catch (error) {
+                console.error('Re-authentication error:', error);
+                let errorMessage = 'Verification failed. Please check your password.';
+
+                if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Too many attempts. Please try again later.';
+                }
+
+                showModalMessage(errorMessage, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Verify';
+            }
+        });
+
+        // Name form handler
+        document.getElementById('nameForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newFirstName = document.getElementById('newFirstName').value.trim();
+            const newLastName = document.getElementById('newLastName').value.trim();
+
+            if (!newFirstName) {
+                showMessage('Please enter a first name.', 'error');
+                return;
+            }
+
+            if (newFirstName === currentUser.firstName && newLastName === (currentUser.lastName || '')) {
+                showMessage('This is already your current name.', 'info');
+                return;
+            }
+
+            const submitBtn = this.querySelector('.btn-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+
+            try {
+                // Update name in Firestore
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    firstName: newFirstName,
+                    lastName: newLastName,
+                    name: newFirstName + (newLastName ? ' ' + newLastName : '')
+                });
+
+                // Update displayName in Firebase Auth
+                await auth.currentUser.updateProfile({
+                    displayName: newFirstName + (newLastName ? ' ' + newLastName : '')
+                });
+
+                // Update local data
+                currentUser.firstName = newFirstName;
+                currentUser.lastName = newLastName;
+                currentUser.name = newFirstName + (newLastName ? ' ' + newLastName : '');
+                
+                const fullName = newFirstName + (newLastName ? ' ' + newLastName : '');
+                document.getElementById('currentName').textContent = fullName;
+
+                // Update localStorage
+                const cachedUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser') || '{}');
+                cachedUser.firstName = newFirstName;
+                cachedUser.lastName = newLastName;
+                cachedUser.name = fullName;
+                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(cachedUser));
+
+                // Update auth buttons to reflect new name
+                updateAuthButtons();
+
+                showMessage('Name updated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Name update error:', error);
+                showMessage('Failed to update name. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Update Name';
+            }
+        });
+
+        // Username form handler
+        document.getElementById('usernameForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newUsername = document.getElementById('newUsername').value.trim();
+
+            if (!newUsername) {
+                showMessage('Please enter a username.', 'error');
+                return;
+            }
+
+            if (newUsername === currentUser.username) {
+                showMessage('This is already your current username.', 'info');
+                return;
+            }
+
+            const submitBtn = this.querySelector('.btn-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+
+            try {
+                // Update username in Firestore
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    username: newUsername
+                });
+
+                // Update local data
+                currentUser.username = newUsername;
+                document.getElementById('currentUsername').textContent = newUsername;
+
+                // Update localStorage
+                const cachedUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser') || '{}');
+                cachedUser.username = newUsername;
+                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(cachedUser));
+
+                showMessage('Username updated successfully!', 'success');
+                document.getElementById('newUsername').value = '';
+
+            } catch (error) {
+                console.error('Username update error:', error);
+                showMessage('Failed to update username. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Update Username';
+            }
+        });
+
+        // Email form handler
+        document.getElementById('emailForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newEmail = document.getElementById('newEmail').value.trim();
+
+            if (!newEmail) {
+                showMessage('Please enter an email address.', 'error');
+                return;
+            }
+
+            if (newEmail === currentUser.email) {
+                showMessage('This is already your current email.', 'info');
+                return;
+            }
+
+            // Require re-authentication before email change
+            openReauthModal(async () => {
+                const submitBtn = document.querySelector('#emailForm .btn-submit');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+
+                try {
+                    // Update email in Firebase Auth
+                    await auth.currentUser.updateEmail(newEmail);
+
+                    // Send verification email to new address
+                    await auth.currentUser.sendEmailVerification();
+
+                    // Update email in Firestore
+                    const userRef = db.collection('users').doc(currentUser.uid);
+                    await userRef.update({
+                        email: newEmail
+                    });
+
+                    // Update local data
+                    currentUser.email = newEmail;
+                    document.getElementById('currentEmail').textContent = newEmail;
+
+                    // Update localStorage
+                    const cachedUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser') || '{}');
+                    cachedUser.email = newEmail;
+                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(cachedUser));
+
+                    showMessage('Email updated successfully! Please check your new email for verification.', 'success');
+                    document.getElementById('newEmail').value = '';
+
+                } catch (error) {
+                    console.error('Email update error:', error);
+                    let errorMessage = 'Failed to update email. Please try again.';
+
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'This email is already in use by another account.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Invalid email format.';
+                    } else if (error.code === 'auth/requires-recent-login') {
+                        errorMessage = 'Please log out and log back in, then try again.';
+                    }
+
+                    showMessage(errorMessage, 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update Email';
+                }
+            });
+        });
+
+        // Password form handler
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!newPassword || !confirmPassword) {
+                showMessage('Please fill in all password fields.', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('Password must be at least 6 characters long.', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showMessage('Passwords do not match.', 'error');
+                return;
+            }
+
+            // Require re-authentication before password change
+            openReauthModal(async () => {
+                const submitBtn = document.querySelector('#passwordForm .btn-submit');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+
+                try {
+                    // Update password in Firebase Auth
+                    await auth.currentUser.updatePassword(newPassword);
+
+                    showMessage('Password updated successfully!', 'success');
+                    document.getElementById('passwordForm').reset();
+
+                } catch (error) {
+                    console.error('Password update error:', error);
+                    let errorMessage = 'Failed to update password. Please try again.';
+
+                    if (error.code === 'auth/weak-password') {
+                        errorMessage = 'Password is too weak. Please use a stronger password.';
+                    } else if (error.code === 'auth/requires-recent-login') {
+                        errorMessage = 'Please log out and log back in, then try again.';
+                    }
+
+                    showMessage(errorMessage, 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update Password';
+                }
+            });
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('reauthModal');
+            if (e.target === modal) {
+                closeReauthModal();
+            }
+        });
+    </script>
+</body>
+</html>

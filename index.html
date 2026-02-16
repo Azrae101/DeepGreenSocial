@@ -1427,10 +1427,37 @@
                 const userData = JSON.parse(cachedUser);
                 const firstName = userData?.firstName || 'User';
                 authButtons.innerHTML = `
-                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${firstName}</span>
-                    <a href="points.html" class="btn btn-login">My Points</a>
-                    <button class="btn btn-register" id="logoutBtn">Sign Out</button>
+                    <div style="position: relative; display: inline-block; margin-right: 15px;">
+                        <span id="userMenuToggle" style="color: var(--primary-green); cursor: pointer; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">Welcome, ${firstName} ▼</span>
+                        <div id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 4px; margin-top: 5px; z-index: 1000;">
+                            <a href="points.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">📊 My Points</a>
+                            <a href="user-settings.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">⚙️ Settings</a>
+                            <a href="#" id="logoutBtn" style="display: block; padding: 12px 16px; color: #d32f2f; text-decoration: none; border-top: 1px solid #e0e0e0; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">🚪 Sign Out</a>
+                        </div>
+                    </div>
                 `;
+                
+                // Add click handler for user menu toggle
+                setTimeout(() => {
+                    const menuToggle = document.getElementById('userMenuToggle');
+                    const dropdown = document.getElementById('userDropdown');
+                    
+                    if (menuToggle && dropdown) {
+                        menuToggle.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                        });
+                        
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', () => {
+                            dropdown.style.display = 'none';
+                        });
+                        
+                        dropdown.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                        });
+                    }
+                }, 0);
             } catch (e) {
                 // Invalid cached data, will be fixed by Firebase
             }
@@ -1450,12 +1477,36 @@
                 const firstName = userData?.firstName || user.displayName?.split(' ')[0] || 'User';
                 
                 authButtons.innerHTML = `
-                    <span style="margin-right: 15px; color: var(--primary-green);">Welcome, ${firstName}</span>
-                    <a href="points.html" class="btn btn-login">My Points</a>
-                    <button class="btn btn-register" id="logoutBtn">Sign Out</button>
+                    <div style="position: relative; display: inline-block; margin-right: 15px;">
+                        <span id="userMenuToggle" style="color: var(--primary-green); cursor: pointer; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">Welcome, ${firstName} ▼</span>
+                        <div id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 4px; margin-top: 5px; z-index: 1000;">
+                            <a href="points.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">📊 My Points</a>
+                            <a href="user-settings.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">⚙️ Settings</a>
+                            <a href="#" id="logoutBtn" style="display: block; padding: 12px 16px; color: #d32f2f; text-decoration: none; border-top: 1px solid #e0e0e0; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#f0f0f0'" onmouseout="this.style.backgroundColor='transparent'">🚪 Sign Out</a>
+                        </div>
+                    </div>
                 `;
                 
-                document.getElementById('logoutBtn').addEventListener('click', function() {
+                // Add click handler for user menu toggle
+                const menuToggle = document.getElementById('userMenuToggle');
+                const dropdown = document.getElementById('userDropdown');
+                
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', () => {
+                    dropdown.style.display = 'none';
+                });
+                
+                dropdown.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                    e.preventDefault();
                     auth.signOut().then(() => {
                         window.location.reload();
                     });
