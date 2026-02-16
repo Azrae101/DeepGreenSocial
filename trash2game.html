@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>♻️ EcoCatcher – Sustainability Arcade</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -41,12 +48,13 @@
 
         canvas {
             display: block;
-            width: 700px;
-            height: 450px;
+            width: 900px;
+            height: 600px;
             border-radius: 20px;
             box-shadow: 0 0 0 3px #7fb381, 0 12px 28px black;
-            background: radial-gradient(circle at 50% 30%, #a8e6cf, #469970);
+            background: linear-gradient(180deg, #87ceeb 0%, #b0d8f0 50%, #a8d5a3 100%);
             cursor: none;
+            touch-action: none;
         }
 
         .stats {
@@ -59,6 +67,8 @@
             font-size: 1.6rem;
             text-shadow: 2px 2px 0 #173e1f;
             padding: 0 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .stats span {
@@ -70,6 +80,28 @@
             gap: 12px;
             border: 2px solid #b1e6a0;
             box-shadow: inset 0 -3px 0 #0b1f0e;
+            transition: all 0.3s ease;
+        }
+        
+        .stats span.pulse-anim {
+            animation: statsPulse 0.3s ease;
+        }
+        
+        @keyframes statsPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); background: #1f5a2e; }
+            100% { transform: scale(1); }
+        }
+        
+        .combo-indicator {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border-color: #ffcd3c !important;
+            animation: comboGlow 1s infinite alternate;
+        }
+        
+        @keyframes comboGlow {
+            from { box-shadow: inset 0 -3px 0 #c44a1c, 0 0 10px rgba(255, 107, 107, 0.5); }
+            to { box-shadow: inset 0 -3px 0 #c44a1c, 0 0 20px rgba(255, 107, 107, 0.8); }
         }
 
         .controls {
@@ -129,11 +161,12 @@
 <div class="game-wrapper">
     <div class="game-panel">
         <!-- Canvas for game -->
-        <canvas id="gameCanvas" width="700" height="450"></canvas>
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
 
         <!-- Score & lives -->
         <div class="stats">
-            <span>♻️ SCORE <span id="scoreDisplay">0</span></span>
+            <span id="scoreSpanEl">♻️ SCORE <span id="scoreDisplay">0</span></span>
+            <span id="comboSpanEl">🔥 COMBO <span id="comboDisplay">x1</span></span>
             <span>❤️ LIVES <span id="livesDisplay">3</span></span>
             <button id="restartBtn">↻ RESTART</button>
             <button id="menuBtn" style="background: #4caf50; border-bottom-color: #2e7d32;">🏠 MENU</button>
@@ -162,12 +195,16 @@
         const ctx = canvas.getContext('2d');
         const scoreSpan = document.getElementById('scoreDisplay');
         const livesSpan = document.getElementById('livesDisplay');
+        const comboSpan = document.getElementById('comboDisplay');
+        const scoreSpanEl = document.getElementById('scoreSpanEl');
+        const comboSpanEl = document.getElementById('comboSpanEl');
         const tipDiv = document.getElementById('tipMessage');
 
         // ----- GAME DIMENSIONS -----
-        const CW = 700, CH = 450;
-        const BIN_WIDTH = 140, BIN_HEIGHT = 80;
+        const CW = 900, CH = 600;
+        const BIN_WIDTH = 120, BIN_HEIGHT = 85; // Made narrower
         const BIN_Y = CH - BIN_HEIGHT - 15;  // bottom area
+        const COLLISION_BONUS = 15; // Extra pixels for more forgiving collision
 
         // ----- GAME STATE -----
         let binX = (CW - BIN_WIDTH) / 2;
@@ -176,18 +213,35 @@
         let gameActive = true;
         let gameOverFlag = false;
         let frameId = null;
+        let combo = 0;
+        let multiplier = 1;
+        let totalItemsCaught = 0;
+        let difficulty = 1;
 
         // ----- ITEMS -----
         let items = [];
         const ITEM_RADIUS = 22;
-        const MAX_ITEMS = 20;
-        const SPAWN_RATE = 35; // frames between spawns (higher = slower)
+        const MAX_ITEMS = 5; // Way fewer items for manageable gameplay
+        let SPAWN_RATE = 80; // Much slower spawn rate (higher = slower)
         let frameCounter = 0;
+        
+        // Firebase user tracking
+        let currentUser = null;
+        let pointsEarnedThisGame = 0;
+        
+        // Visual effects
+        let particles = [];
+        let floatingTexts = [];
+        let powerUps = [];
+        let activePowerUp = null;
+        let powerUpTimer = 0;
 
         // movement flags
         let leftPressed = false;
         let rightPressed = false;
         const MOVE_SPEED = 9;
+        let touchStartX = null;
+        let touchCurrentX = null;
 
         // ----- ITEM TYPES -----
         const TYPES = [
@@ -211,37 +265,242 @@
             { name: 'Dirty Container', emoji: '🗑️', color: '#5d5d5d', good: false, score: -10, tip: 'Dirty containers go to landfill!', bg: '#b0b0b0' },
             { name: 'Plastic Film', emoji: '🛍️', color: '#78909c', good: false, score: -8, tip: 'Plastic film is not recyclable!', bg: '#b0bec5' }
         ];
+        
+        // Power-ups
+        const POWERUP_TYPES = [
+            { name: 'Magnet', emoji: '🧲', color: '#ff6b6b', duration: 300, effect: 'magnet' },
+            { name: 'Slow Time', emoji: '⏰', color: '#4ecdc4', duration: 300, effect: 'slow' },
+            { name: '2x Points', emoji: '✨', color: '#ffd93d', duration: 300, effect: 'double' }
+        ];
 
         // ----- HELPER FUNCTIONS -----
         function random(min, max) {
             return Math.random() * (max - min) + min;
+        }
+        
+        // Draw neighborhood background
+        function drawNeighborhood() {
+            // Sky with gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, CH * 0.7);
+            skyGradient.addColorStop(0, '#87ceeb');
+            skyGradient.addColorStop(0.5, '#b0d8f0');
+            skyGradient.addColorStop(1, '#d4e8f5');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, CW, CH * 0.7);
+            
+            // Sun
+            ctx.shadowColor = 'rgba(255, 220, 100, 0.5)';
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(150, 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Clouds
+            drawCloud(250, 60, 0.8);
+            drawCloud(600, 100, 1);
+            drawCloud(800, 70, 0.7);
+            
+            // Distant hills
+            ctx.fillStyle = '#6b9e78';
+            ctx.beginPath();
+            ctx.moveTo(0, CH * 0.5);
+            ctx.quadraticCurveTo(CW * 0.25, CH * 0.35, CW * 0.5, CH * 0.45);
+            ctx.quadraticCurveTo(CW * 0.75, CH * 0.55, CW, CH * 0.4);
+            ctx.lineTo(CW, CH * 0.7);
+            ctx.lineTo(0, CH * 0.7);
+            ctx.fill();
+            
+            // Buildings in distance
+            drawBuilding(100, CH * 0.42, 80, 120, '#8b7355', '#6b5345');
+            drawBuilding(200, CH * 0.45, 70, 100, '#9b8365', '#7b6355');
+            drawBuilding(320, CH * 0.48, 90, 90, '#a08060', '#806050');
+            drawBuilding(500, CH * 0.46, 75, 110, '#8b7355', '#6b5345');
+            drawBuilding(620, CH * 0.44, 85, 130, '#9b8365', '#7b6355');
+            drawBuilding(750, CH * 0.47, 70, 95, '#a08060', '#806050');
+            
+            // Trees scattered around
+            drawTree(60, CH * 0.55, 0.8);
+            drawTree(440, CH * 0.58, 0.9);
+            drawTree(700, CH * 0.56, 0.85);
+            drawTree(850, CH * 0.59, 0.75);
+            
+            // Grass ground
+            const grassGradient = ctx.createLinearGradient(0, CH * 0.7, 0, CH);
+            grassGradient.addColorStop(0, '#7cb342');
+            grassGradient.addColorStop(0.5, '#689f38');
+            grassGradient.addColorStop(1, '#558b2f');
+            ctx.fillStyle = grassGradient;
+            ctx.fillRect(0, CH * 0.7, CW, CH * 0.3);
+            
+            // Bottom grass strip
+            ctx.fillStyle = '#548c2f';
+            ctx.fillRect(0, CH - 18, CW, 20);
+            ctx.fillStyle = '#6aa84f';
+            ctx.fillRect(0, CH - 14, CW, 8);
+        }
+        
+        function drawCloud(x, y, scale) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(x, y, 20 * scale, 0, Math.PI * 2);
+            ctx.arc(x + 25 * scale, y, 25 * scale, 0, Math.PI * 2);
+            ctx.arc(x + 50 * scale, y, 20 * scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawBuilding(x, y, width, height, color, roofColor) {
+            // Building body
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+            
+            // Windows
+            ctx.fillStyle = '#4a5a6a';
+            const rows = Math.floor(height / 25);
+            const cols = Math.floor(width / 20);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    ctx.fillRect(x + 5 + c * 20, y + 10 + r * 25, 10, 15);
+                }
+            }
+            
+            // Roof
+            ctx.fillStyle = roofColor;
+            ctx.beginPath();
+            ctx.moveTo(x - 5, y);
+            ctx.lineTo(x + width / 2, y - 15);
+            ctx.lineTo(x + width + 5, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function drawTree(x, y, scale) {
+            // Trunk
+            ctx.fillStyle = '#6b4423';
+            ctx.fillRect(x - 8 * scale, y, 16 * scale, 40 * scale);
+            
+            // Foliage
+            ctx.fillStyle = '#4a7c2e';
+            ctx.beginPath();
+            ctx.arc(x, y, 30 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x - 15 * scale, y + 10 * scale, 25 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + 15 * scale, y + 10 * scale, 25 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlights
+            ctx.fillStyle = '#5a8c3e';
+            ctx.beginPath();
+            ctx.arc(x - 8 * scale, y - 5 * scale, 15 * scale, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         // spawn a new falling item
         function spawnItem() {
             if (!gameActive) return;
             if (items.length > MAX_ITEMS) return;
+            
+            // Occasionally spawn golden item (3% chance)
+            if (Math.random() < 0.03 && combo >= 3) {
+                const x = random(ITEM_RADIUS + 5, CW - ITEM_RADIUS - 5);
+                const speed = random(0.8, 1.4);
+                items.push({
+                    name: 'Golden Item',
+                    emoji: '⭐',
+                    color: '#ffd700',
+                    good: true,
+                    score: 30,
+                    tip: 'GOLDEN ITEM! Mega points!',
+                    bg: '#fff9c4',
+                    golden: true,
+                    x, y: -ITEM_RADIUS,
+                    speed,
+                    radius: ITEM_RADIUS + 5
+                });
+                return;
+            }
+            
             const type = TYPES[Math.floor(Math.random() * TYPES.length)];
             const x = random(ITEM_RADIUS + 5, CW - ITEM_RADIUS - 5);
             const y = -ITEM_RADIUS;
-            const speed = random(1.0, 2.2); // Slower falling speed
+            const baseSpeed = 0.8 + (difficulty * 0.1);
+            const speed = random(baseSpeed, baseSpeed + 0.8);
             items.push({
                 ...type,
                 x, y,
-                speed,
+                speed: activePowerUp?.effect === 'slow' ? speed * 0.5 : speed,
                 radius: ITEM_RADIUS
             });
         }
+        
+        // spawn power-up
+        function spawnPowerUp() {
+            if (!gameActive || powerUps.length > 0) return;
+            if (Math.random() < 0.015 && combo >= 2) { // 1.5% chance if combo active
+                const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                const x = random(30, CW - 30);
+                powerUps.push({
+                    ...type,
+                    x, y: -30,
+                    speed: 1.2,
+                    radius: 25
+                });
+            }
+        }
 
-        // collision: bin vs item (rect vs circle)
+        // collision: bin vs item (rect vs circle) - More forgiving collision detection
         function checkCollision(binRect, item) {
+            // Expand bin hitbox for more forgiving collision
+            let bonus = COLLISION_BONUS;
+            if (activePowerUp?.effect === 'magnet') bonus = COLLISION_BONUS + 40; // Magnet increases range
+            
+            const expandedRect = {
+                x: binRect.x - bonus,
+                y: binRect.y - bonus,
+                w: binRect.w + (bonus * 2),
+                h: binRect.h + (bonus * 2)
+            };
+            
             // find closest point on rectangle to circle
-            const closestX = Math.max(binRect.x, Math.min(item.x, binRect.x + binRect.w));
-            const closestY = Math.max(binRect.y, Math.min(item.y, binRect.y + binRect.h));
+            const closestX = Math.max(expandedRect.x, Math.min(item.x, expandedRect.x + expandedRect.w));
+            const closestY = Math.max(expandedRect.y, Math.min(item.y, expandedRect.y + expandedRect.h));
             const dx = closestX - item.x;
             const dy = closestY - item.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance <= item.radius;
+            return distance <= item.radius + 5; // Extra 5px tolerance
+        }
+        
+        // Create particle effects
+        function createParticles(x, y, color, isGood) {
+            const count = isGood ? 8 : 6;
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count;
+                const speed = random(2, 4);
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: random(3, 8),
+                    color,
+                    alpha: 1,
+                    life: 60
+                });
+            }
+        }
+        
+        // Create floating text
+        function createFloatingText(x, y, text, color) {
+            floatingTexts.push({
+                x, y,
+                text,
+                color,
+                alpha: 1,
+                life: 60
+            });
         }
 
         // update score & lives, show messages
@@ -249,14 +508,56 @@
             if (!gameActive) return;
 
             if (item.good) {
-                score += item.score;
-                tipDiv.innerText = `✅ Great! +${item.score}  (${item.emoji} ${item.tip})`;
+                // Calculate points with multiplier
+                let points = item.score;
+                
+                // Combo system
+                combo++;
+                if (combo >= 3) {
+                    multiplier = 1 + Math.floor(combo / 3) * 0.5;
+                    comboSpanEl.classList.add('combo-indicator');
+                } else {
+                    multiplier = 1;
+                    comboSpanEl.classList.remove('combo-indicator');
+                }
+                
+                // Apply power-up multiplier
+                if (activePowerUp?.effect === 'double') {
+                    points *= 2;
+                }
+                
+                points = Math.floor(points * multiplier);
+                score += points;
+                pointsEarnedThisGame += points;
+                totalItemsCaught++;
+                
+                // Visual feedback
+                createParticles(item.x, item.y, item.color, item.good);
+                createFloatingText(item.x, item.y, `+${points}`, item.golden ? '#ffd700' : '#4caf50');
+                scoreSpanEl.classList.add('pulse-anim');
+                setTimeout(() => scoreSpanEl.classList.remove('pulse-anim'), 300);
+                
+                // Update displays
+                scoreSpan.innerText = score;
+                comboSpan.innerText = `x${multiplier.toFixed(1)}`;
+                
+                const comboText = combo >= 3 ? ` 🔥 COMBO x${multiplier.toFixed(1)}!` : '';
+                tipDiv.innerText = `✅ ${item.golden ? 'GOLDEN! ' : ''}+${points}${comboText}  (${item.emoji} ${item.tip})`;
             } else {
-                // bad item caught
+                // bad item caught - breaks combo
+                combo = 0;
+                multiplier = 1;
+                comboSpanEl.classList.remove('combo-indicator');
+                comboSpan.innerText = 'x1';
+                
                 score += item.score;  // negative
                 lives -= 1;
                 const penalty = Math.abs(item.score);
-                tipDiv.innerText = `⚠️ Oops! -${penalty} pts, ❤️ lost.  (${item.emoji} ${item.tip})`;
+                
+                createParticles(item.x, item.y, '#e53935', false);
+                createFloatingText(item.x, item.y, `-${penalty}`, '#e53935');
+                
+                tipDiv.innerText = `⚠️ Oops! -${penalty} pts, ❤️ lost. Combo broken!  (${item.emoji} ${item.tip})`;
                 if (lives < 0) lives = 0;
                 livesSpan.innerText = lives;
             }
@@ -267,7 +568,8 @@
             if (lives <= 0) {
                 gameActive = false;
                 gameOverFlag = true;
-                tipDiv.innerText = '💔 GAME OVER – but every game teaches us! Click RESTART to try again.';
+                endGame();
+                tipDiv.innerText = `💔 GAME OVER – You earned ${pointsEarnedThisGame} points! Caught ${totalItemsCaught} items!`;
             }
         }
 
@@ -275,15 +577,21 @@
         function itemMissed(item, index) {
             if (!gameActive) return;
             if (item.good) {
-                // missed good item: lose life (small penalty)
+                // missed good item: lose life and break combo
+                combo = 0;
+                multiplier = 1;
+                comboSpanEl.classList.remove('combo-indicator');
+                comboSpan.innerText = 'x1';
+                
                 lives -= 1;
                 if (lives < 0) lives = 0;
                 livesSpan.innerText = lives;
-                tipDiv.innerText = `😟 Missed ${item.emoji} ${item.name}! -1 life. Catch recyclables & compost!`;
+                tipDiv.innerText = `😟 Missed ${item.emoji} ${item.name}! -1 life. Combo broken!`;
                 if (lives <= 0) {
                     gameActive = false;
                     gameOverFlag = true;
-                    tipDiv.innerText = '💔 GAME OVER – but remember: every mistake teaches us. ♻️ Restart!';
+                    endGame();
+                    tipDiv.innerText = `💔 GAME OVER – You earned ${pointsEarnedThisGame} points! Caught ${totalItemsCaught} items!`;
                 }
             }
             // missed trash is neutral (it goes to landfill anyway) — no penalty
@@ -295,25 +603,36 @@
             gameActive = true;
             gameOverFlag = false;
             score = 0;
+            pointsEarnedThisGame = 0;
             lives = 3;
+            combo = 0;
+            multiplier = 1;
+            totalItemsCaught = 0;
+            difficulty = 1;
             items = [];
+            particles = [];
+            floatingTexts = [];
+            powerUps = [];
+            activePowerUp = null;
+            powerUpTimer = 0;
+            SPAWN_RATE = 80;
             binX = (CW - BIN_WIDTH) / 2;
             leftPressed = false;
             rightPressed = false;
+            touchStartX = null;
+            touchCurrentX = null;
             scoreSpan.innerText = '0';
             livesSpan.innerText = '3';
-            tipDiv.innerText = '💚 Tip: Catch recyclables & compostables! Avoid trash items like styrofoam & chip bags!';
+            comboSpan.innerText = 'x1';
+            comboSpanEl.classList.remove('combo-indicator');
+            tipDiv.innerText = currentUser ? 
+                '💚 Catch recyclables & compostables! Build combos for multipliers! Points save to your account!' :
+                '💚 Tip: Login to save your points! Catch items and build combos for multipliers!';
             frameCounter = 0;
         }
 
         // ----- DRAWING -----
-        function drawGround() {
-            // grass strip at bottom
-            ctx.fillStyle = '#548c2f';
-            ctx.fillRect(0, CH - 18, CW, 20);
-            ctx.fillStyle = '#6aa84f';
-            ctx.fillRect(0, CH - 14, CW, 8);
-        }
+        // (drawGround is now part of drawNeighborhood)
 
         function drawBin() {
             // recycling bin - bigger and more detailed
@@ -383,6 +702,12 @@
                 ctx.shadowBlur = 8;
                 ctx.shadowOffsetY = 4;
 
+                // Golden glow effect
+                if (item.golden) {
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 20;
+                }
+
                 // background circle with gradient
                 const itemGradient = ctx.createRadialGradient(item.x-5, item.y-5, 0, item.x, item.y, item.radius);
                 itemGradient.addColorStop(0, item.bg);
@@ -393,8 +718,8 @@
                 ctx.fill();
                 
                 // outer ring for depth
-                ctx.strokeStyle = item.color;
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = item.golden ? '#ffd700' : item.color;
+                ctx.lineWidth = item.golden ? 4 : 3;
                 ctx.stroke();
                 
                 // inner shine
@@ -405,7 +730,7 @@
                 ctx.fill();
                 
                 // emoji - bigger
-                ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
+                ctx.font = item.golden ? 'bold 38px "Segoe UI", Arial, sans-serif' : 'bold 32px "Segoe UI", Arial, sans-serif';
                 ctx.fillStyle = 'white';
                 ctx.shadowBlur = 8;
                 ctx.shadowColor = 'black';
@@ -414,6 +739,81 @@
             }
             ctx.shadowBlur = 0;
             ctx.textAlign = 'left';
+        }
+        
+        function drawPowerUps() {
+            for (let powerUp of powerUps) {
+                ctx.shadowColor = powerUp.color;
+                ctx.shadowBlur = 15;
+                
+                // Pulsing effect
+                const pulse = Math.sin(frameCounter * 0.1) * 3;
+                const radius = powerUp.radius + pulse;
+                
+                // Background
+                ctx.beginPath();
+                ctx.arc(powerUp.x, powerUp.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = powerUp.color;
+                ctx.fill();
+                
+                // Border
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Emoji
+                ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = 'white';
+                ctx.shadowBlur = 5;
+                ctx.textAlign = 'center';
+                ctx.fillText(powerUp.emoji, powerUp.x, powerUp.y + 8);
+            }
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+        
+        function drawParticles() {
+            for (let p of particles) {
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+        
+        function drawFloatingTexts() {
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 4;
+            for (let t of floatingTexts) {
+                ctx.globalAlpha = t.alpha;
+                ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = t.color;
+                ctx.fillText(t.text, t.x, t.y);
+            }
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+        
+        function drawPowerUpIndicator() {
+            if (activePowerUp) {
+                const remaining = powerUpTimer / 60;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(10, 10, 180, 50);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 16px "Segoe UI"';
+                ctx.fillText(`${activePowerUp.emoji} ${activePowerUp.name}`, 20, 30);
+                
+                // Progress bar
+                ctx.fillStyle = '#333';
+                ctx.fillRect(20, 38, 140, 10);
+                ctx.fillStyle = activePowerUp.color;
+                ctx.fillRect(20, 38, 140 * (remaining / 5), 10);
+            }
         }
 
         function drawGameOver() {
@@ -439,17 +839,37 @@
 
             // 1. UPDATE
             if (gameActive) {
-                // move bin
-                if (leftPressed && binX > 5) binX -= MOVE_SPEED;
-                if (rightPressed && binX < CW - BIN_WIDTH - 5) binX += MOVE_SPEED;
+                // move bin (keyboard or touch)
+                if (touchCurrentX !== null) {
+                    binX = touchCurrentX - BIN_WIDTH / 2;
+                    binX = Math.max(5, Math.min(binX, CW - BIN_WIDTH - 5));
+                } else {
+                    if (leftPressed && binX > 5) binX -= MOVE_SPEED;
+                    if (rightPressed && binX < CW - BIN_WIDTH - 5) binX += MOVE_SPEED;
+                }
 
                 // spawn falling items
                 frameCounter++;
                 if (frameCounter % SPAWN_RATE === 0) {
                     spawnItem();
-                    // increase difficulty a bit over time
-                    if (frameCounter % (SPAWN_RATE*5) === 0 && SPAWN_RATE > 12) {
-                        // spawn a little more often – dynamic
+                }
+                
+                // Spawn power-ups occasionally
+                if (frameCounter % 180 === 0) {
+                    spawnPowerUp();
+                }
+                
+                // Progressive difficulty
+                if (frameCounter % 600 === 0 && SPAWN_RATE > 50) {
+                    SPAWN_RATE -= 3;
+                    difficulty++;
+                }
+                
+                // Update power-up
+                if (activePowerUp) {
+                    powerUpTimer--;
+                    if (powerUpTimer <= 0) {
+                        activePowerUp = null;
                     }
                 }
 
@@ -457,6 +877,18 @@
                 const binRect = { x: binX, y: BIN_Y, w: BIN_WIDTH, h: BIN_HEIGHT };
                 for (let i = items.length - 1; i >= 0; i--) {
                     const item = items[i];
+                    
+                    // Apply magnet effect
+                    if (activePowerUp?.effect === 'magnet') {
+                        const dx = binX + BIN_WIDTH/2 - item.x;
+                        const dy = BIN_Y + BIN_HEIGHT/2 - item.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 150) {
+                            item.x += dx * 0.05;
+                            item.y += dy * 0.05;
+                        }
+                    }
+                    
                     item.y += item.speed;
 
                     // collision with bin
@@ -470,19 +902,57 @@
                         itemMissed(item, i);
                     }
                 }
+                
+                // Update and check power-ups
+                for (let i = powerUps.length - 1; i >= 0; i--) {
+                    const powerUp = powerUps[i];
+                    powerUp.y += powerUp.speed;
+                    
+                    if (checkCollision(binRect, powerUp)) {
+                        activePowerUp = powerUp;
+                        powerUpTimer = powerUp.duration;
+                        createParticles(powerUp.x, powerUp.y, powerUp.color, true);
+                        createFloatingText(powerUp.x, powerUp.y, powerUp.name + '!', powerUp.color);
+                        tipDiv.innerText = `✨ ${powerUp.emoji} ${powerUp.name} activated!`;
+                        powerUps.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (powerUp.y > CH + 30) {
+                        powerUps.splice(i, 1);
+                    }
+                }
+                
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.2; // gravity
+                    p.life--;
+                    p.alpha = p.life / 60;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+                
+                // Update floating texts
+                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                    const t = floatingTexts[i];
+                    t.y -= 1.5;
+                    t.life--;
+                    t.alpha = t.life / 60;
+                    if (t.life <= 0) floatingTexts.splice(i, 1);
+                }
             }
 
             // 2. DRAW
             ctx.clearRect(0, 0, CW, CH);
-            // sky gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, CH);
-            gradient.addColorStop(0, '#afe0ce');
-            gradient.addColorStop(0.7, '#b1e6c5');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, CW, CH);
-            drawGround();
+            drawNeighborhood();
+            drawParticles();
             drawItems();
+            drawPowerUps();
             drawBin();
+            drawFloatingTexts();
+            drawPowerUpIndicator();
 
             if (!gameActive && gameOverFlag) {
                 drawGameOver();
@@ -523,6 +993,39 @@
             window.location.href = 'game-overview.html';
         });
 
+        // Touch controls
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CW / rect.width;
+            touchStartX = (e.touches[0].clientX - rect.left) * scaleX;
+            touchCurrentX = touchStartX;
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (touchStartX !== null) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = CW / rect.width;
+                touchCurrentX = (e.touches[0].clientX - rect.left) * scaleX;
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchStartX = null;
+            touchCurrentX = null;
+        }, { passive: false });
+        
+        // Mouse controls (in addition to keyboard)
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CW / rect.width;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            binX = mouseX - BIN_WIDTH / 2;
+            binX = Math.max(5, Math.min(binX, CW - BIN_WIDTH - 5));
+        });
+        
         // Prevent page scrolling on arrow keys
         window.addEventListener('keydown', function(e) {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -530,6 +1033,83 @@
             }
         }, false);
 
+        // Save points to Firebase when game ends
+        async function endGame() {
+            if (!currentUser) {
+                console.log('No user logged in, points not saved');
+                return;
+            }
+            
+            if (pointsEarnedThisGame <= 0) {
+                return; // Don't save if no points earned
+            }
+            
+            try {
+                const userRef = db.collection('users').doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const currentPoints = userData.points || 0;
+                    const gamePoints = userData.pointsBreakdown?.games || 0;
+                    
+                    // Update points
+                    await userRef.update({
+                        points: currentPoints + pointsEarnedThisGame,
+                        'pointsBreakdown.games': gamePoints + pointsEarnedThisGame,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Add to history
+                    await userRef.collection('pointsHistory').add({
+                        points: pointsEarnedThisGame,
+                        type: 'game',
+                        description: `Played EcoCatcher game - scored ${score} in-game points`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        date: new Date().toISOString()
+                    });
+                    
+                    console.log(`Saved ${pointsEarnedThisGame} points to Firebase!`);
+                } else {
+                    // Initialize user document if doesn't exist
+                    await userRef.set({
+                        points: pointsEarnedThisGame,
+                        pointsBreakdown: {
+                            games: pointsEarnedThisGame,
+                            quizzes: 0,
+                            events: 0,
+                            community: 0,
+                            challenges: 0
+                        },
+                        level: 1,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    await userRef.collection('pointsHistory').add({
+                        points: pointsEarnedThisGame,
+                        type: 'game',
+                        description: `Played EcoCatcher game - scored ${score} in-game points`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        date: new Date().toISOString()
+                    });
+                }
+            } catch (error) {
+                console.error('Error saving points:', error);
+            }
+        }
+        
+        // Check Firebase auth state
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            if (user) {
+                console.log('User logged in:', user.email);
+                tipDiv.innerText = '💚 You\'re logged in! Points will be saved to your account!';
+            } else {
+                console.log('No user logged in');
+                tipDiv.innerText = '💚 Login to save your points! Catch recyclables & compostables!';
+            }
+        });
+        
         // start the game!
         resetGame();
         gameLoop();
@@ -539,12 +1119,10 @@
             if (frameId) cancelAnimationFrame(frameId);
         });
 
-        // TODO: make it touch-friendly? quick hint for mobile (no touch controls but show message)
-        // For simplicity we keep arrow keys; canvas doesn't support touch drag here, but can be added.
-        // optional display: 
+        // Mobile-friendly message
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
-            tipDiv.innerText = '📱 Use arrow keys (keyboard) or connect a keyboard to play. Touch controls coming soon!';
+            tipDiv.innerText = '📱 Touch/drag on the screen to move the bin! Build combos for bonus points!';
         }
     })();
 </script>
