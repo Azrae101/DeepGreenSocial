@@ -311,11 +311,10 @@
         .post-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 25px;
             padding-bottom: 15px;
             gap: 15px;
-            flex-wrap: wrap;
             border-bottom: 1px solid transparent;
         }
 
@@ -324,15 +323,14 @@
             align-items: center;
             gap: 12px;
             flex: 1;
-            min-width: 200px;
+            min-width: 0;
         }
 
         .post-header-actions {
             display: flex;
             gap: 10px;
             flex-shrink: 0;
-            align-items: flex-start;
-            margin-left: auto;
+            align-items: center;
         }
 
         .user-avatar {
@@ -384,12 +382,13 @@
             padding-top: 15px;
             border-top: 2px solid #eee;
             clear: both;
-            position: relative;
+            align-items: center;
         }
 
         .action-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             background: none;
             border: none;
@@ -398,8 +397,9 @@
             font-size: 0.95em;
             padding: 8px 12px;
             border-radius: 6px;
-            transition: all 0.2s;
+            transition: background-color 0.2s, color 0.2s;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .action-btn:hover {
@@ -409,6 +409,13 @@
 
         .action-btn.like-btn {
             font-weight: 500;
+            min-width: 65px;
+        }
+
+        .action-btn.like-btn span {
+            display: inline-block;
+            min-width: 1.2em;
+            text-align: left;
         }
 
         .action-btn.like-btn:hover {
@@ -573,6 +580,7 @@
         .comment-like-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
             background: none;
             border: none;
@@ -581,7 +589,15 @@
             font-size: 0.85em;
             padding: 4px 8px;
             border-radius: 4px;
-            transition: all 0.2s;
+            transition: background-color 0.2s, color 0.2s;
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+
+        .comment-like-btn span {
+            display: inline-block;
+            min-width: 1.2em;
+            text-align: left;
         }
 
         .comment-like-btn:hover {
@@ -1457,7 +1473,7 @@
                 await postRef.update({ likes });
                 
                 // Update UI
-                const likeBtn = document.querySelector(`#post-${postId} .action-btn`);
+                const likeBtn = document.querySelector(`#post-${postId} .like-btn`);
                 const likeCountSpan = likeBtn.querySelector('span');
                 const likeCount = likes.length;
                 
