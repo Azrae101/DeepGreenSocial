@@ -9,7 +9,7 @@ const eventData = [
             danishTitle: 'Yoga for Jorden',
             description: 'Free yoga followed by breakfast organized by The Green Youth Movement Aarhus. Everyone can join - no experience necessary. A peaceful community with focus on physical care, mindfulness and sustainability. NB: First come, first served.',
             location: 'N. J. Fjords Gade 2, Aarhus C',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+150 pts (1.5h @ 100 pts/hr)',
             link: 'https://forms.gle/X7yoNK7Jb7xpUh6UA',
             linkText: 'Sign up 6/12'
         },
@@ -23,7 +23,7 @@ const eventData = [
             danishTitle: 'Repair Café',
             description: 'Come by and repair your clothes, electronics, or bike with help from our team of volunteers! We\'re all about giving our belongings a second chance instead of throwing them away and buying new. It\'s free and we\'ve got the tools, but remember to bring your own spare parts. You can find us on the stairs at Dokk1 – every month ♻️🛠',
             location: 'Dokk1, 8000 Aarhus, Denmark',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+300 pts (3h @ 100 pts/hr)',
             link: 'https://www.dokk1.dk',
             linkText: 'See more dates'
         },
@@ -37,7 +37,7 @@ const eventData = [
             danishTitle: 'Julemarked',
             description: 'Come to the big Christmas flea market with 82 stalls filled with Christmas decorations, antiques, toys, clothing and crafts. Here you\'ll find trees, pine cones, elves, advent candles, elf figurines, ornaments, mulled wine, apple fritters and much more. Do something for the climate - buy secondhand! Expecting approx. 3,000 visitors.',
             location: 'Vejlby Centervej 51, 8240 Risskov',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+600 pts (6h @ 100 pts/hr)',
             link: 'mailto:kurt@kloborg.dk?subject=Tilmelding%20til%20Julemarked',
             linkText: 'Contact to register'
         },
@@ -51,7 +51,7 @@ const eventData = [
             danishTitle: 'Julemarked',
             description: 'Come to a cozy Christmas market in beautiful surroundings with the scent of mulled wine and apple fritters. Find unique Christmas gifts like jewelry, ceramics, clothes, shoes, natural creams, paintings, dreamcatchers, eye pillows, woodwork, honey, cookies, gingerbread and much more.',
             location: 'Nymøllevej 8, 8200 Aarhus N',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+500 pts (5h @ 100 pts/hr)',
             link: 'mailto:hjerteogko@live.dk?subject=Stand%20til%20Julemarked',
             linkText: 'Book stand'
         },
@@ -65,7 +65,7 @@ const eventData = [
             danishTitle: 'Produktlancering',
             description: 'Come and celebrate the launch of Ananda Organics - certified organic skincare with 90-100% organic ingredients. Get 30% discount on luxurious face oils, moisture serums, mists, body butter, herbal salves and aromatherapy.',
             location: 'Hjerterum, Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+150 pts (1.5h @ 100 pts/hr)',
             link: 'https://www.annaananda.dk/',
             linkText: 'Visit website'
         },
@@ -79,7 +79,7 @@ const eventData = [
             danishTitle: 'Haveværksted',
             description: 'Learn sustainable gardening techniques and help maintain our community garden.',
             location: 'Aarhus Community Garden, 8000 Aarhus C',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+400 pts (4h @ 100 pts/hr)',
             link: '#',
             linkText: 'Event Ended'
         },
@@ -93,7 +93,7 @@ const eventData = [
             danishTitle: 'Madlavningskursus',
             description: 'Learn how to cook delicious meals using locally sourced, sustainable ingredients.',
             location: 'Green Kitchen Aarhus, 8200 Aarhus N',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+300 pts (3h @ 100 pts/hr)',
             link: '#',
             linkText: 'Event Ended'
         },
@@ -107,7 +107,7 @@ const eventData = [
             danishTitle: 'Strandrensning',
             description: 'Join us for a beach cleanup to protect our local marine environment.',
             location: 'Aarhus Beach, 8000 Aarhus C',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+300 pts (3h @ 100 pts/hr)',
             link: '#',
             linkText: 'Event Ended'
         },
@@ -121,7 +121,7 @@ const eventData = [
             danishTitle: 'Plastik Workshop',
             description: 'Learn how to reduce plastic waste in your daily life with practical tips and alternatives.',
             location: 'Eco Center Aarhus, 8000 Aarhus C',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+300 pts (3h @ 100 pts/hr)',
             link: '#',
             linkText: 'Event Ended'
         },
@@ -135,7 +135,7 @@ const eventData = [
             danishTitle: 'TirsdagsSpiren',
             description: 'EAT. GROW. CREATE. Step into our green oasis and get inspired for a more sustainable life. We are ready for both informal chats and wild ideas about green transition – and we guide you to green communities and activities at the library.',
             location: 'Dokk1, By the escalator, level 1, 8000 Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+200 pts (2h @ 100 pts/hr)',
             link: 'https://www.dokk1.dk',
             linkText: 'Learn more'
         },
@@ -149,7 +149,7 @@ const eventData = [
             danishTitle: 'Plantekup',
             description: 'Plant Deal - a botanical market with lots of discounted prices on plants, ceramics, design, watering gear for spring and other plant equipment. The bar is open as always, whether you want a warm cocoa or lunch with draft beer! 🙂',
             location: 'Plukk - Kjeld Tolstrups Gade 12, 8000 Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+650 pts (6.5h @ 100 pts/hr)',
             link: 'https://fb.me/e/6JghlmDDx',
             linkText: 'Facebook Event'
         },
@@ -163,7 +163,7 @@ const eventData = [
             danishTitle: 'Tøjmaleri Workshop',
             description: 'Get your clothes transformed into a unique artwork! Artist Charlotte Moreno Kølkjær offers to turn your old jacket, t-shirt or sweatshirt into an artwork. Kølkjær "paints" with chlorine, which removes the color precisely where it is applied, and after a few seconds a beautiful illustration appears before your eyes. Clothes must be 100% cotton without surface treatment. All colors except white are suitable. It\'s completely free - but at your own risk.',
             location: 'Kunst for alle, Vester Alle 1, 8000 Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+200 pts (2h @ 100 pts/hr)',
             link: 'https://fb.me/e/9lWjWnOfE',
             linkText: 'Facebook Event'
         },
@@ -177,7 +177,7 @@ const eventData = [
             danishTitle: 'Tøjmaleri Workshop',
             description: 'Get your clothes transformed into a unique artwork! Artist Charlotte Moreno Kølkjær offers to turn your old jacket, t-shirt or sweatshirt into an artwork. Kølkjær "paints" with chlorine, which removes the color precisely where it is applied, and after a few seconds a beautiful illustration appears before your eyes. Clothes must be 100% cotton without surface treatment. All colors except white are suitable. It\'s completely free - but at your own risk.',
             location: 'Kunst for alle, Vester Alle 1, 8000 Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+200 pts (2h @ 100 pts/hr)',
             link: 'https://fb.me/e/9lWjWnOfE',
             linkText: 'Facebook Event'
         },
@@ -191,7 +191,7 @@ const eventData = [
             danishTitle: 'Tøjmaleri Workshop',
             description: 'Get your clothes transformed into a unique artwork! Artist Charlotte Moreno Kølkjær offers to turn your old jacket, t-shirt or sweatshirt into an artwork. Kølkjær "paints" with chlorine, which removes the color precisely where it is applied, and after a few seconds a beautiful illustration appears before your eyes. Clothes must be 100% cotton without surface treatment. All colors except white are suitable. It\'s completely free - but at your own risk.',
             location: 'Kunst for alle, Vester Alle 1, 8000 Aarhus',
-            points: '+10 pts signup | +200 pts completion',
+            points: '+200 pts (2h @ 100 pts/hr)',
             link: 'https://fb.me/e/9lWjWnOfE',
             linkText: 'Facebook Event'
         },

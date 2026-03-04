@@ -541,13 +541,6 @@
         // Firebase instances are available globally from firebase-config.js
         // No need to redeclare - just use auth and db directly
 
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                window.location.href = 'index.html';
-            }
-        });
-
         // Registration form handling
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();

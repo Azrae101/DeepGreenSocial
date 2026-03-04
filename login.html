@@ -281,6 +281,13 @@
             text-decoration: underline;
         }
 
+        .recaptcha-container {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
         .flash-messages {
             width: 100%;
             max-width: 300px;
@@ -550,6 +557,12 @@
                 <a href="#" id="forgotPasswordLink">Forgot Password?</a>
             </div>
 
+            <!-- reCAPTCHA (commented out until a domain/site key is available)
+            <div class="recaptcha-container">
+                <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY" data-theme="light"></div>
+            </div>
+            -->
+
             <input class="login-submit" type="submit" value="Log in">
         </form>
 
@@ -637,6 +650,15 @@
         // Clear previous messages
         flashMessages.innerHTML = '';
         
+        // Check reCAPTCHA response (disabled while no domain/site key available)
+        /*
+        const recaptchaResponse = grecaptcha.getResponse();
+        if (!recaptchaResponse) {
+            showMessage('Please complete the reCAPTCHA', 'error');
+            return;
+        }
+        */
+        
         // Disable submit button
         const submitBtn = this.querySelector('.login-submit');
         submitBtn.disabled = true;
@@ -713,6 +735,15 @@
             console.error('Login error:', error);
             submitBtn.disabled = false;
             submitBtn.value = 'Log in';
+            
+            // Reset reCAPTCHA on error (disabled)
+            /*
+            try {
+                grecaptcha.reset();
+            } catch (e) {
+                console.warn('Could not reset reCAPTCHA:', e);
+            }
+            */
             
             let errorMessage = 'Invalid email or password';
             
@@ -836,13 +867,12 @@
         modalFlashMessages.appendChild(messageDiv);
     }
 
-    // Check if user is already logged in
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            // User is already logged in, redirect to home
-            window.location.href = 'index.html';
-        }
-    });
 </script>
+
+<!-- Google reCAPTCHA Script (commented out until a valid domain/site key is configured) -->
+<!--
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+-->
+
 </body>
 </html>

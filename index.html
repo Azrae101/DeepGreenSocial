@@ -239,6 +239,21 @@
             background: #388e3c;
             color: #fff;
         }
+        .hero-cta-group {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-hero-secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+        }
+        .btn-hero-secondary:hover {
+            background: #fff;
+            color: #388e3c;
+        }
         @media (max-width: 900px) {
             .hero h2 {
                 font-size: 2.1em;
@@ -1027,6 +1042,29 @@
         border-radius: 8px;
     }
 
+    /* Toast animations */
+    @keyframes slideUp {
+        from {
+            bottom: -100px;
+            opacity: 0;
+        }
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideDown {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+        to {
+            bottom: -100px;
+            opacity: 0;
+        }
+    }
+
     </style>
 </head>
 <body>
@@ -1063,7 +1101,11 @@
     <section class="hero" id="home">
         <div class="container">
             <h2>Take Real Climate Action Together</h2>
-            <p>Social & Green is a youth-driven platform for hands-on, sustainable events and rewarding initiatives. We help you make a difference through action, not just activism or personal sacrifice.</p>
+            <p>Social & Green is a youth-driven NGO platform for hands-on, sustainable events and rewarding initiatives. Join the community, create an account, and start using the platform to find events, earn points, and take climate action together.</p>
+            <div class="hero-cta-group">
+                <a href="register.html" class="btn-hero">Sign Up & Start</a>
+                <a href="community.html" class="btn-hero btn-hero-secondary">Explore Community</a>
+            </div>
         </div>
     </section>
 
@@ -1076,6 +1118,9 @@
                     Most climate initiatives ask you to do less: eat less meat, fly less, or protest against polluters. 
                     We offer a solution where you <strong style="color: #4caf50;">take action</strong> and do something good 
                     for the climate, <strong style="color: #4caf50;">together</strong>.
+                </p>
+                <p style="color: #e0f2e1; font-size: 1.08rem; max-width: 860px; line-height: 1.8; margin-top: 18px;">
+                    Our community brings students, neighbors, and local changemakers together in one place. Inside the platform you can discover events, share practical ideas, follow your impact, and motivate each other through visible progress and real-world collaboration.
                 </p>
             </div>
             
@@ -1158,7 +1203,7 @@
                         <h3 style="color: #0d47a1; font-size: 1.3rem; margin: 0;">Social Community</h3>
                     </div>
                     <p style="color: #424242; line-height: 1.7; margin-bottom: 20px;">
-                        Meet others who want to help the climate. Build friendships and work together for a better future.
+                        Meet others who want to help the climate and turn good intentions into shared action. Use the website to join local events, stay connected with community members, and build long-term habits with support from people working toward the same goal.
                     </p>
                     <div style="color: #2196f3; font-weight: bold; font-size: 0.9rem;">CONNECT & COLLABORATE</div>
                 </div>
@@ -1594,102 +1639,200 @@
         window.location.href = 'login.html';
     }
 
-    // Function to sign up for an event
-    function signUpForEvent(eventId) {
-        const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+    // Helper function to calculate event duration in hours
+    function calculateEventDuration(dateString) {
+        // Extract time range from date string (e.g., "6/12/2025 - 10:00–11:30")
+        const timeMatch = dateString.match(/(\d{1,2}):(\d{2})[–-](\d{1,2}):(\d{2})/);
         
-        if (!currentUser) {
+        if (!timeMatch) {
+            // Default to 2 hours if no time range found
+            return 2;
+        }
+        
+        const startHour = parseInt(timeMatch[1]);
+        const startMin = parseInt(timeMatch[2]);
+        const endHour = parseInt(timeMatch[3]);
+        const endMin = parseInt(timeMatch[4]);
+        
+        const startTotalMin = startHour * 60 + startMin;
+        const endTotalMin = endHour * 60 + endMin;
+        const durationMin = endTotalMin - startTotalMin;
+        
+        // Convert to hours (rounded to nearest 0.5)
+        return Math.max(0.5, Math.round((durationMin / 60) * 2) / 2);
+    }
+
+    // Function to sign up for an event
+    async function signUpForEvent(eventId) {
+        const user = auth.currentUser;
+        
+        if (!user) {
             redirectToLogin();
             return;
         }
         
-        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
-        
-        if (userIndex === -1) {
-            return;
+        try {
+            const event = eventData.find(e => e.id === eventId);
+            if (!event) return;
+            
+            // Check if event is in the past
+            if (parseDanishDate(event.date) < new Date()) {
+                return;
+            }
+            
+            const userRef = db.collection('users').doc(user.uid);
+            const userSnap = await userRef.get();
+            
+            if (!userSnap.exists) {
+                console.error('User document not found');
+                return;
+            }
+            
+            const userData = userSnap.data();
+            const userEvents = userData.events || [];
+            
+            // Check if user is already signed up
+            if (userEvents.includes(eventId)) {
+                return;
+            }
+            
+            // Calculate points based on event duration (100 points per hour)
+            const durationHours = calculateEventDuration(event.date);
+            const pointsToAward = Math.round(durationHours * 100);
+            
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+            const currentMonthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+            
+            // Add event and award points
+            const pointsHistory = userData.pointsHistory || [];
+            pointsHistory.push({
+                date: today,
+                description: `Event Sign-up: ${event.name} (${durationHours}h)`,
+                points: pointsToAward,
+                type: 'earned'
+            });
+            
+            await userRef.update({
+                events: firebase.firestore.FieldValue.arrayUnion(eventId),
+                points: firebase.firestore.FieldValue.increment(pointsToAward),
+                [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + pointsToAward,
+                pointsHistory: pointsHistory
+            });
+            
+            // Update the button state
+            const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
+            if (eventCard) {
+                const button = eventCard.querySelector('.btn-event');
+                button.textContent = 'Cancel Sign Up';
+                button.className = 'btn btn-cancel';
+                button.onclick = function() { cancelSignUp(eventId); };
+            }
+            
+            // Show success message
+            showToast(`✅ Signed up! +${pointsToAward} points earned (${durationHours}h event)`, 'success');
+            
+        } catch (error) {
+            console.error('Error signing up for event:', error);
+            showToast('Error signing up. Please try again.', 'error');
         }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196F3'};
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            font-weight: 500;
+            animation: slideUp 0.3s ease;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
         
-        // Initialize events array if it doesn't exist
-        if (!users[userIndex].events) {
-            users[userIndex].events = [];
-        }
-        
-        // Check if user is already signed up
-        if (users[userIndex].events.includes(eventId)) {
-            return;
-        }
-        
-        // Check if event is in the past
-        const event = eventData.find(e => e.id === eventId);
-        if (event && parseDanishDate(event.date) < new Date()) {
-            return;
-        }
-        
-        // Add event to user's events
-        users[userIndex].events.push(eventId);
-        
-        // Add points for signing up (10 points per event)
-        if (!users[userIndex].points) {
-            users[userIndex].points = 0;
-        }
-        users[userIndex].points += 10;
-        
-        // Update localStorage
-        localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-        localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-        
-        // Update the button state
-        const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
-        if (eventCard) {
-            const button = eventCard.querySelector('.btn-event');
-            button.textContent = 'Cancel Sign Up';
-            button.className = 'btn btn-cancel';
-            button.onclick = function() { cancelSignUp(eventId); };
-        }
+        setTimeout(() => {
+            toast.style.animation = 'slideDown 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     // Function to cancel sign up for an event
-    function cancelSignUp(eventId) {
-        const currentUser = JSON.parse(localStorage.getItem('sustainalearn_currentUser'));
+    async function cancelSignUp(eventId) {
+        const user = auth.currentUser;
         
-        if (!currentUser) {
+        if (!user) {
             redirectToLogin();
             return;
         }
         
-        const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
-        
-        if (userIndex === -1) {
-            return;
-        }
-        
-        // Check if user is signed up for this event
-        if (!users[userIndex].events || !users[userIndex].events.includes(eventId)) {
-            return;
-        }
-        
-        // Remove event from user's events
-        users[userIndex].events = users[userIndex].events.filter(id => id !== eventId);
-        
-        // Deduct points for cancelling (10 points per event)
-        if (!users[userIndex].points) {
-            users[userIndex].points = 0;
-        }
-        users[userIndex].points = Math.max(0, users[userIndex].points - 10);
-        
-        // Update localStorage
-        localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-        localStorage.setItem('sustainalearn_currentUser', JSON.stringify(users[userIndex]));
-        
-        // Update the button state
-        const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
-        if (eventCard) {
-            const button = eventCard.querySelector('.btn-cancel');
-            button.textContent = 'Sign Up';
-            button.className = 'btn btn-event';
-            button.onclick = function() { signUpForEvent(eventId); };
+        try {
+            const event = eventData.find(e => e.id === eventId);
+            if (!event) return;
+            
+            const userRef = db.collection('users').doc(user.uid);
+            const userSnap = await userRef.get();
+            
+            if (!userSnap.exists) {
+                console.error('User document not found');
+                return;
+            }
+            
+            const userData = userSnap.data();
+            const userEvents = userData.events || [];
+            
+            // Check if user is signed up for this event
+            if (!userEvents.includes(eventId)) {
+                return;
+            }
+            
+            // Calculate points to deduct based on event duration
+            const durationHours = calculateEventDuration(event.date);
+            const pointsToDeduct = Math.round(durationHours * 100);
+            
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+            const currentMonthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+            
+            // Remove event and deduct points
+            const pointsHistory = userData.pointsHistory || [];
+            pointsHistory.push({
+                date: today,
+                description: `Event Cancelled: ${event.name}`,
+                points: -pointsToDeduct,
+                type: 'spent'
+            });
+            
+            await userRef.update({
+                events: firebase.firestore.FieldValue.arrayRemove(eventId),
+                points: firebase.firestore.FieldValue.increment(-pointsToDeduct),
+                [`monthlyPoints.${monthKey}`]: Math.max(0, currentMonthlyPoints - pointsToDeduct),
+                pointsHistory: pointsHistory
+            });
+            
+            // Update the button state
+            const eventCard = document.querySelector(`.event-card[data-event-id="${eventId}"]`);
+            if (eventCard) {
+                const button = eventCard.querySelector('.btn-cancel');
+                button.textContent = 'Sign Up';
+                button.className = 'btn btn-event';
+                button.onclick = function() { signUpForEvent(eventId); };
+            }
+            
+            showToast(`Cancelled. -${pointsToDeduct} points deducted.`, 'info');
+            
+        } catch (error) {
+            console.error('Error cancelling event signup:', error);
+            showToast('Error cancelling. Please try again.', 'error');
         }
     }
 

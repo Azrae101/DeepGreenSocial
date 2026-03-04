@@ -1575,6 +1575,20 @@
             }
         }
         
+        // Helper function to calculate event duration in hours
+        function calculateEventDuration(dateString) {
+            const timeMatch = dateString.match(/(\d{1,2}):(\d{2})[–-](\d{1,2}):(\d{2})/);
+            if (!timeMatch) return 2; // Default to 2 hours
+            const startHour = parseInt(timeMatch[1]);
+            const startMin = parseInt(timeMatch[2]);
+            const endHour = parseInt(timeMatch[3]);
+            const endMin = parseInt(timeMatch[4]);
+            const startTotalMin = startHour * 60 + startMin;
+            const endTotalMin = endHour * 60 + endMin;
+            const durationMin = endTotalMin - startTotalMin;
+            return Math.max(0.5, Math.round((durationMin / 60) * 2) / 2);
+        }
+
         // Helper function to calculate daily check-in points
         function calculateDailyPoints(userData) {
             return (userData.dailyCheckins?.length || 0) * 10;
@@ -1643,8 +1657,16 @@
             const progressPercent = (pointsInCurrentLevel / 100) * 100;
             document.getElementById('levelProgress').style.width = `${progressPercent}%`;
             
-            // Update streak
-            document.getElementById('currentStreak').textContent = userData.streak || 0;
+            // Calculate and update streak (recalculate to ensure accuracy)
+            const actualStreak = calculateConsecutiveStreak(userData.dailyCheckins || []);
+            document.getElementById('currentStreak').textContent = actualStreak;
+            
+            // Update streak in database if it's different from stored value
+            if (actualStreak !== userData.streak) {
+                db.collection('users').doc(currentUserId).update({
+                    streak: actualStreak
+                }).catch(err => console.error('Error updating streak:', err));
+            }
             
             // Update monthly points
             const now = new Date();
@@ -1670,7 +1692,16 @@
             if (!currentUserData) return;
             
             // Calculate points from different sources
-            const eventsPoints = (currentUserData.eventsAttended?.length || 0) * 10;
+            // Events: calculate based on actual event durations (100 pts/hour)
+            let eventsPoints = 0;
+            const userEvents = currentUserData.events || [];
+            userEvents.forEach(eventId => {
+                const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
+                if (event && event.date) {
+                    const durationHours = calculateEventDuration(event.date);
+                    eventsPoints += Math.round(durationHours * 100);
+                }
+            });
             const gamesPoints = currentUserData.gamePoints || 0;
             const articlesPoints = (currentUserData.articlesRead?.length || 0) * 50;
             const quizzesPoints = (currentUserData.articlesQuizPassed?.length || 0) * 100;
@@ -1724,13 +1755,18 @@
             upcomingEventIds.forEach(eventId => {
                 const event = typeof eventData !== 'undefined' ? eventData.find(e => e.id === eventId) : null;
                 
-                const eventItem = document.createElement('div');
-                eventItem.className = 'event-item';
-                eventItem.innerHTML = `
-                    <span class="event-name">${event ? event.name : 'Event'}</span>
-                    <span class="event-points">+10 pts (signup)</span>
-                `;
-                container.appendChild(eventItem);
+                if (event && event.date) {
+                    const durationHours = calculateEventDuration(event.date);
+                    const eventPoints = Math.round(durationHours * 100);
+                    
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'event-item';
+                    eventItem.innerHTML = `
+                        <span class="event-name">${event.name} (${durationHours}h)</span>
+                        <span class="event-points">+${eventPoints} pts</span>
+                    `;
+                    container.appendChild(eventItem);
+                }
             });
         }
         
@@ -1807,6 +1843,40 @@
             });
         }
         
+        // Helper function to calculate consecutive streak from dailyCheckins array
+        function calculateConsecutiveStreak(dailyCheckins) {
+            if (!dailyCheckins || dailyCheckins.length === 0) return 0;
+            
+            // Sort dates in descending order (most recent first)
+            const sortedDates = [...dailyCheckins].sort((a, b) => new Date(b) - new Date(a));
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let streak = 0;
+            let currentDate = new Date(today);
+            
+            // Check backwards from today
+            for (let i = 0; i < sortedDates.length; i++) {
+                const checkDate = new Date(sortedDates[i]);
+                checkDate.setHours(0, 0, 0, 0);
+                
+                const currentDateStr = currentDate.toISOString().split('T')[0];
+                const checkDateStr = checkDate.toISOString().split('T')[0];
+                
+                if (currentDateStr === checkDateStr) {
+                    streak++;
+                    // Move to previous day
+                    currentDate.setDate(currentDate.getDate() - 1);
+                } else if (checkDate < currentDate) {
+                    // There's a gap, streak is broken
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
         function calculateImpactStatsFirebase() {
             if (!currentUserData) return;
             
@@ -1857,12 +1927,16 @@
                     // Get current monthly points
                     const currentMonthlyPoints = currentUserData.monthlyPoints?.[monthKey] || 0;
                     
+                    // Calculate new streak after adding today
+                    const updatedCheckins = [...(currentUserData.dailyCheckins || []), today];
+                    const newStreak = calculateConsecutiveStreak(updatedCheckins);
+                    
                     // Update Firestore with points and history
                     await userRef.update({
                         dailyCheckins: firebase.firestore.FieldValue.arrayUnion(today),
                         points: firebase.firestore.FieldValue.increment(10),
                         [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + 10,
-                        streak: firebase.firestore.FieldValue.increment(1),
+                        streak: newStreak,
                         pointsHistory: firebase.firestore.FieldValue.arrayUnion({
                             date: today,
                             description: 'Daily Check-in',

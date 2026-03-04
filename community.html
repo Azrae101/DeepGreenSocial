@@ -1192,12 +1192,32 @@
 
         async function loadPosts() {
             const postFeed = document.getElementById('postFeed');
+            console.log('loadPosts invoked, db exists?', !!window.db);
+            console.log('location.href', window.location.href, 'host', window.location.host);
             
+            if (typeof db === 'undefined') {
+                postFeed.innerHTML = '<div class="empty-state">Database not initialized. Are you running this from an authorized domain?</div>';
+                console.error('Firestore "db" is undefined. Check firebase-config.js and ensure page is served over HTTP/HTTPS with a whitelisted domain (localhost or 127.0.0.1).');
+                return;
+            }
+
+            // start a timeout in case the promise never resolves
+            let timedOut = false;
+            const timer = setTimeout(() => {
+                timedOut = true;
+                postFeed.innerHTML = '<div class="empty-state">Request is taking too long. Check console/network or your Firebase rules.</div>';
+                console.warn('loadPosts query still pending after 10s');
+            }, 10000);
+
             try {
                 // Get posts ordered by creation date (newest first)
                 const snapshot = await db.collection('posts')
                     .orderBy('createdAt', 'desc')
                     .get();
+                clearTimeout(timer);
+                if (timedOut) {
+                    console.log('Snapshot returned after timeout, displaying results anyway');
+                }
                 
                 if (snapshot.empty) {
                     postFeed.innerHTML = '<div class="empty-state">No posts yet. Be the first to share! 🌟</div>';
@@ -1878,57 +1898,10 @@
             const postImage = document.getElementById('postImage');
             const imagePreview = document.getElementById('imagePreview');
             const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-            const removeImageBtn = document.getElementById('removeImage');
             const imageLabel = document.getElementById('imageLabel');
-            
-            // Function to validate and process image
-            async function handleImageSelection(file) {
-                // Validate file type
-                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!validTypes.includes(file.type)) {
-                    showToast('Please select a valid image file (JPG, PNG, GIF, or WebP)', 'error', 4000);
-                    postImage.value = '';
-                    return false;
-                }
-                
-                // Validate file size (max 5MB)
-                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                if (file.size > maxSize) {
-                    showToast('Image is too large. Please select an image under 5MB.', 'error', 4000);
-                    postImage.value = '';
-                    return false;
-                }
-                
-                // Show file size
-                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                console.log(`Image selected: ${file.name} (${fileSizeMB}MB)`);
-                
-                // Preview image
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreviewContainer.style.display = 'block';
-                    imageLabel.style.background = '#e8f5e9';
-                    imageLabel.innerHTML = `✓ Photo Selected (${fileSizeMB}MB)`;
-                };
-                reader.onerror = function() {
-                    showToast('Error reading image file', 'error', 3000);
-                    postImage.value = '';
-                };
-                reader.readAsDataURL(file);
-                return true;
-            }
-            
-            if (postImage) {
-                postImage.addEventListener('change', async function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        await handleImageSelection(file);
-                    }
-                });
-            }
-            
+
             // Remove image button
+            const removeImageBtn = document.getElementById('removeImage');
             if (removeImageBtn) {
                 removeImageBtn.addEventListener('click', function() {
                     postImage.value = '';
@@ -1938,7 +1911,17 @@
                     imageLabel.innerHTML = '📸 Add Photo';
                 });
             }
-            
+
+            // Listen for image selection
+            if (postImage) {
+                postImage.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        await handleImageSelection(file);
+                    }
+                });
+            }
+
             // Post form submission
             const postForm = document.getElementById('postForm');
             if (postForm) {
@@ -2058,8 +2041,8 @@
                             showNotification('Post published successfully!');
                             showToast('Your post is now live! 🌱', 'success', 3000);
                         } else {
-                            showNotification('Post submitted for review!');
-                            showToast('Your post has been submitted and is waiting for admin approval. ⏳', 'success', 4000);
+                            showNotification('Post submitted for review! An admin will soon approve your post.');
+                            showToast('Your post has been submitted and is waiting for admin approval. An admin will soon approve it. ⏳', 'success', 4000);
                         }
                         
                     } catch (error) {
@@ -2071,21 +2054,69 @@
                     }
                 });
             }
-            
-            // Add CSS for notifications
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
         });
+
+        });
+
+        // Function to validate and process image
+        async function handleImageSelection(file) {
+            // grab dynamic elements in case this runs outside of DOMContentLoaded
+            const postImage = document.getElementById('postImage');
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const imageLabel = document.getElementById('imageLabel');
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showToast('Please select a valid image file (JPG, PNG, GIF, or WebP)', 'error', 4000);
+                if (postImage) postImage.value = '';
+                return false;
+            }
+            
+            // Validate file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (file.size > maxSize) {
+                showToast('Image is too large. Please select an image under 5MB.', 'error', 4000);
+                if (postImage) postImage.value = '';
+                return false;
+            }
+            
+            // Show file size
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            console.log(`Image selected: ${file.name} (${fileSizeMB}MB)`);
+            
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (imagePreview) imagePreview.src = e.target.result;
+                if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
+                if (imageLabel) {
+                    imageLabel.style.background = '#e8f5e9';
+                    imageLabel.innerHTML = `✓ Photo Selected (${fileSizeMB}MB)`;
+                }
+            };
+            reader.onerror = function() {
+                showToast('Error reading image file', 'error', 3000);
+                if (postImage) postImage.value = '';
+            };
+            reader.readAsDataURL(file);
+            return true;
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
     </script>
 </body>
 </html>

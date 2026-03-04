@@ -155,6 +155,29 @@
             margin-top: 15px;
             font-size: 0.9rem;
         }
+
+        /* Toast animations */
+        @keyframes slideUp {
+            from {
+                bottom: -100px;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: -100px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -228,6 +251,8 @@
         // Firebase user tracking
         let currentUser = null;
         let pointsEarnedThisGame = 0;
+        let highScore = 0;
+        let previousHighScore = 0;
         
         // Visual effects
         let particles = [];
@@ -528,7 +553,6 @@
                 
                 points = Math.floor(points * multiplier);
                 score += points;
-                pointsEarnedThisGame += points;
                 totalItemsCaught++;
                 
                 // Visual feedback
@@ -1033,15 +1057,22 @@
             }
         }, false);
 
+        // Calculate reward points based on items caught (modest rewards)
+        function calculateRewardPoints(itemsCaught) {
+            // Award points based on tiers of items caught
+            if (itemsCaught >= 76) return 5;
+            if (itemsCaught >= 51) return 4;
+            if (itemsCaught >= 26) return 3;
+            if (itemsCaught >= 11) return 2;
+            if (itemsCaught >= 1) return 1;
+            return 0;
+        }
+
         // Save points to Firebase when game ends
         async function endGame() {
             if (!currentUser) {
                 console.log('No user logged in, points not saved');
                 return;
-            }
-            
-            if (pointsEarnedThisGame <= 0) {
-                return; // Don't save if no points earned
             }
             
             try {
@@ -1050,60 +1081,137 @@
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    const currentPoints = userData.points || 0;
-                    const gamePoints = userData.pointsBreakdown?.games || 0;
+                    const currentTotalPoints = userData.points || 0;
+                    const currentGamePoints = userData.gamePoints || 0;
+                    previousHighScore = userData.ecocatcherHighScore || 0;
                     
-                    // Update points
-                    await userRef.update({
-                        points: currentPoints + pointsEarnedThisGame,
-                        'pointsBreakdown.games': gamePoints + pointsEarnedThisGame,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    // Calculate modest reward points based on items caught
+                    const itemsReward = calculateRewardPoints(totalItemsCaught);
                     
-                    // Add to history
-                    await userRef.collection('pointsHistory').add({
-                        points: pointsEarnedThisGame,
-                        type: 'game',
-                        description: `Played EcoCatcher game - scored ${score} in-game points`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        date: new Date().toISOString()
-                    });
+                    // Bonus for beating high score
+                    let highScoreBonus = 0;
+                    let beatsHighScore = false;
+                    if (score > previousHighScore && previousHighScore > 0) {
+                        highScoreBonus = 5;
+                        beatsHighScore = true;
+                    }
                     
-                    console.log(`Saved ${pointsEarnedThisGame} points to Firebase!`);
+                    const actualPointsEarned = itemsReward + highScoreBonus;
+                    
+                    // Only save if points were earned
+                    if (actualPointsEarned > 0) {
+                        const today = new Date().toISOString().split('T')[0];
+                        const now = new Date();
+                        const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                        const currentMonthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+                        
+                        // Create description
+                        let description = `EcoCatcher - caught ${totalItemsCaught} items (+${itemsReward}pts)`;
+                        if (beatsHighScore) {
+                            description += ` + High Score Bonus (+${highScoreBonus}pts)`;
+                        }
+                        
+                        const pointsHistory = userData.pointsHistory || [];
+                        pointsHistory.push({
+                            date: today,
+                            description: description,
+                            points: actualPointsEarned,
+                            type: 'earned'
+                        });
+                        
+                        // Update Firestore
+                        await userRef.update({
+                            gamePoints: currentGamePoints + actualPointsEarned,
+                            points: firebase.firestore.FieldValue.increment(actualPointsEarned),
+                            [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + actualPointsEarned,
+                            ecocatcherHighScore: Math.max(score, previousHighScore),
+                            pointsHistory: pointsHistory
+                        });
+                        
+                        console.log(`Saved ${actualPointsEarned} points! (${itemsReward} for items + ${highScoreBonus} bonus)`);
+                        
+                        // Show feedback
+                        if (beatsHighScore) {
+                            showToast(`🎮 +${actualPointsEarned} points! New high score bonus!`, 'success');
+                        } else {
+                            showToast(`🎮 +${actualPointsEarned} points earned!`, 'success');
+                        }
+                    } else {
+                        // Update high score even if no points awarded
+                        if (score > previousHighScore) {
+                            await userRef.update({
+                                ecocatcherHighScore: score
+                            });
+                        }
+                    }
                 } else {
                     // Initialize user document if doesn't exist
-                    await userRef.set({
-                        points: pointsEarnedThisGame,
-                        pointsBreakdown: {
-                            games: pointsEarnedThisGame,
-                            quizzes: 0,
-                            events: 0,
-                            community: 0,
-                            challenges: 0
-                        },
-                        level: 1,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    await userRef.collection('pointsHistory').add({
-                        points: pointsEarnedThisGame,
-                        type: 'game',
-                        description: `Played EcoCatcher game - scored ${score} in-game points`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        date: new Date().toISOString()
-                    });
+                    const itemsReward = calculateRewardPoints(totalItemsCaught);
+                    if (itemsReward > 0) {
+                        await userRef.set({
+                            points: itemsReward,
+                            gamePoints: itemsReward,
+                            ecocatcherHighScore: score,
+                            pointsHistory: [{
+                                date: new Date().toISOString().split('T')[0],
+                                description: `EcoCatcher - caught ${totalItemsCaught} items`,
+                                points: itemsReward,
+                                type: 'earned'
+                            }]
+                        }, { merge: true });
+                        showToast(`🎮 +${itemsReward} points earned!`, 'success');
+                    }
                 }
             } catch (error) {
                 console.error('Error saving points:', error);
             }
         }
         
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: ${type === 'success' ? '#4caf50' : '#2196F3'};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                font-weight: 500;
+                animation: slideUp 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideDown 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
         // Check Firebase auth state
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
                 console.log('User logged in:', user.email);
                 tipDiv.innerText = '💚 You\'re logged in! Points will be saved to your account!';
+                
+                // Load high score
+                try {
+                    const userRef = db.collection('users').doc(user.uid);
+                    const userSnap = await userRef.get();
+                    if (userSnap.exists) {
+                        const userData = userSnap.data();
+                        highScore = userData.ecocatcherHighScore || 0;
+                        previousHighScore = highScore;
+                    }
+                } catch (error) {
+                    console.error('Error loading high score:', error);
+                }
             } else {
                 console.log('No user logged in');
                 tipDiv.innerText = '💚 Login to save your points! Catch recyclables & compostables!';

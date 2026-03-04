@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🐝 Pollinator Protector · Sustainability Arcade</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  
   <style>
     * {
       margin: 0;
@@ -164,6 +171,29 @@
       font-style: italic;
       font-size: 0.95rem;
     }
+
+    /* Toast animations */
+    @keyframes slideUp {
+      from {
+        bottom: -100px;
+        opacity: 0;
+      }
+      to {
+        bottom: 30px;
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        bottom: 30px;
+        opacity: 1;
+      }
+      to {
+        bottom: -100px;
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -227,6 +257,11 @@
     let frameId = null;
     let difficulty = 1;
     let flowersCollected = 0;
+
+    // Firebase user tracking
+    let currentUser = null;
+    let highScore = 0;
+    let previousHighScore = 0;
 
     // ---------- flowers ----------
     let flowers = [];
@@ -313,6 +348,142 @@
         color: '#4a5c5e',
         glow: '#203132'
       });
+    }
+
+    // Calculate reward points based on flowers collected (modest rewards)
+    function calculateRewardPoints(flowersCount) {
+      // Award points based on tiers of flowers collected
+      if (flowersCount >= 76) return 5;
+      if (flowersCount >= 51) return 4;
+      if (flowersCount >= 26) return 3;
+      if (flowersCount >= 11) return 2;
+      if (flowersCount >= 1) return 1;
+      return 0;
+    }
+
+    // Save points to Firebase when game ends
+    async function saveGameResults() {
+      if (!currentUser) {
+        console.log('No user logged in, points not saved');
+        return;
+      }
+      
+      try {
+        const userRef = db.collection('users').doc(currentUser.uid);
+        const userDoc = await userRef.get();
+        
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          const currentTotalPoints = userData.points || 0;
+          const currentGamePoints = userData.gamePoints || 0;
+          previousHighScore = userData.beegameHighScore || 0;
+          
+          // Calculate modest reward points based on flowers collected
+          const flowersReward = calculateRewardPoints(flowersCollected);
+          
+          // Bonus for beating high score
+          let highScoreBonus = 0;
+          let beatsHighScore = false;
+          if (flowersCollected > previousHighScore && previousHighScore > 0) {
+            highScoreBonus = 5;
+            beatsHighScore = true;
+          }
+          
+          const actualPointsEarned = flowersReward + highScoreBonus;
+          
+          // Only save if points were earned
+          if (actualPointsEarned > 0) {
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+            const currentMonthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+            
+            // Create description
+            let description = `Pollinator Protector - ${flowersCollected} flowers (+${flowersReward}pts)`;
+            if (beatsHighScore) {
+              description += ` + High Score Bonus (+${highScoreBonus}pts)`;
+            }
+            
+            const pointsHistory = userData.pointsHistory || [];
+            pointsHistory.push({
+              date: today,
+              description: description,
+              points: actualPointsEarned,
+              type: 'earned'
+            });
+            
+            // Update Firestore
+            await userRef.update({
+              gamePoints: currentGamePoints + actualPointsEarned,
+              points: firebase.firestore.FieldValue.increment(actualPointsEarned),
+              [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + actualPointsEarned,
+              beegameHighScore: Math.max(flowersCollected, previousHighScore),
+              pointsHistory: pointsHistory
+            });
+            
+            console.log(`Saved ${actualPointsEarned} points! (${flowersReward} for flowers + ${highScoreBonus} bonus)`);
+            
+            // Show feedback
+            if (beatsHighScore) {
+              showToast(`🎮 +${actualPointsEarned} points! New high score bonus!`, 'success');
+            } else {
+              showToast(`🎮 +${actualPointsEarned} points earned!`, 'success');
+            }
+          } else {
+            // Update high score even if no points awarded
+            if (flowersCollected > previousHighScore) {
+              await userRef.update({
+                beegameHighScore: flowersCollected
+              });
+            }
+          }
+        } else {
+          // Initialize user document if doesn't exist
+          const flowersReward = calculateRewardPoints(flowersCollected);
+          if (flowersReward > 0) {
+            await userRef.set({
+              points: flowersReward,
+              gamePoints: flowersReward,
+              beegameHighScore: flowersCollected,
+              pointsHistory: [{
+                date: new Date().toISOString().split('T')[0],
+                description: `Pollinator Protector - ${flowersCollected} flowers`,
+                points: flowersReward,
+                type: 'earned'
+              }]
+            }, { merge: true });
+            showToast(`🎮 +${flowersReward} points earned!`, 'success');
+          }
+        }
+      } catch (error) {
+        console.error('Error saving points:', error);
+      }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: ${type === 'success' ? '#4caf50' : '#2196F3'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        font-weight: 500;
+        animation: slideUp 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
 
     // ---------- reset game ----------
@@ -413,6 +584,7 @@
       if (lives <= 0) {
         gameActive = false;
         gameOverFlag = true;
+        saveGameResults(); // Save points when game ends
         tipDiv.innerHTML = '<span class="tip-icon">💔</span> GAME OVER – You collected ' + flowersCollected + ' flowers and learned so much! Restart to help more bees!';
       }
     }
@@ -636,6 +808,31 @@
 
     window.addEventListener('beforeunload', () => {
       if (frameId) cancelAnimationFrame(frameId);
+    });
+
+    // Check Firebase auth state
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+      if (user) {
+        console.log('User logged in:', user.email);
+        tipDiv.innerHTML = '<span class="tip-icon">💚</span> You\\'re logged in! Points will be saved to your account!';
+        
+        // Load high score
+        try {
+          const userRef = db.collection('users').doc(user.uid);
+          const userSnap = await userRef.get();
+          if (userSnap.exists) {
+            const userData = userSnap.data();
+            highScore = userData.beegameHighScore || 0;
+            previousHighScore = highScore;
+          }
+        } catch (error) {
+          console.error('Error loading high score:', error);
+        }
+      } else {
+        console.log('No user logged in');
+        tipDiv.innerHTML = '<span class="tip-icon">💚</span> Login to save your points! Collect nectar & avoid pesticides!';
+      }
     });
   })();
 </script>
