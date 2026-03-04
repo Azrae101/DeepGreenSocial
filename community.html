@@ -1320,10 +1320,10 @@
                 }) : 'Recently';
             
             // Check if current user liked this post
-            const userLiked = post.likes && post.likes.includes(currentUser.username);
+            const userLiked = currentUser && post.likes && post.likes.includes(currentUser.username);
             
             // Check if current user can delete this post
-            const canDelete = currentUserIsAdmin || post.userId === currentUser.username;
+            const canDelete = (currentUser && currentUserIsAdmin) || (currentUser && post.userId === currentUser.username);
             
             // Check if post needs approval
             const isPending = !post.approved;
