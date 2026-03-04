@@ -1004,7 +1004,7 @@
         let currentUser = null;
         let currentUserIsAdmin = false;
         const ADMIN_USERNAME = "Lol Hest";
-        const ADMIN_EMAILS = ["clara.holst@outlook.com", "clar.holst@gmail.com", "admin@socialgreen.com"];
+        const ADMIN_EMAILS = ["clara.holst@outlook.com", "clar.holst@gmail.com", "admin@socialgreen.com", "socialandgreen@gmail.com"];
 
         // ====================
         // Authentication with Firebase Auth
@@ -1192,7 +1192,7 @@
 
         async function loadPosts() {
             const postFeed = document.getElementById('postFeed');
-            console.log('loadPosts invoked, db exists?', !!window.db);
+            console.log('loadPosts invoked, db exists?', !!db);
             console.log('location.href', window.location.href, 'host', window.location.host);
             
             if (typeof db === 'undefined') {
@@ -1259,7 +1259,20 @@
                 }
             } catch (error) {
                 console.error('Error loading posts:', error);
-                postFeed.innerHTML = '<div class="empty-state">Error loading posts. Please refresh.</div>';
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                if (error.code === 'permission-denied') {
+                    postFeed.innerHTML = '<div class="empty-state">Permission denied reading posts. Make sure you are logged in or adjust Firestore rules.</div>';
+                    if (!currentUser) {
+                        const loginPrompt = document.createElement('div');
+                        loginPrompt.className = 'empty-state';
+                        loginPrompt.style.marginTop = '10px';
+                        loginPrompt.innerHTML = 'Please <a href="login.html">log in</a> to view community posts.';
+                        postFeed.appendChild(loginPrompt);
+                    }
+                } else {
+                    postFeed.innerHTML = `<div class="empty-state">Error loading posts: ${error.message}. Check the browser console for details.</div>`;
+                }
             }
         }
         
@@ -2054,8 +2067,6 @@
                     }
                 });
             }
-        });
-
         });
 
         // Function to validate and process image
