@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Choice Challenge · Social & Green</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #f0f7f2;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        /* main game card – matches Social & Green aesthetic */
+        .game-container {
+            max-width: 720px;
+            width: 100%;
+            background: white;
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 40px -10px rgba(27, 77, 62, 0.25);
+            overflow: hidden;
+            border: 1px solid rgba(42, 122, 94, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .game-header {
+            background: linear-gradient(145deg, #1B4D3E 0%, #2A7A5E 100%);
+            padding: 1.8rem 2rem 1.4rem 2rem;
+            color: white;
+            text-align: center;
+        }
+
+        .game-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .game-header h1 span {
+            background: #FFD166;
+            color: #1B4D3E;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.25rem 0.8rem;
+            border-radius: 40px;
+            text-transform: uppercase;
+        }
+
+        .subhead {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.15);
+            margin: 1.2rem -0.5rem 0 -0.5rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            font-weight: 500;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .stat-item i {
+            font-size: 1.3rem;
+        }
+
+        /* main play area */
+        .play-area {
+            padding: 2rem 2rem 1.8rem 2rem;
+            background: #ffffff;
+        }
+
+        .round-info {
+            display: flex;
+            justify-content: space-between;
+            color: #2A7A5E;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            border-bottom: 2px dashed #cae3d7;
+            padding-bottom: 0.8rem;
+        }
+
+        .question-prompt {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #1e3b30;
+            margin-bottom: 2rem;
+            background: #e9f3ee;
+            padding: 0.8rem 1rem;
+            border-radius: 60px;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .option-card {
+            flex: 1 1 200px;
+            min-width: 180px;
+            background: #fafdfb;
+            border: 2px solid #d5eae0;
+            border-radius: 2rem;
+            padding: 1.8rem 1rem 1.4rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 12px -8px rgba(27,77,62,0.1);
+        }
+
+        .option-card:hover:not(.disabled-option) {
+            transform: translateY(-4px);
+            border-color: #2A7A5E;
+            background: white;
+            box-shadow: 0 18px 20px -12px #1B4D3E60;
+        }
+
+        .option-card.selected-correct {
+            border-color: #2A7A5E;
+            background: #e1f5ea;
+            box-shadow: 0 0 0 4px #b8e0cf;
+        }
+
+        .option-card.selected-wrong {
+            border-color: #c95b5b;
+            background: #ffe9e9;
+            box-shadow: 0 0 0 4px #fbc1c1;
+        }
+
+        .disabled-option {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .option-emoji {
+            font-size: 4rem;
+            line-height: 1.2;
+            filter: drop-shadow(2px 6px 6px rgba(0,0,0,0.1));
+        }
+
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0.8rem 0 0.2rem 0;
+            color: #1B4D3E;
+        }
+
+        .option-desc {
+            font-size: 0.9rem;
+            color: #4b6a5c;
+            padding: 0 0.3rem;
+        }
+
+        .feedback-message {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 1rem 0 1.5rem 0;
+            min-height: 3rem;
+            font-weight: 500;
+            padding: 0.5rem;
+        }
+
+        .correct-feedback {
+            color: #1B4D3E;
+            background: #dcf2e7;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+        }
+
+        .wrong-feedback {
+            color: #a14040;
+            background: #ffdede;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+        }
+
+        .next-btn {
+            background: #FFD166;
+            color: #1B4D3E;
+            border: none;
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 #c49f3f;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .next-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #c49f3f;
+        }
+
+        .next-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: 0 4px 0 #b58e3a;
+            pointer-events: none;
+        }
+
+        .results-area {
+            text-align: center;
+            padding: 1rem 0 2rem 0;
+        }
+
+        .final-score {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1B4D3E;
+            background: #FFD166;
+            display: inline-block;
+            padding: 0.5rem 2rem;
+            border-radius: 60px;
+            margin: 1rem 0;
+        }
+
+        .tips-list {
+            text-align: left;
+            background: #e9f3ee;
+            border-radius: 2rem;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .tips-list h3 {
+            color: #1B4D3E;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .tips-list ul {
+            list-style-type: none;
+        }
+
+        .tips-list li {
+            margin-bottom: 0.8rem;
+            padding-left: 2rem;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        .tips-list li::before {
+            content: "🌱";
+            position: absolute;
+            left: 0;
+            color: #2A7A5E;
+            font-size: 1.2rem;
+        }
+
+        .replay-btn {
+            background: white;
+            border: 3px solid #1B4D3E;
+            color: #1B4D3E;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 0.8rem 2.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .replay-btn:hover {
+            background: #1B4D3E;
+            color: white;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7f9e91;
+            padding: 1rem 2rem 1.5rem 2rem;
+            border-top: 1px solid #d0e3da;
+            background: #f6fbf8;
+        }
+
+        .footer-note i {
+            font-style: normal;
+            background: #2A7A5E20;
+            padding: 0.2rem 0.5rem;
+            border-radius: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="game-header">
+            <h1>
+                ♻️ Eco Choice Challenge 
+                <span>plastic-free</span>
+            </h1>
+            <div class="subhead">choose the greener option · learn as you play</div>
+            <div class="stats-bar">
+                <div class="stat-item"><i>⭐</i> <span id="scoreDisplay">0</span> pts</div>
+                <div class="stat-item"><i>📦</i> <span id="roundDisplay">1</span>/10</div>
+            </div>
+        </div>
+
+        <div id="dynamicPlayArea" class="play-area">
+            <!-- JavaScript will inject game or result screen -->
+        </div>
+
+        <div class="footer-note">
+            <i>every correct choice = less plastic + greener habits</i> — Social & Green
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- GAME DATA ----------
+            const rounds = [
+                {
+                    options: [
+                        { name: "Plastic bottle", desc: "single-use PET", emoji: "🧴", correct: false },
+                        { name: "Glass bottle", desc: "refillable / recyclable", emoji: "🍾", correct: true }
+                    ],
+                    explanation: "Glass is infinitely recyclable and doesn't leach chemicals. Choose refillable glass!"
+                },
+                {
+                    options: [
+                        { name: "Plastic bag", desc: "used for ~12 minutes", emoji: "🛍️", correct: false },
+                        { name: "Reusable cotton bag", desc: "use hundreds of times", emoji: "👜", correct: true }
+                    ],
+                    explanation: "A cotton bag needs only 5-10 uses to offset its footprint – far better than plastic."
+                },
+                {
+                    options: [
+                        { name: "Plastic-wrapped veggies", desc: "convenient but wasteful", emoji: "🥦", correct: false },
+                        { name: "Loose veggies", desc: "no packaging, buy what you need", emoji: "🥕", correct: true }
+                    ],
+                    explanation: "Skip the plastic wrap! Choose loose produce and bring your own mesh bags."
+                },
+                {
+                    options: [
+                        { name: "Plastic straw", desc: "single-use, often not recycled", emoji: "🥤", correct: false },
+                        { name: "Metal straw", desc: "reusable & easy to clean", emoji: "🥄", correct: true }
+                    ],
+                    explanation: "Metal (or bamboo) straws eliminate plastic waste. Keep one in your bag!"
+                },
+                {
+                    options: [
+                        { name: "Disposable paper cup", desc: "lined with plastic, single use", emoji: "☕", correct: false },
+                        { name: "Reusable mug", desc: "keep your coffee warm & green", emoji: "🧋", correct: true }
+                    ],
+                    explanation: "Most paper cups have a plastic lining. A reusable mug saves resources and energy."
+                },
+                {
+                    options: [
+                        { name: "Imported apples", desc: "shipped by plane/boat", emoji: "🍎", correct: false },
+                        { name: "Local apples", desc: "from nearby farms", emoji: "🍏", correct: true }
+                    ],
+                    explanation: "Local food reduces transport emissions. Plus it’s fresher and supports regional farmers."
+                },
+                {
+                    options: [
+                        { name: "Plastic container", desc: "petroleum-based", emoji: "🧊", correct: false },
+                        { name: "Cardboard box", desc: "renewable & recyclable", emoji: "📦", correct: true }
+                    ],
+                    explanation: "Cardboard comes from trees (a renewable resource) and is widely recycled."
+                },
+                {
+                    options: [
+                        { name: "Plastic cutlery", desc: "used once, lasts forever", emoji: "🥄", correct: false },
+                        { name: "Bamboo cutlery", desc: "compostable & reusable", emoji: "🥢", correct: true }
+                    ],
+                    explanation: "Bamboo grows fast and can be composted at end of life. A great plastic-free alternative."
+                },
+                {
+                    options: [
+                        { name: "Aluminium can", desc: "energy-intensive but recyclable", emoji: "🥤", correct: false },
+                        { name: "Glass bottle", desc: "heavy but endlessly recyclable", emoji: "🍺", correct: true }
+                    ],
+                    explanation: "Both are better than plastic, but glass is often refillable and contains no plastic lining."
+                },
+                {
+                    options: [
+                        { name: "Plastic wrap", desc: "cling film, single use", emoji: "🎞️", correct: false },
+                        { name: "Beeswax wrap", desc: "washable, reusable", emoji: "🐝", correct: true }
+                    ],
+                    explanation: "Beeswax wraps keep food fresh without plastic. They last a year then compost them."
+                }
+            ];
+
+            // ---------- GAME STATE ----------
+            let currentRoundIndex = 0;            // 0-based
+            let score = 0;
+            let roundActive = true;                // whether we are waiting for player choice (true) or showed feedback
+            let selectedOptionIndex = null;        // the index player clicked (0 or 1) in current round
+            let gameFinished = false;
+
+            // DOM elements
+            const dynamicArea = document.getElementById('dynamicPlayArea');
+            const scoreSpan = document.getElementById('scoreDisplay');
+            const roundSpan = document.getElementById('roundDisplay');
+
+            // Helper to update header stats
+            function updateStatsUI() {
+                scoreSpan.textContent = score;
+                const displayRound = gameFinished ? rounds.length : Math.min(currentRoundIndex + 1, rounds.length);
+                roundSpan.textContent = `${displayRound}/${rounds.length}`;
+            }
+
+            // Render current round (or results if finished)
+            function render() {
+                if (gameFinished) {
+                    renderResults();
+                    return;
+                }
+
+                const round = rounds[currentRoundIndex];
+                // safety
+                if (!round) {
+                    gameFinished = true;
+                    renderResults();
+                    return;
+                }
+
+                const option0 = round.options[0];
+                const option1 = round.options[1];
+
+                // Determine if any option was selected (and correctness) for styling
+                const selected = selectedOptionIndex;
+                const correctIndex = round.options.findIndex(opt => opt.correct === true);
+
+                let feedbackHtml = '';
+                if (selected !== null) {
+                    const isCorrect = (selected === correctIndex);
+                    feedbackHtml = isCorrect 
+                        ? `<div class="correct-feedback">✅ ${round.explanation}</div>`
+                        : `<div class="wrong-feedback">❌ Oops! ${round.explanation}</div>`;
+                }
+
+                const html = `
+                    <div class="round-info">
+                        <span>🌱 round ${currentRoundIndex+1}/${rounds.length}</span>
+                        <span>⚡ choose wisely</span>
+                    </div>
+                    <div class="question-prompt">Which one is better for the planet?</div>
+                    <div class="options-grid">
+                        <!-- Option A -->
+                        <div class="option-card ${selected !== null ? 'disabled-option' : ''} 
+                            ${selected === 0 ? (selected === correctIndex ? 'selected-correct' : 'selected-wrong') : ''}"
+                            data-opt-index="0">
+                            <div class="option-emoji">${option0.emoji}</div>
+                            <div class="option-title">${option0.name}</div>
+                            <div class="option-desc">${option0.desc}</div>
+                        </div>
+                        <!-- Option B -->
+                        <div class="option-card ${selected !== null ? 'disabled-option' : ''} 
+                            ${selected === 1 ? (selected === correctIndex ? 'selected-correct' : 'selected-wrong') : ''}"
+                            data-opt-index="1">
+                            <div class="option-emoji">${option1.emoji}</div>
+                            <div class="option-title">${option1.name}</div>
+                            <div class="option-desc">${option1.desc}</div>
+                        </div>
+                    </div>
+                    <div class="feedback-message">
+                        ${feedbackHtml}
+                    </div>
+                    ${selected !== null ? 
+                        '<button class="next-btn" id="nextRoundBtn">➡️ next round</button>' : 
+                        '<button class="next-btn" disabled>⬅️ make a choice</button>'
+                    }
+                `;
+                dynamicArea.innerHTML = html;
+
+                // Attach event listeners to option cards (if round active and no selection yet)
+                if (selected === null) {
+                    document.querySelectorAll('.option-card').forEach(card => {
+                        card.addEventListener('click', (e) => {
+                            if (selectedOptionIndex !== null) return; // already chosen
+                            const idx = card.dataset.optIndex;
+                            if (idx === undefined) return;
+                            handleOptionChoice(parseInt(idx));
+                        });
+                    });
+                } else {
+                    // Next button listener
+                    const nextBtn = document.getElementById('nextRoundBtn');
+                    if (nextBtn) {
+                        nextBtn.addEventListener('click', () => {
+                            advanceToNextRound();
+                        });
+                    }
+                }
+            }
+
+            // Handle player choice
+            function handleOptionChoice(optIndex) {
+                if (selectedOptionIndex !== null) return; // already locked
+
+                const round = rounds[currentRoundIndex];
+                const correctIdx = round.options.findIndex(opt => opt.correct === true);
+                const isCorrect = (optIndex === correctIdx);
+
+                // Update score
+                if (isCorrect) {
+                    score += 10; // 10 points per correct answer
+                }
+
+                selectedOptionIndex = optIndex;
+                updateStatsUI();
+                render(); // re-render with feedback and disabled cards
+            }
+
+            // Move to next round or finish
+            function advanceToNextRound() {
+                if (currentRoundIndex + 1 < rounds.length) {
+                    // go to next round
+                    currentRoundIndex++;
+                    selectedOptionIndex = null;
+                    render();
+                    updateStatsUI();
+                } else {
+                    // game completed
+                    gameFinished = true;
+                    renderResults();
+                }
+            }
+
+            // Render final results with tips
+            function renderResults() {
+                const totalPossible = rounds.length * 10;
+                const performance = Math.round((score / totalPossible) * 100);
+
+                let encouragement = '';
+                if (performance >= 80) encouragement = '🌟 Eco-warrior! You really know your green choices.';
+                else if (performance >= 50) encouragement = '🌿 Good job! A few swaps can make you a pro.';
+                else encouragement = '🌱 Every step counts! Keep learning & sharing.';
+
+                const tipsList = [
+                    'Bring your own bag, keep one in your backpack.',
+                    'Buy loose fruit & veggies; avoid plastic wrap.',
+                    'Choose glass or cardboard over plastic #1–7.',
+                    'Support local farmers: seasonal = lower footprint.',
+                    'Use a reusable bottle & mug, save CO₂ and money.',
+                    'Try beeswax wraps instead of cling film.',
+                    'Donate unused items to Red Cross / Blue Cross.',
+                    'Prefer second-hand: clothes, furniture, electronics.'
+                ];
+
+                const tipsHtml = tipsList.map(tip => `<li>${tip}</li>`).join('');
+
+                const html = `
+                    <div class="results-area">
+                        <div class="final-score">${score} / ${totalPossible}</div>
+                        <p style="font-size:1.3rem; margin-bottom:0.5rem; color:#1B4D3E;">${encouragement}</p>
+                        <div class="tips-list">
+                            <h3>💚 daily habits for less plastic & waste</h3>
+                            <ul>${tipsHtml}</ul>
+                        </div>
+                        <button class="replay-btn" id="replayGameBtn">↻ play again</button>
+                    </div>
+                `;
+                dynamicArea.innerHTML = html;
+                document.getElementById('replayGameBtn').addEventListener('click', resetGame);
+                updateStatsUI(); // make sure final score is shown in header
+            }
+
+            // Reset everything
+            function resetGame() {
+                currentRoundIndex = 0;
+                score = 0;
+                selectedOptionIndex = null;
+                gameFinished = false;
+                roundActive = true;
+                updateStatsUI();
+                render();
+            }
+
+            // Initial render
+            updateStatsUI();
+            render();
+
+            // minor: ensure header score stays updated (on next round already)
+        })();
+    </script>
+</body>
+</html>
