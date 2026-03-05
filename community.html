@@ -1176,15 +1176,6 @@
                         <strong>💡 Tip:</strong> Earn 5 points for each post and 2 points for each comment!
                     </p>
                 </div>
-                
-                <div style="margin-top: 15px; padding: 15px; background: #fff3e0; border-radius: 8px;">
-                    <p style="margin: 0; color: var(--accent-color); font-size: 0.85em;">
-                        <strong>📸 Image Tips:</strong><br>
-                        • Max size: 5MB<br>
-                        • Formats: JPG, PNG, GIF, WebP<br>
-                        • Preview before posting
-                    </p>
-                </div>
             </div>
         </div>
     </main>
@@ -1381,7 +1372,14 @@
                 }
                 
                 const lastPost = snapshot.docs[0].data();
-                const lastPostTime = lastPost.createdAt.toDate();
+                // If createdAt is missing, treat as very old (allow posting)
+                let lastPostTime;
+                if (lastPost.createdAt) {
+                    lastPostTime = lastPost.createdAt.toDate();
+                } else {
+                    // No timestamp -> assume it's older than 24h
+                    return { canPost: true, message: '' };
+                }
                 const now = new Date();
                 const hoursSinceLastPost = (now - lastPostTime) / (1000 * 60 * 60);
                 const hoursRemaining = Math.ceil(24 - hoursSinceLastPost);
