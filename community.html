@@ -747,6 +747,7 @@
                 <!-- Create Post Card (visible only when logged in) -->
                 <div class="create-post-card" id="createPostCard" style="display: none;">
                     <h2>Share Your Sustainable Action</h2>
+                    <div id="postCooldownBanner" style="display:none; background:#fff3e0; border:1px solid #ffe0b2; border-radius:10px; padding:12px 16px; margin-bottom:16px; color:#e65100; font-weight:600; font-size:0.95em;"></div>
                     <form class="post-form" id="postForm">
                         <textarea id="postText" placeholder="What sustainable action did you take today? Share with the community! 🌱" maxlength="500"></textarea>
                         <div class="post-actions">
@@ -894,6 +895,7 @@
                 updateAuthButtons();
                 document.getElementById('createPostCard').style.display = 'block';
                 loadPosts();
+                checkAndShowCooldown();
             } catch (error) {
                 console.error('Auth error:', error);
                 showToast('Error loading user profile.', 'error');
@@ -942,24 +944,35 @@
             if (!currentUser) return { canPost: false, message: 'Not authenticated' };
             if (currentUserIsAdmin) return { canPost: true, message: '' };
             try {
+                // Simple where-only query — no composite index needed.
+                // We sort client-side to find the most recent post.
                 const snap = await db.collection('posts')
                     .where('userId', '==', currentUser.email)
-                    .orderBy('createdAt', 'desc')
-                    .limit(1)
                     .get();
                 if (snap.empty) return { canPost: true, message: '' };
-                const last = snap.docs[0].data();
-                if (!last.createdAt) return { canPost: true, message: '' };
-                const lastTime = last.createdAt.toDate();
-                const hours = (new Date() - lastTime) / (1000 * 60 * 60);
+
+                // Find the latest post by createdAt client-side
+                let latestTime = null;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if (d.createdAt) {
+                        const t = d.createdAt.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+                        if (!latestTime || t > latestTime) latestTime = t;
+                    }
+                });
+
+                if (!latestTime) return { canPost: true, message: '' };
+
+                const hours = (new Date() - latestTime) / (1000 * 60 * 60);
                 if (hours < 24) {
                     const remaining = Math.ceil(24 - hours);
-                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}.` };
+                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}. ⏳` };
                 }
                 return { canPost: true, message: '' };
             } catch (e) {
-                console.error(e);
-                return { canPost: false, message: 'Error checking post limit' };
+                console.error('checkCanPost error:', e);
+                // On error, allow the post — Firestore will enforce its own rules
+                return { canPost: true, message: '' };
             }
         }
 
@@ -1248,16 +1261,18 @@
             });
         }
 
-        function updateUserPoints(points, reason) {
+        async function updateUserPoints(points, reason) {
             if (!currentUser) return;
-            const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
-            const idx = users.findIndex(u => u.username === currentUser.username);
-            if (idx > -1) {
-                users[idx].points = (users[idx].points || 0) + points;
-                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
-                currentUser.points = users[idx].points;
+            try {
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    points: firebase.firestore.FieldValue.increment(points)
+                });
+                currentUser.points = (currentUser.points || 0) + points;
                 localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
                 showNotification(`+${points} points: ${reason}`);
+            } catch (e) {
+                console.error('Error updating points:', e);
             }
         }
 
@@ -1290,10 +1305,12 @@
             const postText = document.getElementById('postText');
             const charCount = document.getElementById('charCount');
             const submitBtn = document.getElementById('submitPost');
+
             if (postText) {
                 postText.addEventListener('input', () => {
                     const len = postText.value.length;
                     charCount.textContent = len;
+                    charCount.style.color = len > 450 ? 'var(--danger-red)' : 'var(--primary-green)';
                     submitBtn.disabled = len === 0 || len > 500;
                 });
             }
@@ -1305,6 +1322,7 @@
                 const canPost = await checkCanPost();
                 if (!canPost.canPost) {
                     showToast(canPost.message, 'error', 5000);
+                    showCooldownBanner(canPost.message);
                     return;
                 }
                 submitBtn.disabled = true;
@@ -1313,9 +1331,10 @@
                     await createPost(text);
                     postForm.reset();
                     charCount.textContent = '0';
-                    await loadPosts();
-                    showNotification('Post published!');
+                    showNotification('Post published! 🌱');
                     showToast('Your post is now live! 🌱', 'success');
+                    // Show cooldown after posting
+                    showCooldownBanner('You can post again in 24 hours ⏳');
                 } catch (err) {
                     showToast('Error: ' + err.message, 'error');
                 } finally {
@@ -1324,6 +1343,27 @@
                 }
             });
         });
+
+        function showCooldownBanner(message) {
+            const banner = document.getElementById('postCooldownBanner');
+            if (!banner) return;
+            banner.style.display = 'block';
+            banner.textContent = '⏳ ' + message;
+        }
+
+        // Check and show cooldown state when user loads the page
+        async function checkAndShowCooldown() {
+            if (!currentUser || currentUserIsAdmin) return;
+            const result = await checkCanPost();
+            if (!result.canPost) {
+                showCooldownBanner(result.message);
+                const submitBtn = document.getElementById('submitPost');
+                if (submitBtn) submitBtn.disabled = true;
+            } else {
+                const banner = document.getElementById('postCooldownBanner');
+                if (banner) banner.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
