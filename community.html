@@ -1567,15 +1567,31 @@
                 likes: [],
                 createdAt: Date.now()
             };
+
             try {
                 const postRef = db.collection('posts').doc(postId);
-                await postRef.update({ comments: firebase.firestore.FieldValue.arrayUnion(comment) });
+                const postSnap = await postRef.get();
+                if (!postSnap.exists) {
+                    showToast('Post not found', 'error');
+                    return;
+                }
+
+                const post = postSnap.data();
+                const comments = post.comments || [];
+                comments.push(comment);
+
+                await postRef.update({ comments });
                 updateUserPoints(2, 'Commented on a post');
                 input.value = '';
+
+                // Refresh UI
                 const updated = (await postRef.get()).data();
                 document.getElementById(`comments-list-${postId}`).innerHTML = renderComments(updated.comments || [], postId);
                 document.querySelector(`#comments-${postId} .comments-title`).innerHTML = `Comments (${updated.comments?.length || 0})`;
-            } catch (e) { console.error(e); showToast('Error adding comment', 'error'); }
+            } catch (e) {
+                console.error('Add comment error:', e);
+                showToast('Error adding comment: ' + e.message, 'error');
+            }
         }
 
         async function toggleCommentLike(commentId, postId) {
