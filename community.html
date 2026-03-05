@@ -1859,25 +1859,29 @@
                                 const fileName = `${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
                                 const imageRef = storageRef.child(`post-images/${fileName}`);
                                 
-                                // Upload with progress tracking
-                                const uploadTask = imageRef.put(imageFile);
-                                
-                                // Monitor upload progress
-                                uploadTask.on('state_changed',
-                                    (snapshot) => {
-                                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                        progressBar.style.width = progress + '%';
-                                        uploadStatus.textContent = `Uploading... ${Math.round(progress)}%`;
-                                        console.log('Upload progress:', progress + '%');
-                                    },
-                                    (error) => {
-                                        console.error('Upload error:', error);
-                                        throw error;
-                                    }
-                                );
-                                
-                                // Wait for upload to complete
-                                await uploadTask;
+                                // Upload with progress tracking – use a promise to handle resolve/reject correctly
+                                const uploadTask = imageRef.put(file);
+
+                                // Wrap the upload in a promise that resolves on success, rejects on error
+                                await new Promise((resolve, reject) => {
+                                    uploadTask.on('state_changed',
+                                        (snapshot) => {
+                                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                            progressBar.style.width = progress + '%';
+                                            uploadStatus.textContent = `Uploading... ${Math.round(progress)}%`;
+                                            console.log('Upload progress:', progress + '%');
+                                        },
+                                        (error) => {
+                                            // Reject the promise on error
+                                            console.error('Upload error:', error);
+                                            reject(error);
+                                        },
+                                        () => {
+                                            // Upload completed successfully
+                                            resolve();
+                                        }
+                                    );
+                                });
                                 
                                 // Get download URL
                                 imageUrl = await imageRef.getDownloadURL();
