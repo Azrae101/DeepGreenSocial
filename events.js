@@ -404,5 +404,61 @@ const eventData = [
             points: '+10 pts signup | +200 pts completion',
             link: 'https://dokk1.dk/alle-arrangementer',
             linkText: 'Event Info'
+        },
+        {
+            id: 32,
+            name: 'Climate Justice Group Meeting',
+            danishName: 'Møde for Klimaretfærdigheds-gruppen',
+            date: '12/3/2026 - 19:00–21:00',
+            image: 'images/placeholder.png',
+            title: 'Climate Justice Meeting',
+            danishTitle: 'Klimaretfærdigheds Møde',
+            description: 'Join Mellemfolkeligt Samvirke Aarhus Climate Justice Group for regular meetings and discussions about campaigns focused on a socially just climate transition. All are welcome to participate and contribute ideas.',
+            location: 'Mellemfolkeligt Samvirke Aarhus, Mejlgade 53, 8000 Aarhus C',
+            points: '+150 pts (2h @ 75 pts/hr)',
+            link: 'https://www.ms.dk',
+            linkText: 'Learn More'
+        },
+        {
+            id: 33,
+            name: 'Botanical Garden Volunteer Day',
+            danishName: 'Frivillig dag i Botanisk Have',
+            date: '21/3/2026 - 10:00–14:00',
+            image: 'images/placeholder.png',
+            title: 'Botanical Garden Volunteer',
+            danishTitle: 'Botanisk Haves Frivillig',
+            description: 'Help maintain and care for the theme and perennial gardens at the Aarhus Botanical Garden. Join the Friends of the Botanical Garden association. No experience necessary - just bring a willingness to help!',
+            location: 'Aarhus Botanical Garden, Øresundsvej 20, 8000 Aarhus C',
+            points: '+400 pts (4h @ 100 pts/hr)',
+            link: 'https://botaniskhave.dk',
+            linkText: 'Learn More'
+        },
+        {
+            id: 34,
+            name: 'Aarhus University Sustainability Leadership Forum',
+            danishName: 'Aarhus Universitets Bæredygtigheds Forum',
+            date: '19/3/2026 - 13:00–17:00',
+            image: 'images/placeholder.png',
+            title: 'Sustainability Forum',
+            danishTitle: 'Bæredygtigheds Forum',
+            description: 'Join a sustainability-focused forum at Aarhus University featuring discussions on climate councils, waste reduction, sustainable food initiatives, and the work of the Aarhus Centre for Regenerative Building. Meet like-minded students and staff.',
+            location: 'Aarhus University, Nørreport, 8000 Aarhus C',
+            points: '+200 pts (4h @ 50 pts/hr)',
+            link: 'https://www.au.dk/sustainability',
+            linkText: 'Event Info'
+        },
+        {
+            id: 35,
+            name: 'Terrarium Building Workshop at Plukk',
+            danishName: 'Terrarium Bygnings Workshop på Plukk',
+            date: '28/3/2026 - 15:00–17:00',
+            image: 'images/placeholder.png',
+            title: 'Terrarium Workshop',
+            danishTitle: 'Terrarium Workshop',
+            description: 'Create your own living terrarium at this hands-on workshop at Plukk green oasis café. Learn about sustainable plant care and take home your own mini garden. All materials included. Limited spaces - register in advance.',
+            location: 'Plukk - Green Oasis, Kjeld Tolstrups Gade 12, 8000 Aarhus C',
+            points: '+150 pts (2h @ 75 pts/hr)',
+            link: 'https://www.plukkro.dk',
+            linkText: 'Book Workshop'
         }
     ];
