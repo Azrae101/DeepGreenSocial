@@ -10,7 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
     
     <style>
@@ -83,10 +82,12 @@
         nav ul {
             display: flex;
             list-style: none;
+            align-items: center;
         }
 
         nav ul li {
-            margin-left: 20px;
+            margin-left: 8px;
+            position: relative;
         }
 
         nav ul li a {
@@ -96,6 +97,8 @@
             padding: 10px 16px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            display: block;
+            white-space: nowrap;
         }
 
         nav ul li a:hover {
@@ -104,10 +107,77 @@
             transform: translateY(-2px);
         }
 
-        nav ul li a[style*="background"] {
-            background-color: var(--light-green) !important;
-            color: var(--white) !important;
+        nav ul li a.active {
+            background-color: var(--light-green);
+            color: var(--white);
         }
+
+        /* Dropdown */
+        .dropdown > a::after {
+            content: " \25BE";
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: white;
+            min-width: 200px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(46,125,50,0.15);
+            border: 1px solid rgba(76,175,80,0.15);
+            z-index: 200;
+            overflow: hidden;
+            animation: dropFade 0.18s ease;
+        }
+
+        @keyframes dropFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            padding: 11px 18px;
+            color: var(--dark-gray);
+            border-radius: 0;
+            font-size: 0.95em;
+            border-bottom: 1px solid rgba(76,175,80,0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-content a:last-child { border-bottom: none; }
+
+        .dropdown-content a:hover {
+            background: rgba(76,175,80,0.08);
+            color: var(--primary-green);
+            transform: none;
+            padding-left: 22px;
+        }
+
+        /* My Points nav link */
+        .nav-points-link {
+            background: linear-gradient(135deg, #fff8e1, #fffde7);
+            border: 1.5px solid #ffe082;
+            color: #e65100 !important;
+        }
+
+        .nav-points-link:hover {
+            background: linear-gradient(135deg, #ffe082, #ffd54f) !important;
+            color: #bf360c !important;
+            transform: translateY(-2px);
+        }
+
+        #navPointsItem { display: none; }
 
         .auth-buttons {
             display: flex;
@@ -705,12 +775,14 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .header-container { flex-direction: column; padding: 15px 0; gap: 15px; }
-            nav ul { margin: 15px 0; flex-wrap: wrap; justify-content: center; }
-            nav ul li { margin-left: 12px; }
+            .header-container { flex-direction: column; padding: 15px 0; gap: 12px; }
+            nav ul { margin: 8px 0; flex-wrap: wrap; justify-content: center; gap: 4px; }
+            nav ul li { margin-left: 0; }
+            nav ul li a { padding: 8px 12px; font-size: 0.9em; }
             .auth-buttons { width: 100%; justify-content: center; }
             .comment-form { flex-direction: column; }
             .btn-comment { align-self: flex-end; }
+            .dropdown-content { left: 50%; transform: translateX(-50%); }
         }
     </style>
 </head>
@@ -728,13 +800,14 @@
                     <li class="dropdown">
                         <a href="index.html">Home</a>
                         <div class="dropdown-content">
-                            <a href="index.html#events">Events</a>
-                            <a href="index.html#news">News</a>
-                            <a href="index.html#map">Sustainable Aarhus</a>
+                            <a href="index.html#events">📅 Events</a>
+                            <a href="index.html#map">🌿 Sustainable Aarhus</a>
+                            <a href="index.html#news">📰 News</a>
                         </div>
                     </li>
                     <li><a href="game-overview.html">Games</a></li>
-                    <li><a href="community.html" style="background-color: var(--light-green); color: white;">Community</a></li>
+                    <li><a href="community.html" class="active">Community</a></li>
+                    <li id="navPointsItem"><a href="points.html" class="nav-points-link">⭐ My Points</a></li>
                 </ul>
             </nav>
             <div class="auth-buttons" id="authButtons"></div>
@@ -747,7 +820,6 @@
                 <!-- Create Post Card (visible only when logged in) -->
                 <div class="create-post-card" id="createPostCard" style="display: none;">
                     <h2>Share Your Sustainable Action</h2>
-                    <div id="postCooldownBanner" style="display:none; background:#fff3e0; border:1px solid #ffe0b2; border-radius:10px; padding:12px 16px; margin-bottom:16px; color:#e65100; font-weight:600; font-size:0.95em;"></div>
                     <form class="post-form" id="postForm">
                         <textarea id="postText" placeholder="What sustainable action did you take today? Share with the community! 🌱" maxlength="500"></textarea>
                         <div class="post-actions">
@@ -895,7 +967,6 @@
                 updateAuthButtons();
                 document.getElementById('createPostCard').style.display = 'block';
                 loadPosts();
-                checkAndShowCooldown();
             } catch (error) {
                 console.error('Auth error:', error);
                 showToast('Error loading user profile.', 'error');
@@ -904,26 +975,43 @@
 
         function updateAuthButtons() {
             const authButtons = document.getElementById('authButtons');
+            const navPointsItem = document.getElementById('navPointsItem');
+
             if (currentUser) {
+                // Show My Points in the navbar
+                if (navPointsItem) navPointsItem.style.display = 'block';
+
                 authButtons.innerHTML = `
                     <div style="position: relative; display: inline-block;">
-                        <span id="userMenuToggle" style="color: var(--primary-green); cursor: pointer; padding: 8px 12px; border-radius: 4px;">
-                            👋 ${currentUser.firstName || currentUser.username} ${currentUserIsAdmin ? '<span style="background: gold; color: black; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">ADMIN</span>' : ''} ▼
-                        </span>
-                        <div id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 4px; margin-top: 5px; z-index: 1000;">
-                            <a href="points.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none;">📊 My Points</a>
-                            <a href="user-settings.html" style="display: block; padding: 12px 16px; color: var(--dark-gray); text-decoration: none;">⚙️ Settings</a>
-                            <a href="#" id="logoutBtn" style="display: block; padding: 12px 16px; color: #d32f2f; text-decoration: none; border-top: 1px solid #e0e0e0;">🚪 Logout</a>
+                        <button id="userMenuToggle" style="
+                            background: none; border: 2px solid rgba(46,125,50,0.2);
+                            color: var(--primary-green); cursor: pointer; padding: 8px 14px;
+                            border-radius: 10px; font-weight: 600; font-size: 0.95em;
+                            display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                            <span style="width:32px;height:32px;background:linear-gradient(135deg,var(--light-green),#66bb6a);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:1em;">
+                                ${(currentUser.firstName || currentUser.username || 'U').charAt(0).toUpperCase()}
+                            </span>
+                            ${currentUser.firstName || currentUser.username}
+                            ${currentUserIsAdmin ? '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:2px 8px;border-radius:10px;font-size:0.75em;font-weight:800;">ADMIN</span>' : ''}
+                            <span style="font-size:0.7em;opacity:0.6;">▾</span>
+                        </button>
+                        <div id="userDropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;min-width:190px;box-shadow:0 8px 30px rgba(46,125,50,0.15);border-radius:12px;border:1px solid rgba(76,175,80,0.15);z-index:1000;overflow:hidden;">
+                            <a href="user-settings.html" style="display:flex;align-items:center;gap:10px;padding:13px 18px;color:var(--dark-gray);text-decoration:none;font-weight:500;border-bottom:1px solid rgba(0,0,0,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(76,175,80,0.06)'" onmouseout="this.style.background=''">⚙️ Settings</a>
+                            <a href="#" id="logoutBtn" style="display:flex;align-items:center;gap:10px;padding:13px 18px;color:#d32f2f;text-decoration:none;font-weight:500;transition:background 0.2s;" onmouseover="this.style.background='rgba(244,67,54,0.05)'" onmouseout="this.style.background=''">🚪 Logout</a>
                         </div>
                     </div>
                 `;
+
                 const toggle = document.getElementById('userMenuToggle');
                 const dropdown = document.getElementById('userDropdown');
+                toggle.addEventListener('mouseover', () => toggle.style.borderColor = 'var(--light-green)');
+                toggle.addEventListener('mouseout', () => toggle.style.borderColor = 'rgba(46,125,50,0.2)');
                 toggle.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                    const open = dropdown.style.display !== 'none';
+                    dropdown.style.display = open ? 'none' : 'block';
                 });
-                document.addEventListener('click', () => dropdown.style.display = 'none');
+                document.addEventListener('click', () => { if(dropdown) dropdown.style.display = 'none'; });
                 dropdown.addEventListener('click', (e) => e.stopPropagation());
                 document.getElementById('logoutBtn').addEventListener('click', async (e) => {
                     e.preventDefault();
@@ -932,6 +1020,8 @@
                     window.location.href = 'login.html';
                 });
             } else {
+                // Hide My Points when logged out
+                if (navPointsItem) navPointsItem.style.display = 'none';
                 authButtons.innerHTML = `
                     <button class="btn btn-login" onclick="window.location.href='login.html'">Login</button>
                     <button class="btn btn-register" onclick="window.location.href='register.html'">Register</button>
@@ -944,8 +1034,7 @@
             if (!currentUser) return { canPost: false, message: 'Not authenticated' };
             if (currentUserIsAdmin) return { canPost: true, message: '' };
             try {
-                // No .orderBy() here — that's what was causing the missing index error.
-                // We fetch all posts by this user and find the latest one client-side.
+                // No .orderBy() — avoids composite index requirement. Sort client-side instead.
                 const snap = await db.collection('posts')
                     .where('userId', '==', currentUser.email)
                     .get();
@@ -960,14 +1049,14 @@
                 });
                 if (!latestTime) return { canPost: true, message: '' };
                 const hours = (new Date() - latestTime) / (1000 * 60 * 60);
-                if (hours < 1) {
-                    const remaining = Math.ceil(1 - hours);
-                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}.` };
+                if (hours < 24) {
+                    const remaining = Math.ceil(24 - hours);
+                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}. ⏳` };
                 }
                 return { canPost: true, message: '' };
             } catch (e) {
                 console.error('checkCanPost error:', e);
-                return { canPost: true, message: '' }; // fail open — don't block the user on errors
+                return { canPost: true, message: '' }; // fail open — never block on errors
             }
         }
 
@@ -1256,18 +1345,16 @@
             });
         }
 
-        async function updateUserPoints(points, reason) {
+        function updateUserPoints(points, reason) {
             if (!currentUser) return;
-            try {
-                const userRef = db.collection('users').doc(currentUser.uid);
-                await userRef.update({
-                    points: firebase.firestore.FieldValue.increment(points)
-                });
-                currentUser.points = (currentUser.points || 0) + points;
+            const users = JSON.parse(localStorage.getItem('sustainalearn_users')) || [];
+            const idx = users.findIndex(u => u.username === currentUser.username);
+            if (idx > -1) {
+                users[idx].points = (users[idx].points || 0) + points;
+                localStorage.setItem('sustainalearn_users', JSON.stringify(users));
+                currentUser.points = users[idx].points;
                 localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
                 showNotification(`+${points} points: ${reason}`);
-            } catch (e) {
-                console.error('Error updating points:', e);
             }
         }
 
@@ -1300,12 +1387,10 @@
             const postText = document.getElementById('postText');
             const charCount = document.getElementById('charCount');
             const submitBtn = document.getElementById('submitPost');
-
             if (postText) {
                 postText.addEventListener('input', () => {
                     const len = postText.value.length;
                     charCount.textContent = len;
-                    charCount.style.color = len > 450 ? 'var(--danger-red)' : 'var(--primary-green)';
                     submitBtn.disabled = len === 0 || len > 500;
                 });
             }
@@ -1317,7 +1402,6 @@
                 const canPost = await checkCanPost();
                 if (!canPost.canPost) {
                     showToast(canPost.message, 'error', 5000);
-                    showCooldownBanner(canPost.message);
                     return;
                 }
                 submitBtn.disabled = true;
@@ -1326,10 +1410,9 @@
                     await createPost(text);
                     postForm.reset();
                     charCount.textContent = '0';
-                    showNotification('Post published! 🌱');
+                    await loadPosts();
+                    showNotification('Post published!');
                     showToast('Your post is now live! 🌱', 'success');
-                    // Show cooldown after posting
-                    showCooldownBanner('You can post again in 1 hour ⏳');
                 } catch (err) {
                     showToast('Error: ' + err.message, 'error');
                 } finally {
@@ -1338,27 +1421,6 @@
                 }
             });
         });
-
-        function showCooldownBanner(message) {
-            const banner = document.getElementById('postCooldownBanner');
-            if (!banner) return;
-            banner.style.display = 'block';
-            banner.textContent = '⏳ ' + message;
-        }
-
-        // Check and show cooldown state when user loads the page
-        async function checkAndShowCooldown() {
-            if (!currentUser || currentUserIsAdmin) return;
-            const result = await checkCanPost();
-            if (!result.canPost) {
-                showCooldownBanner(result.message);
-                const submitBtn = document.getElementById('submitPost');
-                if (submitBtn) submitBtn.disabled = true;
-            } else {
-                const banner = document.getElementById('postCooldownBanner');
-                if (banner) banner.style.display = 'none';
-            }
-        }
     </script>
 </body>
 </html>
