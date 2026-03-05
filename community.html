@@ -960,8 +960,8 @@
                 });
                 if (!latestTime) return { canPost: true, message: '' };
                 const hours = (new Date() - latestTime) / (1000 * 60 * 60);
-                if (hours < 24) {
-                    const remaining = Math.ceil(24 - hours);
+                if (hours < 1) {
+                    const remaining = Math.ceil(1 - hours);
                     return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}.` };
                 }
                 return { canPost: true, message: '' };
