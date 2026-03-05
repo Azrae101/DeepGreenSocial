@@ -1268,29 +1268,38 @@
 
             try {
                 const userRef = db.collection('users').doc(firebaseUser.uid);
-                const userSnap = await userRef.get();
-                if (userSnap.exists) {
-                    const userData = userSnap.data();
-                    currentUser = {
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,               // use email for identification
-                        username: userData.username || userData.email,
-                        firstName: userData.firstName || userData.name || 'User',
-                        lastName: userData.lastName || '',
-                        ...userData
+                let userSnap = await userRef.get();
+
+                if (!userSnap.exists) {
+                    // Create a basic user document using Firebase Auth info
+                    const newUser = {
+                        email: firebaseUser.email,
+                        username: firebaseUser.email.split('@')[0],
+                        firstName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                        lastName: '',
+                        points: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
-
-                    currentUserIsAdmin = ADMIN_EMAILS.includes(currentUser.email);
-
-                    updateAuthButtons();
-                    document.getElementById('createPostCard').style.display = 'block';
-                    loadPosts();
-                } else {
-                    console.error('User document not found');
-                    showToast('User profile not found. Please log in again.', 'error');
-                    await auth.signOut();
+                    await userRef.set(newUser);
+                    userSnap = await userRef.get(); // re-fetch
                 }
+
+                const userData = userSnap.data();
+                currentUser = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    username: userData.username || userData.email,
+                    firstName: userData.firstName || userData.name || 'User',
+                    lastName: userData.lastName || '',
+                    ...userData
+                };
+                localStorage.setItem('sustainalearn_currentUser', JSON.stringify(currentUser));
+
+                currentUserIsAdmin = ADMIN_EMAILS.includes(currentUser.email);
+                updateAuthButtons();
+                document.getElementById('createPostCard').style.display = 'block';
+                loadPosts();
+                
             } catch (error) {
                 console.error('Error loading user data:', error);
                 showToast('Error loading user profile.', 'error');
