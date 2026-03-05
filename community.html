@@ -978,20 +978,33 @@
             return ref.id;
         }
 
+        // Real-time feed listener — unsubscribe handle so we don't stack listeners
+        let unsubscribeFeed = null;
+
         async function loadPosts() {
             const feed = document.getElementById('postFeed');
             feed.innerHTML = '<div class="loader">Loading posts...</div>';
+
+            // Clean up any previous listener
+            if (unsubscribeFeed) { unsubscribeFeed(); unsubscribeFeed = null; }
+
             try {
-                const snap = await db.collection('posts').orderBy('createdAt', 'desc').get();
-                const posts = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-                feed.innerHTML = '';
-                if (posts.length === 0) {
-                    feed.innerHTML = '<div class="empty-state">No posts yet. Be the first to share! 🌟</div>';
-                    updateStats(0);
-                    return;
-                }
-                posts.forEach(p => renderPost(p));
-                updateStats(posts.length);
+                unsubscribeFeed = db.collection('posts')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot(snap => {
+                        const posts = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+                        feed.innerHTML = '';
+                        if (posts.length === 0) {
+                            feed.innerHTML = '<div class="empty-state">No posts yet. Be the first to share! 🌟</div>';
+                            updateStats(0);
+                            return;
+                        }
+                        posts.forEach(p => renderPost(p));
+                        updateStats(posts.length);
+                    }, err => {
+                        console.error(err);
+                        feed.innerHTML = `<div class="empty-state">Error loading posts: ${err.message}</div>`;
+                    });
             } catch (e) {
                 console.error(e);
                 feed.innerHTML = `<div class="empty-state">Error loading posts: ${e.message}</div>`;
@@ -1039,7 +1052,11 @@
                     <div class="comments-title">Comments (${post.comments?.length || 0})</div>
                     ${currentUser ? `
                         <form class="comment-form" onsubmit="addComment('${post.id}'); return false;">
-                            <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Add a comment..." maxlength="200">
+                            <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                                <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Add a comment..." maxlength="200"
+                                    oninput="document.getElementById('cc-${post.id}').textContent=this.value.length">
+                                <span id="cc-${post.id}" style="font-size:0.78em; color:#aaa; text-align:right;">0</span>
+                            </div>
                             <button type="submit" class="btn btn-comment">Post</button>
                         </form>
                     ` : ''}
@@ -1081,22 +1098,27 @@
 
         // ========== INTERACTIONS ==========
         window.toggleLike = async (postId) => {
-            if (!currentUser) { showToast('Please login', 'info'); return; }
+            if (!currentUser) { showToast('Please login to like posts 👋', 'info'); return; }
             try {
                 const ref = db.collection('posts').doc(postId);
                 const post = (await ref.get()).data();
                 const likes = post.likes || [];
-                const idx = likes.indexOf(currentUser.email);
-                if (idx > -1) likes.splice(idx, 1);
-                else {
-                    likes.push(currentUser.email);
-                    updateUserPoints(1, 'Liked a post');
-                }
-                await ref.update({ likes });
+                const alreadyLiked = likes.includes(currentUser.email);
+
+                // Use atomic arrayUnion / arrayRemove so concurrent likes don't clobber each other
+                await ref.update({
+                    likes: alreadyLiked
+                        ? firebase.firestore.FieldValue.arrayRemove(currentUser.email)
+                        : firebase.firestore.FieldValue.arrayUnion(currentUser.email)
+                });
+
+                if (!alreadyLiked) updateUserPoints(1, 'Liked a post');
+
+                const newCount = alreadyLiked ? likes.length - 1 : likes.length + 1;
                 const btn = document.querySelector(`#post-${postId} .like-btn`);
                 if (btn) {
-                    btn.classList.toggle('liked', idx === -1);
-                    btn.innerHTML = `${idx > -1 ? '🤍' : '❤️'} <span>${likes.length}</span>`;
+                    btn.classList.toggle('liked', !alreadyLiked);
+                    btn.innerHTML = `${!alreadyLiked ? '❤️' : '🤍'} <span>${newCount}</span>`;
                 }
             } catch (e) {
                 console.error(e);
@@ -1105,12 +1127,18 @@
         };
 
         window.addComment = async (postId) => {
-            if (!currentUser) { showToast('Please login', 'info'); return; }
+            if (!currentUser) { showToast('Please login to comment 👋', 'info'); return; }
             const input = document.getElementById(`comment-input-${postId}`);
             const text = input.value.trim();
             if (!text) return;
+            if (text.length > 200) { showToast('Comment too long (max 200 characters)', 'error'); return; }
+
+            const btn = input.nextElementSibling;
+            btn.disabled = true;
+            btn.textContent = 'Posting...';
+
             const comment = {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
                 postId,
                 userId: currentUser.email,
                 userDisplayName: currentUser.firstName || currentUser.username,
@@ -1120,9 +1148,8 @@
             };
             try {
                 const ref = db.collection('posts').doc(postId);
-                const post = (await ref.get()).data();
-                const comments = [...(post.comments || []), comment];
-                await ref.update({ comments });
+                // arrayUnion safely appends without a read-modify-write race
+                await ref.update({ comments: firebase.firestore.FieldValue.arrayUnion(comment) });
                 updateUserPoints(2, 'Commented on a post');
                 input.value = '';
                 const updated = (await ref.get()).data();
@@ -1131,11 +1158,14 @@
             } catch (e) {
                 console.error(e);
                 showToast('Error adding comment', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Post';
             }
         };
 
         window.toggleCommentLike = async (commentId, postId) => {
-            if (!currentUser) { showToast('Please login', 'info'); return; }
+            if (!currentUser) { showToast('Please login to like comments 👋', 'info'); return; }
             try {
                 const ref = db.collection('posts').doc(postId);
                 const post = (await ref.get()).data();
@@ -1145,13 +1175,10 @@
                 const comment = comments[idx];
                 const likes = comment.likes || [];
                 const userIdx = likes.indexOf(currentUser.email);
-                let updatedLikes;
-                if (userIdx > -1) {
-                    updatedLikes = likes.filter((_, i) => i !== userIdx);
-                } else {
-                    updatedLikes = [...likes, currentUser.email];
-                    updateUserPoints(1, 'Liked a comment');
-                }
+                const updatedLikes = userIdx > -1
+                    ? likes.filter((_, i) => i !== userIdx)
+                    : [...likes, currentUser.email];
+                if (userIdx === -1) updateUserPoints(1, 'Liked a comment');
                 comments[idx] = { ...comment, likes: updatedLikes };
                 await ref.update({ comments });
                 document.getElementById(`comments-list-${postId}`).innerHTML = renderComments(comments, postId);
@@ -1170,7 +1197,7 @@
                 const comment = comments.find(c => c.id === commentId);
                 if (!comment) return;
                 if (!currentUserIsAdmin && comment.userId !== currentUser.email) {
-                    showToast('No permission', 'error');
+                    showToast('You can only delete your own comments', 'error');
                     return;
                 }
                 if (!confirm('Delete this comment?')) return;
@@ -1178,6 +1205,7 @@
                 await ref.update({ comments: filtered });
                 document.getElementById(`comments-list-${postId}`).innerHTML = renderComments(filtered, postId);
                 document.querySelector(`#comments-${postId} .comments-title`).innerHTML = `Comments (${filtered.length})`;
+                showToast('Comment deleted', 'success');
             } catch (e) {
                 console.error(e);
                 showToast('Error deleting comment', 'error');
@@ -1188,14 +1216,19 @@
             if (!currentUser) { showToast('Please login', 'error'); return; }
             try {
                 const post = (await db.collection('posts').doc(postId).get()).data();
+                if (!post) { showToast('Post not found', 'error'); return; }
                 if (!currentUserIsAdmin && post.userId !== currentUser.email) {
-                    showToast('No permission', 'error');
+                    showToast('You can only delete your own posts', 'error');
                     return;
                 }
-                if (!confirm('Delete this post?')) return;
+                if (!confirm('Delete this post and all its comments?')) return;
                 await db.collection('posts').doc(postId).delete();
                 document.getElementById(`post-${postId}`)?.remove();
-                updateStats();
+                const remaining = document.querySelectorAll('.post-card').length;
+                updateStats(remaining);
+                if (remaining === 0) {
+                    document.getElementById('postFeed').innerHTML = '<div class="empty-state">No posts yet. Be the first to share! 🌟</div>';
+                }
                 showToast('Post deleted', 'success');
             } catch (e) {
                 console.error(e);
@@ -1236,12 +1269,14 @@
         }
 
         async function updateStats(totalPostsCount) {
-            document.getElementById('totalPosts').textContent = totalPostsCount || 0;
+            document.getElementById('totalPosts').textContent = totalPostsCount ?? 0;
             if (currentUser) {
                 try {
                     const snap = await db.collection('posts').where('userId', '==', currentUser.email).get();
                     document.getElementById('yourPosts').textContent = snap.size;
                 } catch (e) { console.error(e); }
+            } else {
+                document.getElementById('yourPosts').textContent = '0';
             }
         }
 
@@ -1289,15 +1324,5 @@
             });
         });
     </script>
-    <!-- Firestore security rules (update in Firebase Console):
-         match /posts/{postId} {
-           allow read: if true;
-           allow create: if request.auth != null;
-           allow update: if request.auth != null;   // for likes/comments
-           allow delete: if request.auth != null && 
-             (resource.data.userId == request.auth.token.email || 
-              request.auth.token.email in ['admin emails']);
-         }
-    -->
 </body>
 </html>
