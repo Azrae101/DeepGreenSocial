@@ -1600,18 +1600,33 @@
             try {
                 const postRef = db.collection('posts').doc(postId);
                 const post = (await postRef.get()).data();
-                const comments = [...(post.comments || [])];
-                const comment = comments.find(c => c.id === commentId);
-                if (!comment) return;
-                if (!comment.likes) comment.likes = [];
-                const idx = comment.likes.indexOf(currentUser.email);
-                if (idx > -1) comment.likes.splice(idx, 1);
-                else {
-                    comment.likes.push(currentUser.email);
+                const comments = post.comments || [];
+                const commentIndex = comments.findIndex(c => c.id === commentId);
+                if (commentIndex === -1) return;
+                
+                const comment = comments[commentIndex];
+                const likes = comment.likes || [];
+                const idx = likes.indexOf(currentUser.email);
+                
+                let updatedLikes;
+                if (idx > -1) {
+                    // Remove like
+                    updatedLikes = likes.filter((e, i) => i !== idx);
+                } else {
+                    // Add like
+                    updatedLikes = [...likes, currentUser.email];
                     updateUserPoints(1, 'Liked a comment');
                 }
-                await postRef.update({ comments });
-                document.getElementById(`comments-list-${postId}`).innerHTML = renderComments(comments, postId);
+                
+                // Create updated comments array with new comment object
+                const updatedComments = comments.map((c, i) => 
+                    i === commentIndex 
+                        ? { ...c, likes: updatedLikes }
+                        : c
+                );
+                
+                await postRef.update({ comments: updatedComments });
+                document.getElementById(`comments-list-${postId}`).innerHTML = renderComments(updatedComments, postId);
             } catch (e) { console.error(e); showToast('Error toggling like', 'error'); }
         }
 
