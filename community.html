@@ -1430,7 +1430,7 @@
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             const docRef = await db.collection('posts').add(post);
-            await db.collection('posts').doc(docRef.id).update({ id: docRef.id });
+            // No need to manually add id field since we get it from doc.id when loading
             updateUserPoints(5, 'Posted in community');
             return docRef.id;
         }
@@ -1442,7 +1442,10 @@
             try {
                 // Everyone can see all posts
                 const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').get();
-                const posts = snapshot.docs.map(doc => doc.data());
+                const posts = snapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    id: doc.id // Ensure we have the document ID
+                }));
 
                 postFeed.innerHTML = '';
                 if (posts.length === 0) {
