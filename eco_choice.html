@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eco Choice Challenge · Social & Green</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -318,10 +325,41 @@
             padding: 0.2rem 0.5rem;
             border-radius: 30px;
         }
+
+        .back-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #2A7A5E;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            background: #1B4D3E;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-container {
+            position: relative;
+        }
     </style>
 </head>
 <body>
     <div class="game-container" id="gameContainer">
+        <a href="game-overview.html" class="back-button">← Back to Games</a>
         <div class="game-header">
             <h1>
                 ♻️ Eco Choice Challenge 
@@ -345,6 +383,177 @@
 
     <script>
         (function() {
+            // Firebase initialization
+            let currentUser = null;
+            let previousHighScore = 0;
+            
+            // Check Firebase auth state
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                if (user) {
+                    console.log('User logged in:', user.email);
+                    // Load high score from Firestore
+                    loadHighScore();
+                } else {
+                    console.log('No user logged in');
+                }
+            });
+            
+            // Load high score from Firestore
+            async function loadHighScore() {
+                if (!currentUser) return;
+                try {
+                    const userRef = db.collection('users').doc(currentUser.uid);
+                    const userSnap = await userRef.get();
+                    if (userSnap.exists) {
+                        const userData = userSnap.data();
+                        previousHighScore = userData.ecochoiceHighScore || 0;
+                    }
+                } catch (error) {
+                    console.error('Error loading high score:', error);
+                }
+            }
+            
+            // Save game results to Firestore
+            async function saveGameResultsToFirestore(gameScore) {
+                if (!currentUser) {
+                    console.log('No user logged in, game score not saved to Firestore');
+                    return;
+                }
+                
+                try {
+                    const userRef = db.collection('users').doc(currentUser.uid);
+                    const userDoc = await userRef.get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        const currentTotalPoints = userData.points || 0;
+                        const currentGamePoints = userData.gamePoints || 0;
+                        previousHighScore = userData.ecochoiceHighScore || 0;
+                        
+                        // Award points: 1 point per correct answer
+                        const correctAnswers = gameScore / 10; // Each correct answer is 10 points
+                        let pointsEarned = correctAnswers;
+                        
+                        // Bonus for high score (5 points if beat previous score)
+                        let highScoreBonus = 0;
+                        let beatsHighScore = false;
+                        if (gameScore > previousHighScore && previousHighScore > 0) {
+                            highScoreBonus = 5;
+                            beatsHighScore = true;
+                        }
+                        
+                        const totalPointsEarned = pointsEarned + highScoreBonus;
+                        
+                        // Only save if points were earned
+                        if (totalPointsEarned > 0) {
+                            const today = new Date().toISOString().split('T')[0];
+                            const now = new Date();
+                            const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+                            const currentMonthlyPoints = userData.monthlyPoints?.[monthKey] || 0;
+                            
+                            // Create description
+                            let description = `Eco Choice Challenge - ${correctAnswers} correct answers (+${pointsEarned}pts)`;
+                            if (beatsHighScore) {
+                                description += ` + High Score Bonus (+${highScoreBonus}pts)`;
+                            }
+                            
+                            const pointsHistory = userData.pointsHistory || [];
+                            pointsHistory.push({
+                                date: today,
+                                description: description,
+                                points: totalPointsEarned,
+                                type: 'earned'
+                            });
+                            
+                            // Update Firestore
+                            await userRef.update({
+                                gamePoints: currentGamePoints + totalPointsEarned,
+                                points: firebase.firestore.FieldValue.increment(totalPointsEarned),
+                                [`monthlyPoints.${monthKey}`]: currentMonthlyPoints + totalPointsEarned,
+                                ecochoiceHighScore: Math.max(gameScore, previousHighScore),
+                                pointsHistory: pointsHistory
+                            });
+                            
+                            console.log(`Saved ${totalPointsEarned} points! (${pointsEarned} for answers + ${highScoreBonus} bonus)`);
+                            
+                            // Show feedback
+                            if (beatsHighScore) {
+                                showToast(`🎮 +${totalPointsEarned} points! New high score bonus!`, 'success');
+                            } else {
+                                showToast(`🎮 +${totalPointsEarned} points earned!`, 'success');
+                            }
+                        } else {
+                            // Update high score even if no points awarded
+                            if (gameScore > previousHighScore) {
+                                await userRef.update({
+                                    ecochoiceHighScore: gameScore
+                                });
+                            }
+                        }
+                    } else {
+                        // Initialize user document if doesn't exist
+                        const correctAnswers = gameScore / 10;
+                        if (correctAnswers > 0) {
+                            await userRef.set({
+                                points: correctAnswers,
+                                gamePoints: correctAnswers,
+                                ecochoiceHighScore: gameScore,
+                                pointsHistory: [{
+                                    date: new Date().toISOString().split('T')[0],
+                                    description: `Eco Choice Challenge - ${correctAnswers} correct answers`,
+                                    points: correctAnswers,
+                                    type: 'earned'
+                                }]
+                            }, { merge: true });
+                            showToast(`🎮 +${correctAnswers} points earned!`, 'success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving game results to Firestore:', error);
+                }
+            }
+            
+            // Toast notification function
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: ${type === 'success' ? '#4caf50' : '#2196F3'};
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    z-index: 10000;
+                    font-weight: 500;
+                    animation: slideUp 0.3s ease;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideDown 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+            
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideUp {
+                    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+                    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                }
+                @keyframes slideDown {
+                    from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                    to { transform: translateX(-50%) translateY(20px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
             // ---------- GAME DATA ----------
             const rounds = [
                 {
@@ -593,6 +802,9 @@
                 dynamicArea.innerHTML = html;
                 document.getElementById('replayGameBtn').addEventListener('click', resetGame);
                 updateStatsUI(); // make sure final score is shown in header
+                
+                // Save points to Firestore when game finishes
+                saveGameResultsToFirestore(score);
             }
 
             // Reset everything
@@ -609,6 +821,13 @@
             // Initial render
             updateStatsUI();
             render();
+            
+            // Show login prompt for point savings
+            if (!currentUser) {
+                setTimeout(() => {
+                    showToast('💡 Login to save your Eco Choice points!', 'info');
+                }, 500);
+            }
 
             // minor: ensure header score stays updated (on next round already)
         })();
