@@ -944,14 +944,12 @@
             if (!currentUser) return { canPost: false, message: 'Not authenticated' };
             if (currentUserIsAdmin) return { canPost: true, message: '' };
             try {
-                // Simple where-only query — no composite index needed.
-                // We sort client-side to find the most recent post.
+                // No .orderBy() here — that's what was causing the missing index error.
+                // We fetch all posts by this user and find the latest one client-side.
                 const snap = await db.collection('posts')
                     .where('userId', '==', currentUser.email)
                     .get();
                 if (snap.empty) return { canPost: true, message: '' };
-
-                // Find the latest post by createdAt client-side
                 let latestTime = null;
                 snap.forEach(doc => {
                     const d = doc.data();
@@ -960,19 +958,16 @@
                         if (!latestTime || t > latestTime) latestTime = t;
                     }
                 });
-
                 if (!latestTime) return { canPost: true, message: '' };
-
                 const hours = (new Date() - latestTime) / (1000 * 60 * 60);
                 if (hours < 24) {
                     const remaining = Math.ceil(24 - hours);
-                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}. ⏳` };
+                    return { canPost: false, message: `You can post again in ${remaining} hour${remaining !== 1 ? 's' : ''}.` };
                 }
                 return { canPost: true, message: '' };
             } catch (e) {
                 console.error('checkCanPost error:', e);
-                // On error, allow the post — Firestore will enforce its own rules
-                return { canPost: true, message: '' };
+                return { canPost: true, message: '' }; // fail open — don't block the user on errors
             }
         }
 
