@@ -49,6 +49,4 @@ def remove_outer_background(input_path, output_path, threshold=220):
 
 
 # example usage
-remove_outer_background("images/plast.png","images/plast_no_bg.png")
-remove_outer_background("images/rest.png","images/rest_no_bg.png")
 remove_outer_background("images/farlig.png","images/farlig_no_bg.png")
