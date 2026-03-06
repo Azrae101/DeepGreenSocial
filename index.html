@@ -9,7 +9,6 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
     
@@ -952,6 +951,25 @@
         border-radius: 8px;
     }
 
+
+    .admin-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        font-weight: 800;
+        margin-left: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .admin-badge:before {
+        content: "⭐";
+    }
+
+
     /* Toast animations */
     @keyframes slideUp {
         from {
@@ -1028,9 +1046,6 @@
                     We offer a solution where you <strong style="color: #4caf50;">take action</strong> and do something good 
                     for the climate, <strong style="color: #4caf50;">together</strong>.
                 </p>
-                <p style="color: #e0f2e1; font-size: 1.08rem; max-width: 860px; line-height: 1.8; margin-top: 18px;">
-                    Our community brings students, neighbors, and local changemakers together in one place. Inside the platform you can discover events, share practical ideas, follow your impact, and motivate each other through visible progress and real-world collaboration.
-                </p>
             </div>
             
             <div class="problem-solution-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 60px;">
@@ -1089,19 +1104,6 @@
             </div>
             
             <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
-                <!-- Feature 1 -->
-                <div class="feature-card" style="background: white; border-radius: 16px; padding: 35px 30px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; border-top: 6px solid #4caf50;">
-                    <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
-                        <div style="background: #e8f5e9; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 28px; color: #2e7d32;">✋</span>
-                        </div>
-                        <h3 style="color: #1b5e20; font-size: 1.3rem; margin: 0;">Hands-On Events</h3>
-                    </div>
-                    <p style="color: #424242; line-height: 1.7; margin-bottom: 20px;">
-                        Join group activities like trash cleanups, recycling drives, and repair workshops. Every event is designed to make a real, positive impact.
-                    </p>
-                    <div style="color: #4caf50; font-weight: bold; font-size: 0.9rem;">+10 POINTS PER EVENT</div>
-                </div>
                 
                 <!-- Feature 2 -->
                 <div class="feature-card" style="background: white; border-radius: 16px; padding: 35px 30px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; border-top: 6px solid #2196f3;">
@@ -1143,34 +1145,6 @@
                         Access practical guides, workshops, and games that teach you how to help the climate in fun, effective ways.
                     </p>
                     <div style="color: #9c27b0; font-weight: bold; font-size: 0.9rem;">LEARN WHILE HAVING FUN</div>
-                </div>
-                
-                <!-- Feature 5 -->
-                <div class="feature-card" style="background: white; border-radius: 16px; padding: 35px 30px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; border-top: 6px solid #009688;">
-                    <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
-                        <div style="background: #e0f2f1; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 28px; color: #004d40;">📊</span>
-                        </div>
-                        <h3 style="color: #004d40; font-size: 1.3rem; margin: 0;">Track Your Impact</h3>
-                    </div>
-                    <p style="color: #424242; line-height: 1.7; margin-bottom: 20px;">
-                        Measure your contributions and see the difference you make through our transparent points system.
-                    </p>
-                    <div style="color: #009688; font-weight: bold; font-size: 0.9rem;">VISUAL PROGRESS TRACKING</div>
-                </div>
-                
-                <!-- Feature 6 -->
-                <div class="feature-card" style="background: white; border-radius: 16px; padding: 35px 30px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; border-top: 6px solid #f44336;">
-                    <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
-                        <div style="background: #ffebee; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 28px; color: #b71c1c;">🔄</span>
-                        </div>
-                        <h3 style="color: #b71c1c; font-size: 1.3rem; margin: 0;">How It Works</h3>
-                    </div>
-                    <p style="color: #424242; line-height: 1.7; margin-bottom: 20px;">
-                        Earn points for every sustainable action, event participation, and advocacy effort. Your impact is recognized and celebrated because every action counts.
-                    </p>
-                    <div style="color: #f44336; font-weight: bold; font-size: 0.9rem;">SIMPLE & EFFECTIVE</div>
                 </div>
             </div>
 
@@ -1422,6 +1396,7 @@
     // Update auth buttons based on Firebase auth status
     function updateAuthButtons(user) {
         const authButtons = document.getElementById('authButtons');
+        const navPointsItem = document.getElementById('navPointsItem');
         authButtons.classList.add('loaded');
         
         if (user) {
@@ -1440,6 +1415,8 @@
                         </div>
                     </div>
                 `;
+
+                if (navPointsItem) navPointsItem.style.display = 'block';
                 
                 // Add click handler for user menu toggle
                 const menuToggle = document.getElementById('userMenuToggle');
@@ -1472,6 +1449,8 @@
                 <button class="btn btn-login" id="loginBtn">Login</button>
                 <button class="btn btn-register" id="registerBtn">Register</button>
             `;
+
+            if (navPointsItem) navPointsItem.style.display = 'none';
             
             document.getElementById('loginBtn').addEventListener('click', function() {
                 window.location.href = 'login.html';
